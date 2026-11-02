@@ -6,7 +6,7 @@
 graph LR
   subgraph Клиенты
     M[iOS/Android app<br/>Expo]
-    W[Веб-профиль и комнаты<br/>Next.js на Vercel]
+    W[Веб-профиль и комнаты<br/>Vercel Functions]
   end
   subgraph Supabase
     A[Auth]
@@ -33,7 +33,7 @@ graph LR
 | Компонент | Технология | Ответственность |
 |---|---|---|
 | `apps/mobile` | Expo SDK, React Native, TypeScript, Expo Router, TanStack Query | Все экраны приложения, импорт контактов (`expo-contacts`), сканер QR (`expo-camera`), распознавание речи (`expo-speech-recognition`) |
-| `apps/web` | Next.js (App Router), Vercel | Публичный профиль `/<handle>`, комната `/r/<code>`, vCard, генерация `.pkpass` (`/api/wallet`), вебхуки оплаты, лендинг |
+| `apps/web` | Vercel Functions (Node, без фреймворка) | Публичный профиль `/<handle>`, комната `/r/<code>`, vCard, генерация `.pkpass` (`/api/wallet`), вебхуки оплаты, лендинг |
 | `supabase` | Postgres, RLS, Auth, Storage, Edge Functions (Deno) | Данные, доступы, AI-функции |
 | `packages/shared` | TypeScript | Типы домена, константы разделов и тарифов, генерированные типы БД |
 

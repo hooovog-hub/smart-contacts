@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/r/:code", "destination": "/api/room?code=:code" },
+    { "source": "/:handle/vcard", "destination": "/api/vcard?handle=:handle" },
+    { "source": "/:handle((?!api|favicon\\.ico|index).+)", "destination": "/api/profile?handle=:handle" }
+  ]
+}
