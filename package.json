@@ -1,10 +1,13 @@
 {
   "name": "smart-contacts",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/mobile",
+    "packages/*"
+  ],
   "scripts": {
     "mobile": "npm run start -w apps/mobile",
-    "web": "npm run dev -w apps/web",
+    "web": "npm run dev --prefix apps/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
