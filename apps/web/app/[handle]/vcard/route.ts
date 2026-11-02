@@ -1,6 +1,7 @@
 import { supabasePublic } from "@/lib/supabase";
 
-export async function GET(_: Request, { params }: { params: { handle: string } }) {
+export async function GET(_: Request, props: { params: Promise<{ handle: string }> }) {
+  const params = await props.params;
   const { data: p } = await supabasePublic().from("profiles").select("full_name, role, phone, links").eq("handle", params.handle).single();
   if (!p) return new Response("Not found", { status: 404 });
   const url = `${process.env.NEXT_PUBLIC_SITE_URL}/${params.handle}`;

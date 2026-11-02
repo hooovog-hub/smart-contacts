@@ -4,7 +4,8 @@ import { supabasePublic } from "@/lib/supabase";
 // Публичный профиль. Спецификация: docs/01-product/features/profile.md
 export const revalidate = 60;
 
-export default async function ProfilePage({ params }: { params: { handle: string } }) {
+export default async function ProfilePage(props: { params: Promise<{ handle: string }> }) {
+  const params = await props.params;
   const sb = supabasePublic();
   const { data: p } = await sb
     .from("profiles")
