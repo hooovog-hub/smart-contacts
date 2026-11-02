@@ -8,7 +8,7 @@
 | SC-002 | Лендинг с листом ожидания | 0 | P0 | web-engineer | todo | |
 | SC-003 | Тест Meta $50–100 | 0 | P0 | ads-manager | todo | |
 | SC-004 | Варианты названия и проверка доступности | 0 | P1 | brand-designer | todo | |
-| SC-010 | Миграция 0001 + RLS + seed | 1 | P0 | backend-engineer | review | |
+| SC-010 | Миграция 0001 + RLS + seed | 1 | P0 | backend-engineer | done | 1 |
 | SC-011 | Вход (телефон / Apple ID) | 1 | P0 | mobile-engineer | todo | |
 | SC-012 | Экран «Мой профиль» + редактирование | 1 | P0 | mobile-engineer | todo | |
 | SC-013 | Веб-профиль `/<handle>` + vCard | 1 | P0 | web-engineer | todo | |

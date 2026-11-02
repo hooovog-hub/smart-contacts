@@ -1,5 +1,8 @@
 # supabase/
 
+**Проект:** `nqaooorpdptdsucgmwkg` (регион Europe) · URL: `https://nqaooorpdptdsucgmwkg.supabase.co`
+Применённые миграции: 0001_init, 0002_private_helper_functions. Советник безопасности: замечаний нет.
+
 | Путь | Что |
 |---|---|
 | `config.toml` | Локальная конфигурация (создаётся `npx supabase init`) |

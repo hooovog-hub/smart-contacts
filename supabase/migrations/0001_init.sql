@@ -193,7 +193,7 @@ alter table team_members enable row level security;
 create policy "profiles read" on profiles for select using (true);
 create policy "profiles own write" on profiles for all using (auth.uid() = id) with check (auth.uid() = id);
 
-create function is_paid(p uuid) returns boolean language sql stable as
+create function is_paid(p uuid) returns boolean language sql stable set search_path = public as
 $$ select exists (select 1 from profiles where id = p and plan <> 'free') $$;
 
 create policy "brands read" on brands for select using (is_paid(profile_id) or auth.uid() = profile_id);
