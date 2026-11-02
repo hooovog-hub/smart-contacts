@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.expo/
+dist/
+.next/
+*.p12
+*.pem
+*.cer
+*.pkpass
+.DS_Store
+supabase/.temp/

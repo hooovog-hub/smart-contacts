@@ -1,0 +1,1399 @@
+<title>Smart Contacts</title>
+<style>
+/* Layout: one-screen phone app — header, scrolling screen, bottom tabs; sheets slide over */
+/* Layout: one-screen dark phone app — black canvas, soft grey cards, floating icon tab bar; sheets slide over */
+:root{
+  --bg:#000000; --surface:#161618; --surface-2:#222225; --ink:#F5F5F7; --muted:#8E8E93; --line:#2A2A2E;
+  --brand:#F5F5F7; --brand-ink:#000000; --accent:#FF8A3D; --accent-soft:#2A1B10; --accent-ink:#FFB57A;
+  --ok:#5BD08A; --ok-soft:#12261A; --gold:#F5C451; --gold-soft:#2B2210; --danger:#FF6B81;
+  --grad:linear-gradient(100deg,#FFB547 0%,#FF7A59 45%,#E85BC4 100%);
+  --a1:#6E7BFF; --a2:#FF8A3D; --a3:#E85BC4; --a4:#3CC9A0; --a5:#4AB4F0; --a6:#A57CFF;
+  --f-display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",system-ui,sans-serif;
+  --f-body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;
+  --r:18px;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+*{box-sizing:border-box}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;text-align:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#app{height:100%;max-width:440px;margin:0 auto;display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden}
+@media (min-width:520px){#app{border-left:1px solid var(--line);border-right:1px solid var(--line)}}
+.hdr{padding:14px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));display:flex;align-items:center;gap:10px}
+.hdr h1{font-family:var(--f-display);font-weight:700;font-size:21px;margin:0;flex:1;min-width:0;text-wrap:balance}
+.hdr .sub{display:block;font-family:var(--f-body);font-weight:500;font-size:12.5px;color:var(--muted)}
+.back{width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;flex:none}
+#main{flex:1;overflow-y:auto;overflow-x:hidden}
+.pad{padding:0 max(16px,env(safe-area-inset-right,0px)) 28px max(16px,env(safe-area-inset-left,0px))}
+.tabs{display:flex;border-top:1px solid var(--line);background:var(--surface);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs button{flex:1;padding:9px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;font-weight:500;color:var(--muted)}
+.tabs button[aria-current="true"]{color:var(--brand)}
+.tabs svg{width:22px;height:22px}
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 12px;height:42px}
+.search input{flex:1;border:0;background:transparent;outline:none;min-width:0}
+.search svg{width:18px;height:18px;color:var(--muted);flex:none}
+.seg{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:12px 0 2px}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:none;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:13.5px;font-weight:500;white-space:nowrap}
+.seg button .n{color:var(--muted);font-size:12px;margin-left:4px;font-variant-numeric:tabular-nums}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg button[aria-pressed="true"] .n{color:inherit;opacity:.7}
+.sect{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:20px 0 8px}
+.stack{display:grid;gap:10px}
+.av{width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:600;font-size:15px;color:#fff;background:var(--ac)}
+.av.lg{width:72px;height:72px;font-size:24px}
+.av.sm{width:30px;height:30px;font-size:11px;border:2px solid var(--surface)}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;vertical-align:2px}
+.pill.pro{background:var(--gold-soft);color:var(--gold)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.acc{background:var(--accent-soft);color:var(--accent-ink)}
+.pill.mute{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:4px 10px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);font-size:12.5px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 18px;border-radius:12px;font-weight:600;background:var(--brand);color:var(--brand-ink);text-align:center}
+.btn.acc{background:var(--accent);color:#fff}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn.sm{height:34px;padding:0 12px;font-size:13.5px;border-radius:10px}
+.btn.wide{width:100%}
+.btn[disabled]{opacity:.55;cursor:default}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.hint{font-size:13px;color:var(--muted)}
+.empty{text-align:center;color:var(--muted);padding:32px 16px}
+/* meeting hero */
+.hero{background:var(--brand);color:var(--brand-ink);border-radius:18px;padding:16px;display:grid;gap:12px;width:100%}
+.hero .eyebrow{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
+.hero h2{margin:0;font-family:var(--f-display);font-size:20px;font-weight:700;line-height:1.2}
+.hero .m{font-size:13.5px;opacity:.85}
+.faces{display:flex;align-items:center}
+.faces .av{margin-right:-8px;border-color:var(--brand)}
+.faces .more{margin-left:14px;font-size:13px;opacity:.85}
+.meter{height:6px;border-radius:3px;background:rgba(255,255,255,.22);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent)}
+.hero .btn{background:var(--brand-ink);color:var(--brand);height:40px;font-size:14px}
+.hero .btn.out{background:transparent;color:var(--brand-ink);border:1px solid currentColor}
+.mrow{display:flex;gap:12px;align-items:center;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);width:100%}
+.mrow .date{width:46px;flex:none;text-align:center;border-right:1px solid var(--line);padding-right:10px}
+.mrow .date b{display:block;font-family:var(--f-display);font-size:19px;line-height:1.1}
+.mrow .date span{font-size:11.5px;color:var(--muted);text-transform:uppercase}
+.mrow .t{flex:1;min-width:0}
+.mrow .nm{font-weight:600}
+/* match banner */
+.match{background:var(--accent-soft);color:var(--accent-ink);border-radius:var(--r);padding:12px 14px;display:grid;gap:8px}
+.match b{font-weight:600}
+.match .who{display:flex;flex-wrap:wrap;gap:6px}
+.match .who button{background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 10px 4px 4px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500}
+.match .who .av{width:24px;height:24px;font-size:10px;border:0}
+/* person card */
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:8px}
+.pcard .top{display:flex;gap:12px;align-items:center;width:100%}
+.pcard .t{flex:1;min-width:0}
+.pcard .nm{font-weight:600}
+.pcard .ds{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard .note{font-size:13.5px;background:var(--surface-2);border-radius:10px;padding:7px 10px;color:var(--ink)}
+.pcard .note::before{content:"Моя заметка: ";color:var(--muted)}
+.pcard .flags{display:flex;gap:6px;flex-wrap:wrap}
+.tick{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;flex:none;color:var(--muted)}
+.tick[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+/* sheets */
+.scrim{position:fixed;inset:0;background:rgba(8,10,20,.45);z-index:20;display:flex;justify-content:center;align-items:flex-end;animation:fade .18s ease}
+.sheet{width:100%;max-width:440px;max-height:92%;overflow-y:auto;background:var(--bg);border-radius:20px 20px 0 0;padding:8px max(16px,env(safe-area-inset-right,0px)) calc(22px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));animation:up .22s ease}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:4px auto 10px}
+.shd{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.shd h2{flex:1;margin:0;font-family:var(--f-display);font-size:17px;font-weight:700}
+.x{width:34px;height:34px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+@keyframes fade{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.phead{display:flex;gap:14px;align-items:center;margin:-4px 0 14px}
+.phead .nm{font-family:var(--f-display);font-weight:700;font-size:20px;line-height:1.2}
+.biz{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:4px;background:var(--surface)}
+.biz .bn{font-weight:600;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.biz .sp{font-size:12.5px;color:var(--muted)}
+.offer{background:var(--accent-soft);color:var(--accent-ink);border-radius:10px;padding:7px 10px;font-weight:500;font-size:13.5px;margin-top:4px}
+.kv{display:grid;gap:12px}
+.k{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:3px}
+.field{display:grid;gap:5px;margin-bottom:12px}
+.field label{font-size:13px;font-weight:500;color:var(--muted)}
+.field input,.field textarea{height:44px;border-radius:11px;border:1px solid var(--line);background:var(--surface);padding:0 12px;outline:none;width:100%}
+.field textarea{height:76px;padding:10px 12px;resize:vertical}
+.field input:focus,.field textarea:focus{border-color:var(--brand)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.met{display:flex;gap:8px}
+.met button{flex:1}
+.met button[aria-pressed="true"]{background:var(--ok);color:#fff;border-color:var(--ok)}
+/* recall */
+.rcard{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px 16px;text-align:center;display:grid;gap:10px;justify-items:center}
+.rcard .nm{font-family:var(--f-display);font-size:22px;font-weight:700}
+.prog{height:4px;border-radius:2px;background:var(--line);overflow:hidden;margin:6px 0 12px}
+.prog i{display:block;height:100%;background:var(--accent)}
+/* profile */
+.bizcard{border-radius:20px;padding:18px;background:var(--brand);color:var(--brand-ink);display:grid;gap:12px;position:relative;overflow:hidden}
+.bizcard::after{content:"";position:absolute;right:-46px;top:-46px;width:150px;height:150px;border-radius:50%;background:var(--accent)}
+.bizcard > *{position:relative;z-index:1}
+.bizcard .nm{font-family:var(--f-display);font-size:22px;font-weight:700;max-width:78%}
+.bizcard .chip{background:transparent;border-color:currentColor;color:inherit}
+.qrbox{background:#fff;border-radius:16px;padding:12px;display:grid;place-items:center;width:100%;max-width:220px;margin:0 auto}
+.qrbox svg{width:100%;height:auto;display:block}
+.code{font-family:var(--f-display);font-size:22px;letter-spacing:.12em;text-align:center;margin:10px 0 2px}
+.plan{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.plan > div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:grid;gap:6px;align-content:start}
+.plan .pt{font-family:var(--f-display);font-weight:700;font-size:15px}
+.plan .pp{font-size:13px;color:var(--muted)}
+.plan ul{margin:0;padding-left:16px;font-size:13px;display:grid;gap:4px}
+.plan .on{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.lock{display:flex;gap:10px;align-items:center;border:1px dashed var(--line);border-radius:12px;padding:12px;color:var(--muted);font-size:13.5px}
+.web{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.web .bar{background:var(--surface-2);border-bottom:1px solid var(--line);padding:8px 12px;font-size:12px;color:var(--muted);text-align:center}
+.web .bd{padding:16px;display:grid;gap:10px}
+.toast{position:absolute;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:500;z-index:40;max-width:calc(100% - 32px);animation:fade .2s ease}
+.row-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+/* rich profile */
+.ptop{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.ptop .band{height:78px;background:var(--ac);position:relative;overflow:hidden}
+.ptop .band::after{content:"";position:absolute;right:-30px;top:-50px;width:150px;height:150px;border-radius:50%;background:var(--accent);opacity:.85}
+.ptop .band::before{content:"";position:absolute;left:38%;bottom:-70px;width:120px;height:120px;border-radius:50%;border:2px solid rgba(255,255,255,.35)}
+.ptop .pin{padding:0 16px 16px;margin-top:-38px;position:relative;display:grid;gap:4px}
+.av.xl{width:80px;height:80px;font-size:28px;border:4px solid var(--surface)}
+.pname{font-family:var(--f-display);font-weight:700;font-size:22px;line-height:1.2;margin-top:6px;text-wrap:balance}
+.pmeta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;font-size:13px;color:var(--muted)}
+.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.qa button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 4px;display:grid;justify-items:center;gap:4px;font-size:12px;font-weight:500;text-align:center}
+.qa button svg{width:20px;height:20px;color:var(--brand)}
+.qa button[aria-pressed="true"]{border-color:var(--ok);color:var(--ok)}
+.qa button.savebtn{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;box-shadow:0 6px 18px rgba(232,121,43,.35)}
+.qa button.savebtn svg{color:#fff}
+.qa button.savebtn[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff;box-shadow:none}
+.strip{display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-top:10px}
+.strip div{padding:10px 8px;text-align:center;border-right:1px solid var(--line)}
+.strip div:last-child{border-right:0}
+.strip b{display:block;font-family:var(--f-display);font-size:19px;font-variant-numeric:tabular-nums}
+.strip span{font-size:12px;color:var(--muted)}
+.brand{display:grid;grid-template-columns:48px 1fr;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px}
+.mono{width:48px;height:48px;border-radius:12px;background:var(--ac);color:#fff;display:grid;place-items:center;font-family:var(--f-display);font-weight:700;font-size:15px}
+.brand .bn{font-weight:600}
+.brand .sp{font-size:12.5px;color:var(--muted)}
+.brand .t{min-width:0;display:grid;gap:3px}
+.alist{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.aw{display:grid;grid-template-columns:36px 1fr;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line);align-items:center}
+.aw:last-child{border-bottom:0}
+.aw .ic{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--gold-soft);color:var(--gold)}
+.aw .ic svg{width:18px;height:18px}
+.aw .ic.k-press,.aw .ic.k-talk{background:var(--surface-2);color:var(--brand)}
+.aw .ic.k-case{background:var(--ok-soft);color:var(--ok)}
+.aw .at{font-weight:500;font-size:14.5px}
+.aw .as{font-size:12.5px;color:var(--muted)}
+.quote{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:8px}
+.quote p{margin:0;font-size:14.5px}
+.quote .by{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+.quote .by .av{width:24px;height:24px;font-size:10px}
+.lrow{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.lrow:last-child{border-bottom:0}
+.lrow .lk{width:84px;flex:none;font-size:13px;color:var(--muted)}
+.lrow .lv{flex:1;min-width:0;overflow-wrap:anywhere;user-select:all;font-variant-numeric:tabular-nums}
+.lrow button{font-size:13px;color:var(--brand);font-weight:600;flex:none}
+.complete{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px}
+.complete .bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.complete .bar i{display:block;height:100%;background:var(--ok)}
+.todo{display:flex;flex-wrap:wrap;gap:6px}
+.todo button{font-size:12.5px;padding:5px 10px;border-radius:999px;border:1px dashed var(--accent);color:var(--accent-ink);background:var(--accent-soft)}
+.mut{display:flex;align-items:center;gap:10px}
+.mut .faces .av{border-color:var(--surface)}
+.bio{margin:14px 2px 0;font-size:15.5px;line-height:1.55;max-width:60ch}
+button.brand{width:100%;text-align:left;grid-template-columns:48px 1fr auto;align-items:center}
+button.brand:active{transform:scale(.99)}
+.brand .bl{font-size:12.5px;color:var(--brand);font-weight:500}
+.brand .chev,.fold .chev{color:var(--muted);display:grid;place-items:center}
+.folds{display:grid;gap:8px;margin-top:18px}
+details.fold{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+details.fold summary{list-style:none;display:flex;align-items:center;gap:8px;padding:14px;cursor:pointer;font-weight:600}
+details.fold summary::-webkit-details-marker{display:none}
+.fold .n{color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums;font-size:13.5px}
+.fold summary .chev{margin-left:auto;transition:transform .2s}
+details.fold[open] summary .chev{transform:rotate(90deg)}
+.fold .fb{padding:0 14px 14px}
+.fb .alist{border:0;background:transparent;border-radius:0}
+.fb .lrow,.fb .aw{padding-left:0;padding-right:0}
+.fb .quote{background:var(--surface-2);border:0}
+.linkrow{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.linkrow:last-child{border-bottom:0}
+.linkrow .li{width:36px;height:36px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font-weight:700;font-size:12px;color:var(--brand);flex:none}
+.linkrow .t{flex:1;min-width:0}
+.linkrow .lv{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.linkrow .go{color:var(--brand);font-weight:600;font-size:13.5px}
+.field select{height:44px;border-radius:11px;border:1px solid var(--line);background:var(--surface);padding:0 10px;width:100%}
+
+/* ---------- AI assistant ---------- */
+.askbar{display:flex;align-items:center;gap:10px;width:100%;height:48px;padding:0 16px;border-radius:999px;background:var(--surface);color:var(--muted);font-size:14px;text-align:left}
+.askbar svg{width:18px;height:18px;color:#FF8A3D;flex:none}
+.askbar span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-intro{border-radius:24px;padding:20px;display:grid;gap:8px;color:#fff;background:radial-gradient(90% 100% at 0% 0%,#3A4BD8,transparent 60%),radial-gradient(90% 100% at 100% 0%,#E85BC4,transparent 60%),radial-gradient(100% 100% at 50% 120%,#FF8A3D,transparent 60%),#1a1a2a}
+.ai-intro b{font-size:20px;letter-spacing:-.02em}
+.ai-intro span{opacity:.85;font-size:14px}
+.sugg{display:grid;gap:8px;margin-top:14px}
+.sugg button{background:var(--surface);border-radius:16px;padding:12px 14px;text-align:left;font-size:14px}
+.msgs{display:grid;gap:14px;margin-top:6px}
+.msg-u{justify-self:end;max-width:85%;background:var(--surface-2);padding:10px 14px;border-radius:18px 18px 4px 18px}
+.msg-a{display:grid;gap:10px}
+.msg-a .txt{font-size:15px;line-height:1.5;color:#E5E5EA}
+.msg-a .src{font-size:12px;color:var(--muted)}
+.thinking{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:14px}
+.thinking i{width:8px;height:8px;border-radius:50%;background:var(--grad);animation:pulse 1s ease-in-out infinite}
+.thinking i:nth-child(2){animation-delay:.15s}.thinking i:nth-child(3){animation-delay:.3s}
+@keyframes pulse{50%{opacity:.25;transform:scale(.7)}}
+.rec{background:var(--surface);border-radius:18px;padding:12px 14px;display:grid;gap:8px}
+.rec .top{display:flex;gap:12px;align-items:center;width:100%;text-align:left}
+.rec .t{flex:1;min-width:0}
+.rec .nm{font-weight:600}
+.rec .why{font-size:14px;color:#D1D1D6}
+.rec .ask{font-size:13.5px;background:var(--surface-2);border-radius:12px;padding:8px 10px;color:#C7C7CC}
+.rec .acts{display:flex;gap:8px;flex-wrap:wrap}
+.kind{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.kind.direct{background:#1C2A22;color:var(--ok)}
+.kind.indirect{background:#2A1B10;color:#FFB57A}
+.composer{position:sticky;bottom:calc(80px + env(safe-area-inset-bottom,0px));margin-top:16px;display:flex;gap:8px;align-items:center;background:rgba(28,28,30,.85);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-radius:999px;padding:6px 6px 6px 16px;z-index:5}
+.composer input{flex:1;min-width:0;border:0;background:transparent;outline:none;font-size:15px;height:40px}
+.composer .send{width:40px;height:40px;border-radius:50%;background:var(--grad);color:#1a0d00;display:grid;place-items:center;flex:none}
+.composer .send[disabled]{opacity:.4}
+.composer .send svg{width:18px;height:18px}
+button.task{display:grid;gap:10px;width:100%;text-align:left;background:var(--surface);border-radius:18px;padding:14px}
+.task .tt{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.task .tt b{font-weight:600;font-size:15px}
+.task .tl{display:flex;align-items:center;gap:10px;min-width:0}
+.task .tl .hint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stack3{display:flex;flex:none}.stack3 .av{width:26px;height:26px;font-size:10px;margin-left:-8px;border:2px solid var(--surface)}.stack3 .av:first-child{margin-left:0}
+.st{font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:999px;white-space:nowrap;flex:none}
+.st.ok{background:#1C2A22;color:var(--ok)}.st.wait{background:#2A1B10;color:#FFB57A}
+button.idea{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;background:var(--surface);border-radius:18px;padding:14px}
+.idea .t{display:grid;gap:4px;min-width:0}.idea b{font-weight:600}
+.micb{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#FF8A3D;background:var(--surface-2);flex:none;margin-left:-10px}
+.micb svg{width:20px;height:20px}
+.donebar{background:var(--surface);border-radius:16px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.chip.pick{display:inline-flex;align-items:center;gap:6px;padding:4px 12px 4px 4px}
+.chip.pick .av{width:24px;height:24px;font-size:10px;border:0}
+.voice{display:grid;justify-items:center;gap:14px;text-align:center;padding:10px 0 6px}
+.voice .orb{width:130px;height:130px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#1a0d00;box-shadow:0 0 60px rgba(255,122,89,.45),0 0 0 14px rgba(255,138,61,.12),0 0 0 30px rgba(232,91,196,.07);animation:breathe 1.6s ease-in-out infinite}
+.voice .orb svg{width:48px;height:48px}
+.voice .vt{font-size:20px;font-weight:600;letter-spacing:-.01em;min-height:56px;max-width:30ch}
+@keyframes breathe{50%{transform:scale(1.06)}}
+[hidden]{display:none!important}
+.azpad .clist,.azpad .lh{margin-right:14px}
+.orgline{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:13px;color:#D1D1D6}
+.orgline svg{width:15px;height:15px;color:#F5C451;flex:none}
+.org{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line)}
+.org:last-child{border-bottom:0}
+.org .oi{width:38px;height:38px;border-radius:10px;flex:none;display:grid;place-items:center;font-size:12px;font-weight:700;color:#F5C451;background:#2B2210}
+.org .t{flex:1;min-width:0}.org .on{font-weight:500;font-size:14.5px}.org .os{font-size:12.5px;color:var(--muted)}
+.ov{font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;white-space:nowrap;background:var(--surface-2);color:var(--muted);flex:none}
+.ov.ok{background:#1C2A22;color:var(--ok)}
+.plans{display:grid;gap:10px}
+.pl{background:var(--surface);border-radius:20px;padding:16px;display:grid;gap:8px}
+.pl.cur{box-shadow:inset 0 0 0 1.5px #FF8A3D}
+.pl.biz{background:radial-gradient(90% 80% at 100% 0%,rgba(110,123,255,.28),transparent 60%),radial-gradient(80% 80% at 0% 100%,rgba(232,91,196,.18),transparent 60%),var(--surface)}
+.plh{display:flex;align-items:center;gap:8px}
+.pl .pt{font-weight:700;font-size:18px;letter-spacing:-.01em}
+.pltag{font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:rgba(110,123,255,.2);color:#B8BFFF}
+.pl .pp{font-size:14px;color:var(--muted)}.pl .pp b{font-size:24px;color:var(--ink);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.pfor{font-size:13px;color:#C7C7CC}
+.pl ul{margin:0;padding-left:18px;display:grid;gap:5px;font-size:13.5px;color:#D1D1D6}
+.pl .btn{justify-self:start;margin-top:4px}
+/* contacts book */
+.vtog{display:flex;background:var(--surface);border-radius:999px;padding:3px;flex:none}
+.vtog button{padding:7px 12px;border-radius:999px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.vtog button[aria-pressed="true"]{background:#F5F5F7;color:#000}
+.cwrap{display:flex;align-items:center;gap:8px;margin-top:12px}
+.chiprow{flex:1;min-width:0;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent);padding-right:16px}
+.chiprow::-webkit-scrollbar{display:none}
+.cchip{flex:none;display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;background:var(--surface);font-size:13.5px;font-weight:500;color:var(--ink);white-space:nowrap}
+.cchip svg{width:16px;height:16px;color:var(--ac,#fff)}
+.cchip .n{color:var(--muted);font-size:12px}
+.cchip.on{background:var(--grad);color:#1a0d00}.cchip.on svg{color:#1a0d00}.cchip.on .n{color:#1a0d00;opacity:.6}
+.cchip.more{background:var(--surface-2);flex:none}
+.gh{display:flex;align-items:center;gap:8px;margin:20px 2px 8px;font-size:14px;font-weight:600}
+.gh svg{width:17px;height:17px;color:var(--ac)}
+.gh .n{color:var(--muted);font-weight:500}
+.gh .all{margin-left:auto;color:var(--muted);font-weight:500;font-size:13px}
+.gh .ghb{color:var(--muted);font-size:20px;line-height:1;padding:0 6px 0 0}
+.clist{background:var(--surface);border-radius:18px;overflow:hidden}
+.crow{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.crow:last-child{border-bottom:0}
+.crow .t{flex:1;min-width:0;display:grid}
+.crow .nm{font-weight:500;font-size:15px}
+.crow .ds{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lh{font-size:13px;font-weight:700;color:#FF8A3D;margin:16px 2px 6px}
+.rail{position:fixed;right:max(2px,env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%);display:grid;font-size:10.5px;font-weight:600;color:#55555a;text-align:center;z-index:6}
+@media (min-width:520px){.rail{right:calc(50% - 216px)}}
+.rail button,.rail span{padding:1px 4px;line-height:1.25}
+.rail .has{color:#FF8A3D}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tg{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:14px;padding:10px 12px;font-size:14px;font-weight:500;text-align:left}
+.tg .ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;color:var(--ac);background:color-mix(in srgb,var(--ac) 16%,transparent);flex:none}
+.tg .ico svg{width:18px;height:18px}.tg .n{margin-left:auto;color:var(--muted);font-size:12.5px}
+/* AI dock */
+.ai-pad{padding-bottom:190px}
+.dock{position:absolute;left:0;right:0;bottom:0;padding:28px max(16px,env(safe-area-inset-right,0px)) calc(84px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:linear-gradient(180deg,transparent,#000 34%);z-index:12;pointer-events:none}
+.dock .composer{position:static;margin:0;pointer-events:auto;background:#1E1E21;box-shadow:0 0 0 1px rgba(255,255,255,.12),0 10px 30px rgba(0,0,0,.7);padding:6px 6px 6px 18px;height:64px}
+.dock .composer input{font-size:15.5px}
+.dock .micb{width:52px;height:52px;margin:0;border-radius:50%;background:var(--grad);color:#1a0d00;box-shadow:0 0 24px rgba(255,122,89,.45)}
+.dock .micb svg{width:24px;height:24px}
+.dock .send{width:52px;height:52px;background:#F5F5F7;color:#000}
+.tcat{font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--surface-2);color:#C7C7CC;white-space:nowrap;flex:none}
+.secrow{display:flex;align-items:center;justify-content:space-between}
+.archlink{color:#FFB57A;font-weight:600;font-size:13px;padding:4px 0 4px 10px}
+.archb{display:flex;align-items:center;gap:8px;width:100%;margin-top:12px;padding:14px;border-radius:16px;background:transparent;box-shadow:inset 0 0 0 1px var(--line);font-weight:500;color:#C7C7CC}
+.archb .n{color:var(--muted)}.archb .chev{margin-left:auto;color:var(--muted)}
+.dock .composer.recording{height:auto;flex-direction:column;align-items:stretch;gap:10px;padding:14px 10px 10px 14px;border-radius:26px;box-shadow:0 0 0 1.5px #FF7A59,0 0 30px rgba(255,122,89,.35),0 10px 30px rgba(0,0,0,.7)}
+.rtext{font-size:16px;line-height:1.45;min-height:46px;padding-right:6px;color:var(--ink)}
+.rph{color:var(--muted)}
+.caret{display:inline-block;width:2px;height:1.1em;background:#FF8A3D;margin-left:3px;vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.rbar{display:flex;align-items:center;gap:8px}
+.rbtn{width:44px;height:44px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;color:var(--ink);flex:none}
+.rbtn .sq{width:14px;height:14px;border-radius:3px;background:#F5F5F7}
+.wave{flex:1;min-width:0;height:44px;display:flex;align-items:center;justify-content:center;gap:3px;overflow:hidden}
+.wave i{width:3px;height:6px;border-radius:2px;background:#FF8A3D;animation:wv .7s ease-in-out infinite alternate}
+@keyframes wv{to{height:26px}}
+.recording.stopped .wave i{animation:none;height:4px;background:#55555a}
+.rbar .send{width:44px;height:44px;border-radius:50%;background:var(--grad);color:#1a0d00;display:grid;place-items:center;flex:none}
+.rdemo{font-size:11px;color:var(--muted);padding-left:4px}
+/* ---------- dark minimal skin ---------- */
+body{font-size:14.5px;-webkit-font-smoothing:antialiased;letter-spacing:-.005em}
+#app{background:#000}
+@media (min-width:520px){#app{border-color:#1a1a1a}}
+.hdr{padding-top:16px}
+.hdr h1{font-weight:700;font-size:24px;letter-spacing:-.02em}
+.hdr .sub{font-size:13px;font-weight:400}
+.back{background:var(--surface);border:0}
+.pad{padding-bottom:120px}
+.sect{text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;margin:22px 2px 10px}
+.card,.pcard,.mrow,.mem,.biz,.brand,.alist,.quote,.complete,.web,.ptop,details.fold,.plan > div,.strip{background:var(--surface);border:0;border-radius:var(--r)}
+.chip{background:var(--surface-2);border:0;padding:6px 12px;font-size:13px}
+.search{background:var(--surface);border:0;border-radius:999px;height:44px;padding:0 16px}
+.seg button{background:var(--surface);border:0;padding:8px 14px;font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--grad);color:#1a0d00}
+.seg button[aria-pressed="true"] .n{opacity:.7}
+.btn{border-radius:999px;height:44px;font-weight:600;background:#F5F5F7;color:#000}
+.btn.sm{border-radius:999px;height:34px}
+.btn.acc{background:var(--grad);color:#1a0d00;box-shadow:0 8px 24px rgba(255,122,89,.25)}
+.btn.ghost{background:var(--surface-2);border:0;color:var(--ink)}
+.field input,.field textarea,.field select{background:var(--surface-2);border:0;border-radius:14px}
+.field input:focus,.field textarea:focus{outline:1.5px solid #555}
+.av{background:radial-gradient(circle at 30% 25%,color-mix(in srgb,var(--ac) 55%,#fff) 0%,var(--ac) 45%,color-mix(in srgb,var(--ac) 45%,#000) 100%)}
+.av.sm{border-color:#000}
+.pill.pro{background:var(--grad);color:#1a0d00}
+.pill.ok{background:#1C2A22;color:var(--ok)}
+.pill.mute{background:var(--surface-2);border:0}
+/* floating icon tab bar */
+.tabs{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));width:auto;border:0;border-radius:999px;padding:6px;gap:4px;
+  background:rgba(28,28,30,.72);-webkit-backdrop-filter:blur(20px) saturate(160%);backdrop-filter:blur(20px) saturate(160%);box-shadow:0 10px 30px rgba(0,0,0,.6);z-index:15}
+.tabs button{flex:none;width:58px;height:46px;padding:0;border-radius:999px;font-size:0;gap:0;justify-content:center;color:#8E8E93}
+.tabs button[aria-current="true"]{background:#F5F5F7;color:#000}
+.tabs svg{width:22px;height:22px}
+/* meeting hero as artwork card */
+.hero{background:radial-gradient(120% 90% at 10% 0%,#3A4BD8 0%,transparent 55%),radial-gradient(90% 80% at 100% 20%,#E85BC4 0%,transparent 60%),radial-gradient(100% 90% at 60% 110%,#FF8A3D 0%,transparent 60%),#1a1a2a;color:#fff;border-radius:24px;padding:18px}
+.hero h2{font-family:var(--f-display);font-size:24px;letter-spacing:-.02em}
+.hero .btn{background:#fff;color:#000}
+.hero .btn.out{background:rgba(255,255,255,.14);color:#fff;border:0}
+.meter{background:rgba(255,255,255,.25)}
+.meter i{background:#fff}
+.faces .av{border-color:rgba(0,0,0,.4)}
+.match{background:var(--surface);color:var(--ink)}
+.match .who button{background:var(--surface-2)}
+.mrow .date{border-color:var(--line)}
+.mrow .date b{font-family:var(--f-display);font-weight:700}
+.offer{background:#2A1B10;color:#FFB57A;border-radius:12px}
+/* profile */
+.ptop{overflow:hidden}
+.ptop .band{height:120px;background:radial-gradient(80% 120% at 15% 10%,var(--ac) 0%,transparent 60%),radial-gradient(70% 110% at 85% 0%,#FF8A3D 0%,transparent 60%),radial-gradient(80% 120% at 60% 120%,#E85BC4 0%,transparent 65%),#1d1d22}
+.ptop .band::before,.ptop .band::after{display:none}
+.av.xl{border:4px solid var(--surface)}
+.pname{font-family:var(--f-display);font-size:24px;letter-spacing:-.02em;font-weight:700}
+.qa button{background:var(--surface);border:0;border-radius:16px;font-size:12px;color:var(--ink)}
+.qa button svg{color:var(--ink)}
+.qa button.savebtn{background:var(--grad);color:#1a0d00;box-shadow:0 8px 22px rgba(255,122,89,.3)}
+.qa button.savebtn svg{color:#1a0d00}
+.qa button.savebtn[aria-pressed="true"]{background:#1C2A22;color:var(--ok);box-shadow:none}
+.qa button.savebtn[aria-pressed="true"] svg{color:var(--ok)}
+.bio{color:#D1D1D6}
+.mono{background:linear-gradient(135deg,color-mix(in srgb,var(--ac) 70%,#fff),var(--ac) 50%,color-mix(in srgb,var(--ac) 50%,#000));border-radius:14px}
+.brand .bl{color:#A5A5AA}
+.aw{border-color:var(--line)}
+.aw .ic{background:#2B2210}
+.aw .ic.k-press,.aw .ic.k-talk{background:var(--surface-2);color:#C7C7CC}
+.lrow{border-color:var(--line)}
+.lrow button{color:#F5F5F7}
+.fb .quote{background:var(--surface-2)}
+.quote{background:var(--surface)}
+.folds{gap:8px}
+details.fold summary{font-weight:500;padding:16px}
+.complete .bar{background:var(--surface-2)}
+.complete .bar i{background:var(--grad)}
+.todo button{background:var(--surface-2);border:0;color:var(--ink)}
+.lock{border-color:#333;border-radius:16px}
+.plan .on{box-shadow:inset 0 0 0 1.5px #FF8A3D}
+.bizcard{background:radial-gradient(90% 100% at 0% 0%,#3A4BD8,transparent 60%),radial-gradient(90% 100% at 100% 100%,#E85BC4,transparent 60%),#1a1a2a;color:#fff}
+.bizcard::after{display:none}
+/* recall + sheets */
+.scrim{background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.sheet{background:#0E0E10;border-radius:28px 28px 0 0}
+.grab{background:#3A3A3C}
+.x{background:var(--surface-2);border:0}
+.shd h2{font-family:var(--f-display);font-weight:700;font-size:19px}
+.rcard{background:var(--surface);border:0;border-radius:24px}
+.rcard .nm{font-family:var(--f-display)}
+.prog{background:var(--surface-2)}
+.prog i{background:var(--grad)}
+.tick{border-color:#3A3A3C}
+.tick[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#000}
+.pcard .note{background:var(--surface-2)}
+.linkrow{border-color:var(--line)}
+.linkrow .li{background:var(--surface-2);color:#fff}
+.linkrow .go{color:#F5F5F7}
+.toast{background:#F5F5F7;color:#000;border-radius:999px;bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.18em}
+.empty{color:var(--muted)}
+</style>
+
+<div id="app">
+  <div id="hdr"></div>
+  <div id="main"></div>
+  <nav class="tabs" id="tabs"></nav>
+  <div id="sheet"></div>
+  <div id="toast"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+/* ---------- demo data ---------- */
+const P = [
+ {id:'p1',name:'Ани Мкртчян',role:'Основатель',pro:true,phone:'+374 94 118 220',tg:'@ani_flowers',
+  biz:[{name:'Ani Flowers',sphere:'Цветы и декор',desc:'Оформление офисов, витрин и мероприятий',offer:'−10% по рекомендации',links:{instagram:'@ani.flowers.am',site:'aniflowers.am',facebook:'Ani Flowers'}},
+       {name:'Ani Events',sphere:'Организация мероприятий',desc:'Ивенты под ключ до 200 гостей',offer:'',links:{instagram:'@ani.events.am'}}],
+  helps:['оформление мероприятий','декор','ивенты'],seeks:['фотограф','площадка']},
+ {id:'p2',name:'Давид Саргсян',role:'Юрист',pro:true,phone:'+374 99 610 275',tg:'@d_sargsyan',
+  biz:[{name:'Sargsyan Legal',sphere:'Юридические услуги',desc:'Регистрация компаний, договоры, IT-право',offer:'Первая консультация бесплатно',links:{site:'sargsyan-legal.am',facebook:'Sargsyan Legal',linkedin:'Sargsyan Legal'}},
+       {name:'StartDocs',sphere:'Legal-tech',desc:'Онлайн-конструктор договоров для малого бизнеса',offer:'Месяц бесплатно',year:2023,team:'4 человека',links:{site:'startdocs.am',instagram:'@startdocs.am'}},
+       {name:'Legal Academy',sphere:'Обучение',desc:'Курсы по праву для предпринимателей',offer:'',year:2021,team:'5 преподавателей',links:{instagram:'@legal.academy.am',facebook:'Legal Academy Armenia',youtube:'Legal Academy'}}],
+  helps:['юрист','IT-право','регистрация компании','договоры'],seeks:['бухгалтер']},
+ {id:'p3',name:'Мари Акопян',role:'Бухгалтер, аутсорс',pro:false,phone:'+374 77 410 903',
+  biz:[{name:'Частная практика',sphere:'Бухгалтерия',desc:'',offer:''}],helps:['бухгалтер','налоги','отчётность'],seeks:[]},
+ {id:'p4',name:'Арман Петросян',role:'CEO',pro:true,phone:'+374 98 300 417',tg:'@buildarm',
+  biz:[{name:'BuildArm',sphere:'Ремонт и строительство',desc:'Ремонт офисов и квартир под ключ',offer:'Бесплатный выезд и смета',links:{site:'buildarm.am',instagram:'@buildarm',facebook:'BuildArm'}},
+       {name:'ArmStone',sphere:'Камень и плитка',desc:'Поставка туфа, гранита и плитки',offer:'',links:{site:'armstone.am'}}],
+  helps:['ремонт','строительство','плитка'],seeks:['дизайнер интерьера','маркетинг','брендинг']},
+ {id:'p5',name:'Лусине Григорян',role:'HR-консультант',pro:false,phone:'+374 95 447 119',
+  biz:[{name:'Частная практика',sphere:'HR и найм',desc:'',offer:''}],helps:['найм','HR'],seeks:[]},
+ {id:'p6',name:'Тигран Овсепян',role:'Директор',pro:true,phone:'+374 93 220 781',tg:'@tourarmenia',
+  biz:[{name:'Tour Armenia',sphere:'Туризм',desc:'Корпоративные туры и тимбилдинг по Армении',offer:'−15% для контактов в Smart Contacts'}],
+  helps:['туры','тимбилдинг','трансфер'],seeks:['таргетолог','сайт']},
+ {id:'p7',name:'Нарине Варданян',role:'Product Designer',pro:false,phone:'+374 77 158 342',
+  biz:[{name:'Фриланс',sphere:'Дизайн',desc:'',offer:''}],helps:['UX','дизайн приложений'],seeks:[]},
+ {id:'p8',name:'Гагик Манукян',role:'Основатель',pro:true,phone:'+374 41 305 660',tg:'@cargo_am',
+  biz:[{name:'Cargo AM',sphere:'Логистика',desc:'Доставка из Китая и ЕС, растаможка',offer:''}],
+  helps:['доставка','логистика','импорт'],seeks:['бухгалтер']},
+ {id:'p9',name:'Сона Аветисян',role:'Стоматолог',pro:true,phone:'+374 94 902 155',
+  biz:[{name:'Дентал Плюс',sphere:'Стоматология',desc:'Лечение, профчистка, имплантация',offer:'−10% по рекомендации'}],
+  helps:['стоматология'],seeks:['сайт','реклама']},
+ {id:'p10',name:'Ваче Казарян',role:'Таргетолог',pro:false,phone:'+374 98 731 046',
+  biz:[{name:'Фриланс',sphere:'Реклама',desc:'',offer:''}],helps:['таргетолог','реклама','Meta Ads'],seeks:[]},
+ {id:'p11',name:'Эрик Симонян',role:'Инвестор',pro:true,phone:'+374 99 812 004',tg:'@esimonyan',
+  biz:[{name:'Simonyan Capital',sphere:'Инвестиции',desc:'Ангельские инвестиции в стартапы на ранней стадии',offer:''}],
+  helps:['инвестор','инвестиции','стартапы'],seeks:['AI-стартап']},
+ {id:'p12',name:'Мане Карапетян',role:'Фотограф',pro:false,phone:'+374 55 389 724',
+  biz:[{name:'Фриланс',sphere:'Фото и видео',desc:'',offer:''}],helps:['фотограф','видео'],seeks:[]},
+ {id:'p13',name:'Артур Геворгян',role:'Директор',pro:true,phone:'+374 91 650 214',tg:'@packpro',
+  biz:[{name:'PackPro',sphere:'Упаковка',desc:'Пищевая и подарочная упаковка с печатью',offer:'Бесплатный образец'}],
+  helps:['упаковка','печать'],seeks:['брендинг','дизайн упаковки']},
+ {id:'p14',name:'Кристина Оганян',role:'Риелтор',pro:false,phone:'+374 91 509 877',
+  biz:[{name:'Частная практика',sphere:'Недвижимость',desc:'',offer:''}],helps:['аренда офиса','недвижимость'],seeks:[]},
+ {id:'p15',name:'Самвел Арутюнян',role:'Владелец',pro:true,phone:'+374 10 541 600',tg:'@coffeepoint',
+  biz:[{name:'Coffee Point',sphere:'Кофейни',desc:'Сеть из 4 кофеен в Ереване, зал для встреч',offer:'Зал для деловых встреч бесплатно'}],
+  helps:['площадка','кейтеринг'],seeks:['SMM','сайт']},
+ {id:'p16',name:'Лилит Ширинян',role:'Копирайтер',pro:false,phone:'+374 93 846 207',
+  biz:[{name:'Фриланс',sphere:'Тексты и SMM',desc:'',offer:''}],helps:['тексты','SMM'],seeks:[]}
+];
+P.push(
+ {id:'p17',name:'Ашот Маргарян',role:'Дизайнер интерьеров',pro:true,phone:'+374 91 234 512',tg:'@ashot.interiors',
+  bio:'Проектирую интерьеры квартир, офисов и ресторанов и веду комплектацию: мебель, свет, двери, отделка.',
+  biz:[{name:'AM Interiors',sphere:'Дизайн интерьера',desc:'Дизайн-проекты и комплектация под ключ',offer:'Бесплатный выезд на объект',year:2015,team:'6 дизайнеров',links:{instagram:'@am.interiors',site:'aminteriors.am'}}],
+  helps:['дизайн интерьера','комплектация','мебель','отделка'],seeks:['фотограф интерьеров'],
+  awards:[{t:'Интерьер года, категория «Ресторан»',y:2023,k:'medal'}],links:{instagram:'@am.interiors',whatsapp:'+374 91 234 512'},stats:{meetings:5,helped:3}},
+ {id:'p18',name:'Карен Абрамян',role:'Производство дверей',pro:false,phone:'+374 93 554 101',
+  biz:[{name:'Частное производство',sphere:'Двери',desc:'',offer:''}],helps:['двери','межкомнатные двери','входные двери'],seeks:[]}
+);
+P.push(
+ {id:'p19',basic:true,name:'Арам Саакян',role:'Брат',phone:'+374 94 210 377',biz:[],helps:[],seeks:[]},
+ {id:'p20',basic:true,name:'Мама',role:'Семья',phone:'+374 91 400 812',biz:[],helps:[],seeks:[]},
+ {id:'p21',basic:true,name:'Гор Аветисян',role:'Друг, школа',phone:'+374 99 812 610',biz:[],helps:[],seeks:[]},
+ {id:'p22',basic:true,name:'Нарек Давтян',role:'Друг, футбол по средам',phone:'+374 77 158 902',biz:[],helps:[],seeks:[]},
+ {id:'p23',basic:true,name:'Лилит Григорян',role:'Педиатр',phone:'+374 94 333 018',biz:[],helps:['педиатр','детский врач'],seeks:[]},
+ {id:'p24',basic:true,name:'Карен',role:'Электрик',phone:'+374 91 763 390',biz:[],helps:['электрик','проводка'],seeks:[]},
+ {id:'p25',basic:true,name:'Ваге Мкртчян',role:'Сантехник',phone:'+374 95 120 448',biz:[],helps:['сантехник'],seeks:[]},
+ {id:'p26',basic:true,name:'Вазген',role:'Такси Гюмри',phone:'+374 93 554 777',biz:[],helps:['такси','трансфер'],seeks:[]},
+ {id:'p27',basic:true,name:'Ани Саакян',role:'Сестра',phone:'+374 98 007 261',biz:[],helps:[],seeks:[]},
+ {id:'p28',basic:true,name:'Гарик',role:'Автомастер',phone:'+374 91 880 315',biz:[],helps:['автосервис','СТО'],seeks:[]}
+);
+const ORGS={
+ p2:[{n:'Палата адвокатов Армении',r:'Член',y:2015,v:true},{n:'Бизнес-клуб «Манташянц»',r:'Член правления',y:2021,v:true},{n:'International Bar Association',r:'Член',y:2019,v:false}],
+ p11:[{n:'Бизнес-клуб «Манташянц»',r:'Член',y:2022,v:true},{n:'Армянская ассоциация бизнес-ангелов',r:'Сооснователь',y:2020,v:true},{n:'World Business Angels Investment Forum',r:'Член',y:2023,v:false}],
+ p1:[{n:'Бизнес-клуб «Манташянц»',r:'Член',y:2023,v:true},{n:'Ассоциация флористов Армении',r:'Член',y:2018,v:false}],
+ p4:[{n:'Союз строителей Армении',r:'Член',y:2014,v:true}],
+ p17:[{n:'Союз дизайнеров Армении',r:'Член',y:2016,v:true},{n:'International Interior Design Association',r:'Член',y:2020,v:false}],
+ p6:[{n:'Ассоциация туроператоров Армении',r:'Член правления',y:2019,v:true}]
+};
+P.forEach(p=>{ if(ORGS[p.id]) p.orgs=ORGS[p.id]; });
+P.push(
+ {id:'p70',basic:true,name:'Карен Варданян',role:'Основатель, IT-компания',phone:'+374 90 590 310',biz:[],helps:[],seeks:[],cat:'mant',orgs:[{n:'Бизнес-клуб «Манташянц»',r:'Член',y:2024,v:true}]},
+ {id:'p71',basic:true,name:'Рубен Мкртчян',role:'Девелопер, жилые комплексы',phone:'+374 91 597 323',biz:[],helps:[],seeks:[],cat:'mant',orgs:[{n:'Бизнес-клуб «Манташянц»',r:'Член',y:2024,v:true}]},
+ {id:'p72',basic:true,name:'Лилит Аветисян',role:'Владелица сети салонов красоты',phone:'+374 92 604 336',biz:[],helps:[],seeks:[],cat:'mant',orgs:[{n:'Бизнес-клуб «Манташянц»',r:'Член',y:2024,v:true}]},
+ {id:'p73',basic:true,name:'Артём Казарян',role:'Импорт продуктов питания',phone:'+374 93 611 349',biz:[],helps:[],seeks:[],cat:'mant',orgs:[{n:'Бизнес-клуб «Манташянц»',r:'Член',y:2024,v:true}]},
+ {id:'p74',basic:true,name:'Нарек Гаспарян',role:'Финтех-стартап',phone:'+374 94 618 362',biz:[],helps:[],seeks:[],cat:'mant',orgs:[{n:'Бизнес-клуб «Манташянц»',r:'Член',y:2024,v:true}]},
+ {id:'p75',basic:true,name:'Ани Тер-Петросян',role:'Директор частной школы',phone:'+374 95 625 375',biz:[],helps:[],seeks:[],cat:'mant',orgs:[{n:'Бизнес-клуб «Манташянц»',r:'Член',y:2024,v:true}]},
+ {id:'p76',basic:true,name:'Ваче Манукян',role:'Винодельня',phone:'+374 96 632 388',biz:[],helps:[],seeks:[],cat:'mant',orgs:[{n:'Бизнес-клуб «Манташянц»',r:'Член',y:2024,v:true}]},
+ {id:'p77',basic:true,name:'Гаяне Оганесян',role:'Консалтинг, стратегия',phone:'+374 97 639 401',biz:[],helps:[],seeks:[],cat:'mant',orgs:[{n:'Бизнес-клуб «Манташянц»',r:'Член',y:2024,v:true}]}
+);
+const CATMAP={p1:'work',p2:'finance',p3:'finance',p4:'repair',p5:'work',p6:'travel',p7:'work',p8:'work',p9:'med',p10:'work',p11:'work',p12:'work',p13:'work',p14:'home',p15:'food',p16:'work',p17:'repair',p18:'repair',
+ p19:'family',p20:'family',p21:'friends',p22:'friends',p23:'med',p24:'repair',p25:'repair',p26:'travel',p27:'family',p28:'auto'};
+P.forEach(p=>{ p.cat=p.cat||CATMAP[p.id]||'work'; });
+P.push(
+ {id:'p29',basic:true,name:'Папа',role:'Семья',phone:'+374 99 303 577',biz:[],helps:[],seeks:[],cat:'family'},
+ {id:'p30',basic:true,name:'Бабушка Сирануш',role:'Семья',phone:'+374 90 310 590',biz:[],helps:[],seeks:[],cat:'family'},
+ {id:'p31',basic:true,name:'Дядя Ашот',role:'Семья',phone:'+374 91 317 603',biz:[],helps:[],seeks:[],cat:'family'},
+ {id:'p32',basic:true,name:'Тётя Каринэ',role:'Семья',phone:'+374 92 324 616',biz:[],helps:[],seeks:[],cat:'family'},
+ {id:'p33',basic:true,name:'Мелине Саакян',role:'Двоюродная сестра',phone:'+374 93 331 629',biz:[],helps:[],seeks:[],cat:'family'},
+ {id:'p34',basic:true,name:'Давит Саакян',role:'Двоюродный брат',phone:'+374 94 338 642',biz:[],helps:[],seeks:[],cat:'family'},
+ {id:'p35',basic:true,name:'Арпи Саакян',role:'Племянница',phone:'+374 95 345 655',biz:[],helps:[],seeks:[],cat:'family'},
+ {id:'p36',basic:true,name:'Тигран Саакян',role:'Племянник',phone:'+374 96 352 668',biz:[],helps:[],seeks:[],cat:'family'},
+ {id:'p37',basic:true,name:'Нуне Арутюнян',role:'Тётя, Гюмри',phone:'+374 97 359 681',biz:[],helps:[],seeks:[],cat:'family'},
+ {id:'p38',basic:true,name:'Самвел Саакян',role:'Дядя, Москва',phone:'+374 98 366 694',biz:[],helps:[],seeks:[],cat:'family'},
+ {id:'p39',basic:true,name:'Анаит Мовсисян',role:'Крёстная',phone:'+374 99 373 707',biz:[],helps:[],seeks:[],cat:'family'},
+ {id:'p40',basic:true,name:'Лусине Адамян',role:'Менеджер проектов, Factory DF',phone:'+374 90 380 720',biz:[],helps:['менеджер проектов'],seeks:[],cat:'work'},
+ {id:'p41',basic:true,name:'Ваган Саркисян',role:'Моушн-дизайнер',phone:'+374 91 387 733',biz:[],helps:['моушн-дизайн', 'анимация'],seeks:[],cat:'work'},
+ {id:'p42',basic:true,name:'Мариам Хачатрян',role:'SMM-менеджер',phone:'+374 92 394 746',biz:[],helps:['SMM', 'контент'],seeks:[],cat:'work'},
+ {id:'p43',basic:true,name:'Армен Джанибекян',role:'Фронтенд-разработчик',phone:'+374 93 401 759',biz:[],helps:['сайт', 'разработка'],seeks:[],cat:'work'},
+ {id:'p44',basic:true,name:'Седа Варданян',role:'Клиент, сеть аптек',phone:'+374 94 408 772',biz:[],helps:['клиент'],seeks:[],cat:'work'},
+ {id:'p45',basic:true,name:'Грант Мелконян',role:'Типография «Принт Ленд»',phone:'+374 95 415 785',biz:[],helps:['печать', 'полиграфия'],seeks:[],cat:'work'},
+ {id:'p46',basic:true,name:'Тереза Погосян',role:'Копирайтер',phone:'+374 96 422 798',biz:[],helps:['тексты'],seeks:[],cat:'work'},
+ {id:'p47',basic:true,name:'Овик Арзуманян',role:'Видеограф',phone:'+374 97 429 811',biz:[],helps:['видео', 'съёмка'],seeks:[],cat:'work'},
+ {id:'p48',basic:true,name:'Шушан Аракелян',role:'HR, агентство найма',phone:'+374 98 436 824',biz:[],helps:['найм', 'HR'],seeks:[],cat:'work'},
+ {id:'p49',basic:true,name:'Гагик Тадевосян',role:'Поставщик оборудования для офиса',phone:'+374 99 443 837',biz:[],helps:['оргтехника', 'мебель для офиса'],seeks:[],cat:'work'},
+ {id:'p50',basic:true,name:'Тигран Мелкумян',role:'Друг, университет',phone:'+374 90 450 850',biz:[],helps:[],seeks:[],cat:'friends'},
+ {id:'p51',basic:true,name:'Арсен Гаспарян',role:'Друг, футбол',phone:'+374 91 457 863',biz:[],helps:[],seeks:[],cat:'friends'},
+ {id:'p52',basic:true,name:'Левон Карапетян',role:'Друг детства',phone:'+374 92 464 876',biz:[],helps:[],seeks:[],cat:'friends'},
+ {id:'p53',basic:true,name:'Эдгар Симонян',role:'Друг, сосед',phone:'+374 93 471 889',biz:[],helps:[],seeks:[],cat:'friends'},
+ {id:'p54',basic:true,name:'Ашот Бабаян',role:'Друг, походы',phone:'+374 94 478 902',biz:[],helps:[],seeks:[],cat:'friends'},
+ {id:'p55',basic:true,name:'Ара Галстян',role:'Друг, университет',phone:'+374 95 485 915',biz:[],helps:[],seeks:[],cat:'friends'},
+ {id:'p56',basic:true,name:'Сурен Агаджанян',role:'Друг, Дилижан',phone:'+374 96 492 928',biz:[],helps:[],seeks:[],cat:'friends'},
+ {id:'p57',basic:true,name:'Вардан Ованесян',role:'Друг, армия',phone:'+374 97 499 941',biz:[],helps:[],seeks:[],cat:'friends'},
+ {id:'p58',basic:true,name:'Нарине Петросян',role:'Подруга, университет',phone:'+374 98 506 954',biz:[],helps:[],seeks:[],cat:'friends'},
+ {id:'p59',basic:true,name:'Гор Шахбазян',role:'Друг, шахматы',phone:'+374 99 513 967',biz:[],helps:[],seeks:[],cat:'friends'},
+ {id:'p60',basic:true,name:'Артак',role:'Плиточник',phone:'+374 90 520 980',biz:[],helps:['плитка'],seeks:[],cat:'repair'},
+ {id:'p61',basic:true,name:'Ваагн',role:'Маляр',phone:'+374 91 527 993',biz:[],helps:['покраска', 'штукатурка'],seeks:[],cat:'repair'},
+ {id:'p62',basic:true,name:'Самвел',role:'Мебель на заказ',phone:'+374 92 534 206',biz:[],helps:['мебель на заказ', 'кухни'],seeks:[],cat:'repair'},
+ {id:'p63',basic:true,name:'Рубен',role:'Окна и двери ПВХ',phone:'+374 93 541 219',biz:[],helps:['окна', 'двери'],seeks:[],cat:'repair'},
+ {id:'p64',basic:true,name:'Норайр',role:'Кондиционеры',phone:'+374 94 548 232',biz:[],helps:['кондиционеры'],seeks:[],cat:'repair'},
+ {id:'p65',basic:true,name:'Гриша',role:'Сварщик',phone:'+374 95 555 245',biz:[],helps:['сварка'],seeks:[],cat:'repair'},
+ {id:'p66',basic:true,name:'Андраник',role:'Кровельщик',phone:'+374 96 562 258',biz:[],helps:['крыша'],seeks:[],cat:'repair'},
+ {id:'p67',basic:true,name:'Мкртич',role:'Ламинат и паркет',phone:'+374 97 569 271',biz:[],helps:['полы', 'паркет'],seeks:[],cat:'repair'},
+ {id:'p68',basic:true,name:'Арам',role:'Натяжные потолки',phone:'+374 98 576 284',biz:[],helps:['потолки'],seeks:[],cat:'repair'},
+ {id:'p69',basic:true,name:'Камо',role:'Строительные материалы',phone:'+374 99 583 297',biz:[],helps:['стройматериалы'],seeks:[],cat:'repair'}
+);
+
+const MEETINGS = [
+ {id:'m1',title:'Нетворкинг-завтрак',kind:'Нетворкинг',date:'2026-10-31',place:'Coffee Point, Ереван',people:['p17','p1','p2','p3','p5','p7','p10','p12','p13','p14','p15','p16'],me:true,code:'SC-1031'},
+ {id:'m2',title:'Бизнес-конференция',kind:'Конференция',date:'2026-10-22',place:'Конгресс-холл, Ереван',people:['p1','p2','p4','p6','p8','p9','p11','p13','p18'],me:true,code:'SC-1022'},
+ {id:'m3',title:'Обед с партнёрами',kind:'Деловая встреча',date:'2026-10-12',place:'Ресторан, Ереван',people:['p4','p11'],me:true,code:'SC-1012'},
+ {id:'m0',title:'Ужин предпринимателей',kind:'Ужин',date:'2026-11-14',place:'Дилижан',people:['p1','p2','p4','p6','p11','p15'],upcoming:true,code:'SC-1114'}
+];
+const ME0={name:'Ованнес',role:'Основатель',pro:true,phone:'+374 00 000 000',tg:'@hovhannes',handle:'hovhannes',
+  biz:[{name:'Factory DF',sphere:'Брендинг',desc:'Логотипы, фирменный стиль, сайты',offer:'−15% по рекомендации',links:{instagram:'@factorydf'}},
+       {name:'Procus.ai',sphere:'AI для SMM',desc:'AI-сервис для ведения Instagram малого бизнеса',offer:'3 месяца бесплатно для моих контактов',links:{site:'procus.ai',instagram:'@procus.ai'}}],
+  helps:['брендинг','дизайн упаковки','сайт','SMM','AI-стартап'],seeks:['таргетолог','инвестор','юрист']};
+
+/* ---------- rich profile data ---------- */
+const WA=id=>P.find(p=>p.id===id).phone;
+const EXTRA={
+ p1:{city:'Ереван',since:2023,langs:['Հայ','Рус','Eng'],links:{instagram:'@ani.flowers.am',site:'aniflowers.am',whatsapp:'+374 94 118 220'},
+   bizx:[{year:2016,team:'12 человек'},{year:2021,team:'6 человек'}],edu:'Академия художеств, дизайн',
+   awards:[{t:'Лучший цветочный бутик Еревана',y:2024,k:'medal',src:'городская бизнес-премия'},{t:'Оформление международного саммита в Цахкадзоре',y:2025,k:'case'},{t:'Интервью в деловом журнале',y:2025,k:'press'}],
+   endorse:[{from:'p15',text:'Оформила открытие нашей кофейни. Всё в срок и красиво.'}],askMe:'как выйти на корпоративных клиентов',interests:['керамика','походы'],stats:{meetings:14,helped:9}},
+ p2:{city:'Ереван',since:2022,langs:['Հայ','Рус','Eng'],links:{linkedin:'David Sargsyan',site:'sargsyan-legal.am',email:'office@sargsyan-legal.am',whatsapp:'+374 99 610 275'},
+   bizx:[{year:2018,team:'7 юристов'}],edu:'ЕГУ, юридический факультет',
+   awards:[{t:'Спикер форума по IT-праву',y:2025,k:'talk'},{t:'Топ-10 юристов в сфере IT',y:2024,k:'medal',src:'рейтинг «Юрист года»'}],
+   cases:[{t:'Зарегистрировал 40+ IT-компаний',d:'По программе налоговых льгот для стартапов'}],
+   endorse:[{from:'p8',text:'Помог с контрактом поставщика за два дня.'},{from:'p11',text:'Ведёт сделки наших портфельных компаний.'}],askMe:'налоговые льготы для IT',interests:['шахматы','вино'],stats:{meetings:18,helped:12}},
+ p4:{city:'Ереван',since:2023,langs:['Հայ','Рус'],links:{instagram:'@buildarm',site:'buildarm.am',whatsapp:'+374 98 300 417'},
+   bizx:[{year:2012,team:'45 человек'},{year:2019,team:'10 человек'}],
+   awards:[{t:'Медаль «Строитель года»',y:2022,k:'medal',src:'Союз строителей'},{t:'Реконструкция здания на Абовяна',y:2023,k:'case'}],
+   endorse:[{from:'p15',text:'Сделали ремонт второй кофейни за 5 недель.'}],askMe:'сколько реально стоит ремонт офиса',interests:['футбол'],stats:{meetings:11,helped:6}},
+ p6:{city:'Ереван',since:2024,langs:['Հայ','Рус','Eng','Fr'],links:{instagram:'@tour.armenia',site:'tourarmenia.am'},bizx:[{year:2014,team:'20 человек'}],
+   awards:[{t:'Лауреат национальной премии в туризме',y:2024,k:'medal'},{t:'3 000 корпоративных гостей за год',y:2025,k:'case'}],askMe:'тимбилдинг на 50+ человек',interests:['горы','фотография'],stats:{meetings:9,helped:4}},
+ p8:{city:'Ереван',since:2024,langs:['Հայ','Рус','中文'],links:{site:'cargo-am.am',whatsapp:'+374 41 305 660'},bizx:[{year:2017,team:'15 человек'}],
+   awards:[{t:'Сертифицированный таможенный брокер',y:2018,k:'cert'}],askMe:'как везти товар из Китая',stats:{meetings:7,helped:5}},
+ p9:{city:'Ереван',since:2024,langs:['Հայ','Рус','Deu'],links:{instagram:'@dentalplus.am',whatsapp:'+374 94 902 155'},bizx:[{year:2015,team:'9 врачей'}],edu:'Ереванский медицинский университет',
+   awards:[{t:'Стажировка по имплантологии, Мюнхен',y:2019,k:'cert'}],stats:{meetings:6,helped:3}},
+ p11:{city:'Ереван',since:2022,langs:['Հայ','Рус','Eng'],links:{linkedin:'Erik Simonyan',email:'erik@simonyan.capital'},bizx:[{year:2020,team:'3 партнёра'}],
+   awards:[{t:'Инвестировал в 14 стартапов',y:2025,k:'case'},{t:'Ментор стартап-акселератора',y:2024,k:'talk'},{t:'Интервью в деловом журнале',y:2025,k:'press'}],
+   endorse:[{from:'p2',text:'Честный и быстрый инвестор, без лишней бюрократии.'}],askMe:'что показать инвестору на первой встрече',interests:['теннис'],stats:{meetings:12,helped:8}},
+ p13:{city:'Абовян',since:2024,langs:['Հայ','Рус'],links:{site:'packpro.am',instagram:'@packpro.am',whatsapp:'+374 91 650 214'},bizx:[{year:2016,team:'60 человек, своё производство'}],
+   awards:[{t:'Поставщик упаковки для 3 сетей супермаркетов',y:2025,k:'case'},{t:'Участник международной выставки упаковки',y:2024,k:'talk'}],stats:{meetings:8,helped:4}},
+ p15:{city:'Ереван',since:2022,langs:['Հայ','Рус','Eng'],links:{instagram:'@coffeepoint.am'},bizx:[{year:2017,team:'38 человек'}],
+   awards:[{t:'Кофейня года по версии городского гида',y:2024,k:'medal'}],endorse:[{from:'p1',text:'Самвел всегда даёт зал под наши встречи.'}],interests:['бариста-чемпионаты'],stats:{meetings:16,helped:10}}
+};
+P.forEach(p=>{ const e=EXTRA[p.id]; if(!e) return; (e.bizx||[]).forEach((x,i)=>{ if(p.biz[i]) Object.assign(p.biz[i],x); }); Object.assign(p,e); delete p.bizx; });
+Object.assign(ME0,{city:'Ереван',since:2024,langs:['Հայ','Рус','Eng'],links:{instagram:'@factorydf',site:'procus.ai',whatsapp:'+374 00 000 000',linkedin:'',email:''},
+  awards:[{t:'Пример: награда за лучший ребрендинг',y:2025,k:'medal',src:'замените на свою'},{t:'Пример: выступление про AI в маркетинге',y:2026,k:'talk'}],
+  endorse:[{from:'p13',text:'Сделали стиль для новой линейки PackPro. Быстро и со вкусом.'}],askMe:'брендинг и AI для маркетинга',interests:['дизайн','AI'],edu:'',stats:{meetings:2,helped:1}});
+ME0.biz[0].year=''; ME0.biz[0].team=''; ME0.biz[1].year=''; ME0.biz[1].team='';
+ME0.orgs=[{n:'Пример: Торгово-промышленная палата Армении',r:'Член',y:2024,v:false},{n:'Пример: Бизнес-клуб «Манташянц»',r:'Член',y:2025,v:false}];
+ME0.bio='Помогаю бизнесу выглядеть сильным брендом: айдентика, сайты и AI-инструменты для соцсетей.';
+const BIOS={p1:'Создаю цветочный декор для бизнеса и событий: от витрин до международных саммитов.',
+ p2:'Помогаю IT-компаниям и стартапам законно экономить на налогах и спокойно заключать сделки. 10 лет в корпоративном праве.',
+ p4:'Строю и ремонтирую коммерческие помещения в Ереване с 2012 года. Работаем по смете без сюрпризов.',
+ p6:'Организую корпоративные поездки по Армении для команд от 10 до 300 человек.',
+ p8:'Привожу товары из Китая и ЕС под ключ: поиск поставщика, доставка, растаможка.',
+ p9:'Стоматолог с 15-летним опытом, руковожу клиникой «Дентал Плюс».',
+ p11:'Инвестирую в ранние стартапы из Армении и помогаю им выйти на международный рынок.',
+ p13:'Производим пищевую и подарочную упаковку с печатью для брендов и торговых сетей.',
+ p15:'Владелец сети кофеен Coffee Point. Люблю собирать людей за одним столом.'};
+P.forEach(p=>{ if(BIOS[p.id]) p.bio=BIOS[p.id]; });
+
+/* ---------- state ---------- */
+const KEY='sc_comm_v9';
+function fresh(){ return {view:'meetings',meeting:null,pp:null,met:{m1:{p15:true,p2:true}},notes:{p15:'Хозяин кофейни, предложил зал для нашего воркшопа'},saved:{},endorsed:{},me:JSON.parse(JSON.stringify(ME0)),q:'',filter:'all',dq:'',rsvp:false,previewFree:false,chat:[]}; }
+function load(){ try{ const r=localStorage.getItem(KEY); return r?JSON.parse(r):null; }catch(e){ return null; } }
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+let S=load()||fresh(); let sheet=null, recallI=0;
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const byId=id=>P.find(p=>p.id===id);
+const ini=n=>n.split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+const acol=id=>`--ac:var(--a${(parseInt(id.replace(/\D/g,''))||0)%6+1})`;
+const ME_PHOTO='data:image/jpeg;base64,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';
+const avatar=(p,cls='')=>(p.id==='p0'||p.id==='me')?`<span class="av ${cls}" style="${acol('p0')};background:var(--surface-2) url(${ME_PHOTO}) center/cover" role="img" aria-label="${esc(p.name)}"></span>`:`<span class="av ${cls}" style="${acol(p.id||'p0')}">${esc(ini(p.name))}</span>`;
+const MON=['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+const dParts=s=>{const d=new Date(s+'T12:00:00');return {d:d.getDate(),m:MON[d.getMonth()]};};
+const dLong=s=>new Date(s+'T12:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
+const stem=w=>w.toLowerCase().slice(0,Math.max(4,w.length-2));
+function hay(p){ return [p.name,p.role,...p.helps,...p.biz.map(b=>`${b.name} ${b.sphere} ${b.desc}`)].join(' ').toLowerCase(); }
+function matchQ(p,q){ if(!q.trim()) return true; const h=hay(p); return q.toLowerCase().split(/\s+/).filter(w=>w.length>1).every(w=>h.includes(stem(w))); }
+// who can help me: their helps/biz match my seeks
+function helpsMe(p){ return S.me.seeks.filter(s=>{const h=hay(p); return s.toLowerCase().split(/\s+/).every(w=>h.includes(stem(w)));}); }
+// who needs me: their seeks match my helps / biz
+function needsMe(p){ const mine=[...S.me.helps,...S.me.biz.map(b=>b.sphere)].join(' ').toLowerCase(); return p.seeks.filter(s=>s.toLowerCase().split(/\s+/).every(w=>mine.includes(stem(w)))); }
+const metMap=mid=>(S.met[mid]=S.met[mid]||{});
+const IC={
+ spark:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 2.5l1.9 5.6 5.6 1.9-5.6 1.9L11 17.5l-1.9-5.6L3.5 10l5.6-1.9z"/><path d="M18.5 14.5l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9z"/></svg>',
+ cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>',
+ people:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.7c1.9.6 3.2 2.3 3.5 5.3"/></svg>',
+ card:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2.2"/><path d="M5.5 16c.5-1.5 1.6-2.3 3-2.3s2.5.8 3 2.3M14.5 10h4M14.5 13.5h3"/></svg>',
+ search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4-4"/></svg>',
+ x:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+ back:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+ check:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+ lock:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="11" width="14" height="9.5" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>'
+};
+const SVL=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const CATS=[
+ ['work','Работа','1',SVL('<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5h6v2M3 12.5h18"/>')],
+ ['mant','Манташянц','6',SVL('<path d="M3 9.5L12 4l9 5.5"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/>')],
+ ['repair','Ремонт','2',SVL('<path d="M14.5 5.5a4 4 0 0 0-5 5L4 16l4 4 5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z"/>')],
+ ['family','Семья','4',SVL('<path d="M4 11l8-6.5 8 6.5"/><path d="M6 10v9.5h12V10"/><path d="M10 19.5v-5h4v5"/>')],
+ ['med','Медицина','3',SVL('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/><path d="M12 9.5v4M10 11.5h4"/>')],
+ ['friends','Друзья','5',SVL('<circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.6c2.3.3 3.9 1.8 4.4 4.9"/>')],
+ ['finance','Финансы и право','6',SVL('<circle cx="12" cy="12" r="8.5"/><path d="M14.8 9.2c-.5-1-1.6-1.6-2.8-1.6-1.6 0-2.8.9-2.8 2.2 0 3 5.8 1.6 5.8 4.4 0 1.3-1.3 2.2-3 2.2-1.3 0-2.5-.7-3-1.7M12 6v1.6M12 16.4V18"/>')],
+ ['travel','Путешествия','5',SVL('<path d="M3 13.5l18-7-5 14-3.5-5.5z"/><path d="M12.5 15l3.5-5"/>')],
+ ['home','Дом и быт','4',SVL('<path d="M5 20V9l7-5 7 5v11"/><path d="M9 20v-6h6v6"/>')],
+ ['auto','Авто','2',SVL('<path d="M4 16v-4l2-5h12l2 5v4z"/><circle cx="7.5" cy="16.5" r="1.8"/><circle cx="16.5" cy="16.5" r="1.8"/><path d="M4 12h16"/>')],
+ ['food','Рестораны','6',SVL('<path d="M7 3v8a2 2 0 0 0 2 2v8M5 3v5M9 3v5M17 21V3c-2 1-3 3-3 6v4h3"/>')],
+ ['edu','Образование','1',SVL('<path d="M2.5 9.5L12 5l9.5 4.5L12 14z"/><path d="M6.5 11.5v4.5c3 2 8 2 11 0v-4.5"/>')],
+ ['beauty','Красота','3',SVL('<path d="M12 3c2.5 3 4 5.5 4 8a4 4 0 0 1-8 0c0-2.5 1.5-5 4-8z"/><path d="M8 20h8"/>')]
+];
+const CAT=Object.fromEntries(CATS.map(c=>[c[0],{name:c[1],col:c[2],icon:c[3]}]));
+function toast(m){ const t=$('#toast'); t.innerHTML=`<div class="toast" role="status">${esc(m)}</div>`; clearTimeout(toast.t); toast.t=setTimeout(()=>t.innerHTML='',2300); }
+function qrSVG(text){ try{ const q=qrcode(0,'M'); q.addData(text); q.make(); return q.createSvgTag({cellSize:4,margin:0,scalable:true}); }catch(e){ return `<div style="color:#333;padding:24px;font-size:13px">${esc(text)}</div>`; } }
+
+/* ---------- root ---------- */
+function render(){
+  const tabs=[['meetings','Знакомства',IC.cal],['people','Контакты',IC.people],['ai','Задачи и AI',IC.spark],['profile','Мой профиль',IC.card]];
+  $('#tabs').innerHTML=tabs.map(([v,l,i])=>`<button data-tab="${v}" aria-current="${S.view===v}" aria-label="${l}" title="${l}">${i}${l}</button>`).join('');
+  $('#tabs').querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{S.view=b.dataset.tab; S.pp=null; if(b.dataset.tab==='meetings') S.meeting=null; save(); render(); $('#main').scrollTop=0;});
+  if(S.pp && byId(S.pp.id)) renderPersonPage();
+  else if(S.view==='meetings') (S.meeting?renderMeeting():renderMeetings());
+  else if(S.view==='people') renderPeople();
+  else if(S.view==='ai') renderAI();
+  else renderProfile();
+  renderSheet();
+}
+
+/* ---------- meetings list ---------- */
+function renderMeetings(){
+  const last=MEETINGS[0], up=MEETINGS.find(x=>x.upcoming), m=metMap(last.id);
+  const known=Object.values(m).filter(Boolean).length, total=last.people.length;
+  const helpers=last.people.map(byId).filter(p=>helpsMe(p).length);
+  $('#hdr').innerHTML=`<div class="hdr"><h1>Знакомства<span class="sub">${P.length} контактов · ${MEETINGS.filter(x=>!x.upcoming).length} события</span></h1></div>`;
+  $('#main').innerHTML=`<div class="pad">
+   <button class="hero" data-meet="${last.id}">
+     <span class="eyebrow">Вчера · ${dLong(last.date)}</span>
+     <h2>${last.title}</h2>
+     <span class="m">${esc(last.place)} · ${total} человек</span>
+     <span class="faces">${last.people.slice(0,7).map(id=>avatar(byId(id),'sm')).join('')}${total>7?`<span class="more">+${total-7}</span>`:''}</span>
+     <span style="display:grid;gap:6px"><span class="m">Вы помните ${known} из ${total}</span><span class="meter"><i style="width:${Math.round(known/total*100)}%"></i></span></span>
+   </button>
+   <button class="askbar" id="askbar" style="margin-top:10px">${IC.spark}<span>Спросите AI: «Нужно решить вопрос с дверями»</span></button>
+   <div class="row-actions" style="margin-top:10px"><button class="btn acc" style="flex:1" id="recall">Вспомнить всех за 2 минуты</button></div>
+   ${ideas().length?`<div class="sect">Стоит написать сегодня</div><div class="stack">${ideas().map(x=>`<button class="idea" data-p="${x.id}">${avatar(byId(x.id))}<span class="t"><b>${esc(x.t)}</b><span class="hint">${esc(x.d)}</span></span></button>`).join('')}</div>`:''}
+   <div class="card" style="margin-top:12px;display:flex;gap:12px;align-items:center"><span style="flex:1;min-width:0"><b>Любая встреча — комната</b><span class="hint" style="display:block">Ужин, конференция, переговоры: покажите QR, и все участники сохранятся с профилями.</span></span><button class="btn sm" id="newroom">Создать</button></div>
+   <div class="sect">Скоро</div>
+   <button class="mrow" data-meet="${up.id}"><span class="date"><b>${dParts(up.date).d}</b><span>${dParts(up.date).m}</span></span>
+     <span class="t"><span class="nm" style="display:block">${up.title}</span><span class="hint" style="display:block">${up.people.length} записались</span></span>
+     ${S.rsvp?'<span class="pill ok">Вы идёте</span>':'<span class="pill acc">Запись</span>'}</button>
+   <div class="sect">Где вы знакомились</div>
+   <div class="stack">${MEETINGS.filter(x=>!x.upcoming).map(x=>{const k=Object.values(metMap(x.id)).filter(Boolean).length;return `
+     <button class="mrow" data-meet="${x.id}"><span class="date"><b>${dParts(x.date).d}</b><span>${dParts(x.date).m}</span></span>
+     <span class="t"><span class="nm" style="display:block">${x.title}</span><span class="hint" style="display:block">${x.kind} · ${x.people.length} чел. · помните ${k}</span></span></button>`;}).join('')}</div>
+  </div>`;
+  document.querySelectorAll('[data-meet]').forEach(b=>b.onclick=()=>openMeeting(b.dataset.meet));
+  document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>openPerson(b.dataset.p,last.id));
+  $('#recall').onclick=()=>openRecall(last.id);
+  $('#newroom').onclick=()=>openSheet({type:'qr',mid:'new'});
+  $('#askbar').onclick=()=>{S.view='ai'; S.task=null; save(); render(); setTimeout(()=>$('#aiq')?.focus(),50);};
+}
+function openMeeting(id){ S.meeting=id; S.q=''; S.filter='all'; save(); render(); $('#main').scrollTop=0; }
+
+/* ---------- meeting page ---------- */
+function renderMeeting(){
+  const mt=MEETINGS.find(x=>x.id===S.meeting); const m=metMap(mt.id);
+  const ppl=mt.people.map(byId);
+  const counts={all:ppl.length,known:ppl.filter(p=>m[p.id]).length,unknown:ppl.filter(p=>m[p.id]===undefined).length,help:ppl.filter(p=>helpsMe(p).length).length,need:ppl.filter(p=>needsMe(p).length).length};
+  let list=ppl.filter(p=>matchQ(p,S.q));
+  if(S.filter==='known') list=list.filter(p=>m[p.id]); if(S.filter==='unknown') list=list.filter(p=>m[p.id]===undefined);
+  if(S.filter==='help') list=list.filter(p=>helpsMe(p).length); if(S.filter==='need') list=list.filter(p=>needsMe(p).length);
+  $('#hdr').innerHTML=`<div class="hdr"><button class="back" id="back" aria-label="Назад">${IC.back}</button><h1 style="font-size:18px">${mt.title}<span class="sub">${dLong(mt.date)} · ${esc(mt.place)}</span></h1></div>`;
+  const top = mt.upcoming
+   ? `<div class="hero"><span class="eyebrow">${dLong(mt.date)} · 10:00</span><h2>${mt.title}</h2><span class="m">${mt.people.length} записались. На встрече покажите QR: гости войдут одним сканом.</span>
+      <span class="row-actions"><button class="btn" id="rsvp">${S.rsvp?'✓ Вы идёте':'Я приду'}</button><button class="btn out" id="qr">QR для входа</button></span></div>`
+   : `<div class="row-actions"><button class="btn acc" style="flex:1" id="recall">Вспомнить: ${counts.unknown} не отмечены</button><button class="btn ghost" id="qr">QR</button></div>`;
+  const F=mt.upcoming?[['all','Все']]:[['all','Все'],['known','Знаком'],['unknown','Не отмечены'],['help','Помогут мне'],['need','Нужен им я']];
+  $('#main').innerHTML=`<div class="pad">${top}
+   <div style="margin-top:12px"><label class="search">${IC.search}<input id="q" type="search" placeholder="Кто поможет с… / имя / компания" value="${esc(S.q)}" aria-label="Поиск по участникам"></label></div>
+   <div class="seg">${F.map(([k,l])=>`<button data-f="${k}" aria-pressed="${S.filter===k}">${l}<span class="n">${counts[k]}</span></button>`).join('')}</div>
+   <div class="stack" style="margin-top:10px">${list.length?list.map(p=>pcardHTML(p,mt)).join(''):`<div class="empty">Никого. Попробуйте «реклама», «юрист», «упаковка».</div>`}</div>
+  </div>`;
+  $('#back').onclick=()=>{S.meeting=null; save(); render();};
+  const q=$('#q'); q.oninput=()=>{S.q=q.value; const p=q.selectionStart; renderMeeting(); const n=$('#q'); n.focus(); n.setSelectionRange(p,p);};
+  document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{S.filter=b.dataset.f; save(); renderMeeting();});
+  document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openPerson(b.dataset.open,mt.id));
+  document.querySelectorAll('[data-tick]').forEach(b=>b.onclick=()=>{const id=b.dataset.tick; if(m[id]) delete m[id]; else m[id]=true; save(); renderMeeting();});
+  const r=$('#recall'); if(r) r.onclick=()=>openRecall(mt.id);
+  const rs=$('#rsvp'); if(rs) rs.onclick=()=>{S.rsvp=!S.rsvp; save(); renderMeeting(); toast(S.rsvp?'Вы записаны. Напомним за день':'Запись отменена');};
+  $('#qr').onclick=()=>openSheet({type:'qr',mid:mt.id});
+}
+function pcardHTML(p,mt){
+  const m=mt?metMap(mt.id):{}; const h=helpsMe(p), n=needsMe(p);
+  return `<div class="pcard"><div class="top">
+    <button class="top" data-open="${p.id}" style="flex:1;min-width:0">${avatar(p)}<span class="t"><span class="nm" style="display:block">${esc(p.name)} ${p.pro?'<span class="pill pro">PRO</span>':''}</span>
+    <span class="ds" style="display:block">${esc([p.role,...(p.pro?p.biz.map(b=>b.name):[])].join(' · '))}</span>${!mt?`<span class="ds" style="display:block">${esc((MEETINGS.find(x=>!x.upcoming&&x.people.includes(p.id))||{}).title||'')}</span>`:''}</span></button>
+    ${mt&&!mt.upcoming?`<button class="tick" data-tick="${p.id}" aria-pressed="${!!m[p.id]}" aria-label="Говорили с ${esc(p.name)}">${IC.check}</button>`:''}</div>
+    ${(h.length||n.length||S.saved[p.id])?`<div class="flags">${h.map(x=>`<span class="pill ok">поможет: ${esc(x)}</span>`).join('')}${n.map(x=>`<span class="pill acc">ищет: ${esc(x)}</span>`).join('')}${S.saved[p.id]?'<span class="pill mute">в телефоне</span>':''}</div>`:''}
+    ${S.notes[p.id]?`<div class="note">${esc(S.notes[p.id])}</div>`:''}</div>`;
+}
+
+/* ---------- people directory ---------- */
+const inCat=(p,k)=>p.cat===k||(k==='mant'&&(p.orgs||[]).some(o=>/Манташянц/.test(o.n)));
+const catCount=k=>P.filter(p=>inCat(p,k)).length;
+function crow(p,showCat){ const c=CAT[p.cat];
+  return `<button class="crow" data-open="${p.id}">${avatar(p)}<span class="t"><span class="nm">${esc(p.name)}${p.pro?' <span class="pill pro">PRO</span>':''}</span><span class="ds">${esc(p.role)}${p.pro&&p.biz[0]?' · '+esc(p.biz[0].name):''}${showCat?' · '+esc(c.name):''}</span></span></button>`; }
+const byName=(a,b)=>a.name.localeCompare(b.name,'ru');
+function renderPeople(){
+  const az=S.cview==='az'; const cat=S.ccat&&CAT[S.ccat]?S.ccat:null; const q=(S.dq||'').trim();
+  $('#hdr').innerHTML=`<div class="hdr"><h1>Контакты<span class="sub">${P.length} человек</span></h1><div class="vtog" role="tablist"><button data-cv="sec" aria-pressed="${!az}">Разделы</button><button data-cv="az" aria-pressed="${az}">А–Я</button></div></div>`;
+  const PRI=['family','work','friends','repair','mant']; const pr=k=>{const i=PRI.indexOf(k); return i<0?99:i;};
+  const used=CATS.filter(c=>catCount(c[0])).sort((x,y)=>(pr(x[0])-pr(y[0]))||(catCount(y[0])-catCount(x[0])));
+  const chips=az?'':`<div class="cwrap"><div class="chiprow" id="chiprow"><button class="cchip${!cat?' on':''}" data-cat="">Все<span class="n">${P.length}</span></button>${used.map(([k,n,col,ic])=>`<button class="cchip${cat===k?' on':''}" data-cat="${k}" style="--ac:var(--a${col})">${ic}${n}<span class="n">${catCount(k)}</span></button>`).join('')}</div><button class="cchip more" id="morecats">Ещё ⌄</button></div>`;
+  let body='';
+  if(q){ const list=P.filter(p=>matchQ(p,q)||p.role.toLowerCase().includes(q.toLowerCase())).sort(byName);
+    body=`<div class="sect">${list.length} найдено</div>`+(list.length?`<div class="clist">${list.map(p=>crow(p,true)).join('')}</div>`:`<div class="empty">Никого. Попробуйте спросить AI: «кто поможет с …»</div>`);
+  } else if(az){
+    const groups={}; P.slice().sort(byName).forEach(p=>{ const L=p.name[0].toUpperCase(); (groups[L]=groups[L]||[]).push(p); });
+    body=Object.entries(groups).map(([L,ps])=>`<div class="lh" id="L-${L}">${L}</div><div class="clist">${ps.map(p=>crow(p,true)).join('')}</div>`).join('');
+    body+=`<div class="rail" id="rail">${[...'АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЭЮЯ'].map(x=>groups[x]?`<button data-L="${x}" class="has">${x}</button>`:`<span>${x}</span>`).join('')}</div>`;
+  } else if(cat){ const c=CAT[cat]; const list=P.filter(p=>inCat(p,cat)).sort(byName);
+    body=`<div class="gh" style="--ac:var(--a${c.col})"><button class="ghb" data-cat="">‹</button>${c.icon}${c.name}<span class="n">${list.length}</span></div><div class="clist">${list.map(p=>crow(p,false)).join('')}</div>`;
+  } else {
+    body=used.map(([k,n,col,ic])=>{ const list=P.filter(p=>inCat(p,k)).sort(byName);
+      return `<div class="gh" style="--ac:var(--a${col})">${ic}${n}<span class="n">${list.length}</span>${list.length>3?`<button class="all" data-cat="${k}">Все ›</button>`:''}</div><div class="clist">${list.slice(0,3).map(p=>crow(p,false)).join('')}</div>`; }).join('');
+  }
+  $('#main').innerHTML=`<div class="pad${az&&!q?' azpad':''}"><label class="search">${IC.search}<input id="dq" type="search" placeholder="Имя, роль или «кто чинит двери»" value="${esc(S.dq||'')}" aria-label="Поиск по контактам"></label>${chips}${body}</div>`;
+  const qi=$('#dq'); qi.oninput=()=>{S.dq=qi.value; const p=qi.selectionStart; renderPeople(); const n=$('#dq'); n.focus(); n.setSelectionRange(p,p);};
+  document.querySelectorAll('[data-cv]').forEach(b=>b.onclick=()=>{S.cview=b.dataset.cv; S.ccat=null; save(); renderPeople(); $('#main').scrollTop=0;});
+  document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{S.ccat=b.dataset.cat||null; S.dq=''; save(); renderPeople(); $('#main').scrollTop=0;});
+  document.querySelectorAll('#main [data-open]').forEach(b=>b.onclick=()=>openPerson(b.dataset.open,null));
+  document.querySelectorAll('[data-L]').forEach(b=>b.onclick=()=>{ const el=document.getElementById('L-'+b.dataset.L); if(el) $('#main').scrollTop=el.offsetTop-8; });
+  const mc=$('#morecats'); if(mc) mc.onclick=()=>openSheet({type:'cats'});
+  const on=document.querySelector('#chiprow .cchip.on'); if(on&&cat) on.scrollIntoView({inline:'center',block:'nearest'});
+}
+function shCats(){ return `${head('Все разделы')}<div class="tgrid">${CATS.map(([k,n,col,ic])=>`<button class="tg" data-pickcat="${k}" style="--ac:var(--a${col})"><span class="ico">${ic}</span>${n}<span class="n">${catCount(k)}</span></button>`).join('')}</div><p class="hint" style="margin-top:12px">Пустые разделы заполнятся, когда вы добавите людей.</p>`; }
+function bCats(){ document.querySelectorAll('[data-pickcat]').forEach(b=>b.onclick=()=>{ S.ccat=b.dataset.pickcat; S.cview='sec'; S.dq=''; save(); closeSheet(); $('#main').scrollTop=0; }); }
+
+/* ---------- profile ---------- */
+function bizHTML(b,locked){ return `<div class="biz"><div class="bn">${esc(b.name)}<span class="sp">${esc(b.sphere)}</span></div>${b.desc?`<div style="font-size:14px">${esc(b.desc)}</div>`:''}${b.offer&&!locked?`<div class="offer">${esc(b.offer)}</div>`:''}</div>`; }
+function renderProfileOld(){
+  const me=S.me, free=S.previewFree; const shown=free?me.biz.slice(0,1):me.biz;
+  $('#hdr').innerHTML=`<div class="hdr"><h1>Мой профиль<span class="sub">Так вас видят в клубе</span></h1></div>`;
+  $('#main').innerHTML=`<div class="pad">
+   <div class="seg" style="margin-top:0"><button data-pv="pro" aria-pressed="${!free}">Pro-профиль</button><button data-pv="free" aria-pressed="${free}">Как выглядит Free</button></div>
+   <div class="bizcard" style="margin-top:10px"><div><div class="nm">${esc(me.name)}</div><div style="opacity:.85;font-size:14px">${esc(me.role)} · ${esc(shown.map(b=>b.name).join(', '))}</div></div>
+     ${free?'':`<div class="chips">${me.helps.slice(0,4).map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`}</div>
+   <div class="sect">Бизнесы</div>
+   <div class="stack">${shown.map(b=>bizHTML(b,free)).join('')}
+    ${free?`<div class="lock">${IC.lock}<span>Ещё ${me.biz.length-1} бизнес, предложения для клуба и запросы «ищу» доступны в Pro</span></div>`:''}</div>
+   ${free?'':`<div class="sect">Могу помочь</div><div class="chips">${me.helps.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>
+   <div class="sect">Ищу</div><div class="chips">${me.seeks.map(t=>`<span class="chip" style="border-color:var(--accent)">${esc(t)}</span>`).join('')}</div>`}
+   <div class="row-actions" style="margin-top:14px"><button class="btn" style="flex:1" id="myqr">Мой QR</button><button class="btn ghost" style="flex:1" id="edit">Редактировать</button></div>
+   <div class="sect">Тарифы <span style="text-transform:none;letter-spacing:0;font-weight:500">(гипотеза для теста)</span></div>
+   <div class="plan">
+     <div><span class="pt">Free</span><span class="pp">0 ֏</span><ul><li>Имя, роль, телефон</li><li>1 бизнес</li><li>Вход во встречи по QR</li><li>Заметки о людях</li></ul></div>
+     <div class="on"><span class="pt">Pro <span class="pill pro">ваш</span></span><span class="pp">≈ 2 000 ֏ / мес</span><ul><li>До 5 бизнесов</li><li>Предложения и скидки для клуба</li><li>«Ищу / Могу помочь» и подбор людей</li><li>Кто смотрел и сохранил профиль</li><li>Выше в поиске клуба</li></ul></div>
+   </div>
+   <div class="card" style="margin-top:8px"><b>Для организатора клуба</b><div class="hint">Страница клуба, встречи с QR-входом, список участников и статистика знакомств. Платит клуб, участникам Free бесплатно.</div></div>
+   <div class="sect">Демо</div><div class="row-actions" id="rz"><button class="btn ghost sm" id="reset">Сбросить демо</button></div>
+  </div>`;
+  document.querySelectorAll('[data-pv]').forEach(b=>b.onclick=()=>{S.previewFree=b.dataset.pv==='free'; save(); renderProfile();});
+  $('#myqr').onclick=()=>openSheet({type:'myqr'});
+  $('#edit').onclick=()=>openSheet({type:'edit'});
+  $('#reset').onclick=()=>{ $('#rz').innerHTML=`<span class="hint">Стереть отметки и заметки?</span><button class="btn sm" style="background:var(--danger);color:#fff" id="ry">Сбросить</button><button class="btn ghost sm" id="rn">Отмена</button>`;
+    $('#ry').onclick=()=>{S=fresh(); save(); render(); toast('Демо сброшено');}; $('#rn').onclick=renderProfile; };
+}
+
+/* ---------- sheets ---------- */
+function openSheet(s){ sheet=s; renderSheet(); }
+function closeSheet(){ sheet=null; render(); }
+const head=t=>`<div class="grab"></div><div class="shd"><h2>${t}</h2><button class="x" data-close aria-label="Закрыть">${IC.x}</button></div>`;
+function renderSheet(){
+  const el=$('#sheet'); if(!sheet){ el.innerHTML=''; return; }
+  const f={person:shPerson,recall:shRecall,qr:shQR,myqr:shMyQR,edit:shEdit,brand:shBrand,voice:shVoice,cats:shCats}[sheet.type];
+  el.innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true">${f()}</div></div>`;
+  $('#scrim').onclick=e=>{ if(e.target.id==='scrim') closeSheet(); };
+  el.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheet);
+  ({person:bPerson,recall:bRecall,qr:()=>{},myqr:()=>{},edit:bEdit,brand:bBrand,voice:bVoice,cats:bCats})[sheet.type]();
+}
+function openPerson(id,mid){ sheet=null; OPEN={}; S.pp={id,mid:mid||null,from:$('#main').scrollTop}; save(); render(); $('#main').scrollTop=0; }
+function shPerson(){
+  const p=byId(sheet.id); const mt=sheet.mid&&MEETINGS.find(x=>x.id===sheet.mid); const m=mt?metMap(mt.id):{};
+  const h=helpsMe(p), n=needsMe(p); const where=MEETINGS.filter(x=>!x.upcoming&&x.people.includes(p.id));
+  return `${head('')}<div class="phead">${avatar(p,'lg')}<div style="min-width:0"><div class="nm">${esc(p.name)}</div><div class="hint">${esc(p.role)} ${p.pro?'<span class="pill pro">PRO</span>':''}</div></div></div>
+   ${h.length?`<div class="match" style="margin-bottom:10px"><b>Может помочь вам: ${esc(h.join(', '))}</b></div>`:''}
+   ${n.length?`<div class="match" style="margin-bottom:10px;background:var(--ok-soft);color:var(--ok)"><b>Ищет то, что делаете вы: ${esc(n.join(', '))}</b></div>`:''}
+   <div class="stack">${p.biz.map(b=>bizHTML(b,false)).join('')}</div>
+   <div class="card kv" style="margin-top:10px">
+     <div><div class="k">Чем поможет</div><div class="chips">${p.helps.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div></div>
+     ${p.seeks.length?`<div><div class="k">Ищет</div><div class="chips">${p.seeks.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div></div>`:''}
+     <div><div class="k">Связь</div><span style="user-select:all;font-variant-numeric:tabular-nums">${esc(p.phone)}</span>${p.tg?` · <span style="user-select:all">${esc(p.tg)}</span>`:''}</div>
+     <div><div class="k">Встречались</div>${where.map(x=>`${x.title}, ${dLong(x.date)}`).join(' · ')||'Ещё не встречались'}</div>
+   </div>
+   ${mt&&!mt.upcoming?`<div class="sect">На этой встрече</div><div class="met"><button class="btn ghost" id="talk" aria-pressed="${!!m[p.id]}">${m[p.id]?'✓ Говорили':'Мы говорили'}</button><button class="btn ghost" id="notalk" aria-pressed="false">Не общались</button></div>`:''}
+   <div class="field" style="margin-top:12px"><label for="note">Моя заметка (видите только вы)</label><textarea id="note" placeholder="О чём говорили, что обещали…">${esc(S.notes[p.id]||'')}</textarea></div>
+   <div class="row-actions"><button class="btn acc" style="flex:1" id="savep" ${S.saved[p.id]?'disabled':''}>${S.saved[p.id]?'Сохранён в телефоне':'Сохранить в телефон'}</button><button class="btn ghost" id="copy">Копировать номер</button></div>`;
+}
+function bPerson(){
+  const p=byId(sheet.id); const mid=sheet.mid; const m=mid?metMap(mid):null;
+  const note=$('#note'); note.oninput=()=>{ const v=note.value.trim(); if(v) S.notes[p.id]=v; else delete S.notes[p.id]; save(); };
+  const t=$('#talk'); if(t) t.onclick=()=>{ m[p.id]=true; save(); renderSheet(); toast('Отмечено: вы знакомы'); };
+  const nt=$('#notalk'); if(nt) nt.onclick=()=>{ m[p.id]=false; save(); toast('Отмечено: не общались'); closeSheet(); };
+  $('#savep').onclick=()=>{ S.saved[p.id]=true; save(); renderSheet(); toast('Контакт с компанией и заметкой сохранён'); };
+  $('#copy').onclick=()=>{ (navigator.clipboard?navigator.clipboard.writeText(p.phone):Promise.reject()).then(()=>toast('Номер скопирован'),()=>toast('Выделите номер и скопируйте')); };
+}
+function openRecall(mid){ recallI=0; openSheet({type:'recall',mid}); }
+function recallQueue(){ const mt=MEETINGS.find(x=>x.id===sheet.mid); const m=metMap(mt.id); return mt.people.filter(id=>m[id]===undefined).map(byId); }
+function shRecall(){
+  const mt=MEETINGS.find(x=>x.id===sheet.mid); const q=recallQueue(); const m=metMap(mt.id);
+  if(!q.length){ const k=Object.values(m).filter(Boolean).length;
+    return `${head('Готово')}<div class="empty" style="padding:16px 8px"><div style="font-family:var(--f-display);font-size:30px;color:var(--ink)">${k}</div>новых и старых знакомых с «${mt.title}».<br>Они сохранены с компаниями и заметками.</div><button class="btn wide" data-close>Смотреть список</button>`; }
+  const p=q[Math.min(recallI,q.length-1)]; const done=mt.people.length-q.length;
+  return `${head('Кого вы помните?')}
+   <div class="hint">${mt.title}, ${dLong(mt.date)} · осталось ${q.length}</div>
+   <div class="prog"><i style="width:${Math.round(done/mt.people.length*100)}%"></i></div>
+   <div class="rcard">${avatar(p,'lg')}<div class="nm">${esc(p.name)}</div>
+     <div class="hint" style="margin-top:-6px">${esc(p.role)}</div>
+     ${p.pro?`<div class="chips" style="justify-content:center">${p.biz.map(b=>`<span class="chip">${esc(b.name)} · ${esc(b.sphere)}</span>`).join('')}</div>`:''}
+     ${helpsMe(p).length?`<span class="pill ok">может помочь вам: ${esc(helpsMe(p).join(', '))}</span>`:''}
+     ${needsMe(p).length?`<span class="pill acc">ищет: ${esc(needsMe(p).join(', '))}</span>`:''}
+     <div class="field" style="width:100%;margin:4px 0 0;text-align:left"><label for="rnote">Заметка, если говорили</label><input id="rnote" placeholder="Например: обсуждали упаковку" autocomplete="off"></div>
+   </div>
+   <div class="two" style="margin-top:12px"><button class="btn acc" id="yes">Говорили</button><button class="btn ghost" id="no">Не общались</button></div>
+   <button class="btn ghost wide" style="margin-top:8px" id="skip">Пропустить</button>`;
+}
+function bRecall(){
+  const q=recallQueue(); if(!q.length) return; const p=q[Math.min(recallI,q.length-1)]; const m=metMap(sheet.mid);
+  const commit=v=>{ m[p.id]=v; const n=$('#rnote').value.trim(); if(n) S.notes[p.id]=n; save(); renderSheet(); };
+  $('#yes').onclick=()=>commit(true); $('#no').onclick=()=>commit(false);
+  $('#skip').onclick=()=>{ recallI=(recallI+1)%q.length; renderSheet(); };
+}
+function shQR(){
+  const isNew=sheet.mid==='new'; const mt=isNew?{title:'Ваша встреча',people:[],code:'SC-'+Math.random().toString(36).slice(2,6).toUpperCase()}:(MEETINGS.find(x=>x.id===sheet.mid)||MEETINGS[0]); const code=mt.code;
+  return `${head(isNew?'Новая комната':'Вход на встречу')}
+   <p class="hint" style="margin:-2px 0 12px">Повесьте QR на входе или покажите с телефона. Гость сканирует камерой и сразу попадает в список участников.</p>
+   <div class="qrbox">${qrSVG('https://smartcontacts.app/m/'+code)}</div><div class="code">${code}</div>
+   <div class="sect">Что увидит гость без приложения</div>
+   <div class="web"><div class="bar">smartcontacts.app/m/${code}</div><div class="bd">
+     <b>${esc(mt.title)}</b><span class="hint">${mt.people.length?mt.people.length+' участников уже здесь':'Вы первый в комнате'}</span>
+     <div class="field" style="margin:0"><label for="g1">Имя</label><input id="g1" placeholder="Как вас зовут"></div>
+     <div class="field" style="margin:0"><label for="g2">Чем занимаетесь</label><input id="g2" placeholder="Например: логистика, Cargo AM"></div>
+     <div class="field" style="margin:0"><label for="g3">Телефон</label><input id="g3" type="tel" placeholder="+374 …"></div>
+     <button class="btn acc wide" onclick="toast('Гость добавлен в список встречи')">Войти на встречу</button>
+     <span class="hint" style="text-align:center">Или войти через профиль Smart Contacts</span></div></div>`;
+}
+function shMyQR(){
+  return `${head('Мой QR')}<p class="hint" style="margin:-2px 0 12px">Собеседник сканирует и видит ваш профиль с бизнесами и кнопкой «Сохранить контакт».</p>
+   <div class="qrbox">${qrSVG('https://smartcontacts.app/'+S.me.handle)}</div><div class="hint" style="text-align:center;margin-top:8px">smartcontacts.app/${esc(S.me.handle)}</div>`;
+}
+function shEdit(){
+  const me=S.me;
+  return `${head('Редактировать профиль')}<form id="ef">
+   <div class="two"><div class="field"><label for="e-name">Имя</label><input id="e-name" value="${esc(me.name)}"></div><div class="field"><label for="e-role">Роль</label><input id="e-role" value="${esc(me.role)}"></div></div>
+   <div class="field"><label for="e-help">Могу помочь (через запятую)</label><input id="e-help" value="${esc(me.helps.join(', '))}"></div>
+   <div class="field"><label for="e-seek">Ищу (через запятую)</label><input id="e-seek" value="${esc(me.seeks.join(', '))}"></div>
+   <div class="sect" style="margin-top:4px">Бизнесы</div>
+   ${me.biz.map((b,i)=>`<div class="card" style="margin-bottom:10px">
+     <div class="two"><div class="field"><label for="b-n${i}">Название</label><input id="b-n${i}" value="${esc(b.name)}"></div><div class="field"><label for="b-s${i}">Сфера</label><input id="b-s${i}" value="${esc(b.sphere)}"></div></div>
+     <div class="field"><label for="b-d${i}">Что делаете</label><input id="b-d${i}" value="${esc(b.desc)}"></div>
+     <div class="field" style="margin-bottom:6px"><label for="b-o${i}">Предложение для клуба</label><input id="b-o${i}" value="${esc(b.offer)}"></div>
+     ${me.biz.length>1?`<button type="button" class="btn ghost sm" data-rm="${i}">Убрать бизнес</button>`:''}</div>`).join('')}
+   ${me.biz.length<5?`<button type="button" class="btn ghost wide" id="addb">+ Добавить бизнес</button>`:''}
+   <button class="btn acc wide" style="margin-top:12px" type="submit">Сохранить профиль</button></form>`;
+}
+function readEdit(){ const me=S.me; const v=id=>($('#'+id)?.value||'').trim(); const list=s=>s.split(',').map(x=>x.trim()).filter(Boolean);
+  me.name=v('e-name')||me.name; me.role=v('e-role'); me.helps=list(v('e-help')); me.seeks=list(v('e-seek'));
+  me.biz=me.biz.map((b,i)=>({name:v('b-n'+i),sphere:v('b-s'+i),desc:v('b-d'+i),offer:v('b-o'+i)})); }
+function bEdit(){
+  const keep=()=>{const y=$('#sheet .sheet').scrollTop; renderSheet(); $('#sheet .sheet').scrollTop=y;};
+  const ab=$('#addb'); if(ab) ab.onclick=()=>{ readEdit(); S.me.biz.push({name:'',sphere:'',desc:'',offer:''}); keep(); };
+  document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ readEdit(); S.me.biz.splice(+b.dataset.rm,1); keep(); });
+  $('#ef').onsubmit=e=>{ e.preventDefault(); readEdit(); S.me.biz=S.me.biz.filter(b=>b.name); if(!S.me.biz.length) S.me.biz=[{name:'Мой бизнес',sphere:'',desc:'',offer:''}]; save(); closeSheet(); toast('Профиль обновлён'); };
+}
+
+/* ---------- rich profile page ---------- */
+const SV=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const KIND={
+ medal:['Награда',SV('<circle cx="12" cy="15" r="5.5"/><path d="M8.5 10.5 6 3h4l2 5 2-5h4l-2.5 7.5"/><path d="M12 12.8l.8 1.6 1.7.2-1.2 1.2.3 1.7-1.6-.8-1.6.8.3-1.7-1.2-1.2 1.7-.2z"/>')],
+ cert:['Сертификат',SV('<rect x="4" y="3" width="16" height="13" rx="2"/><path d="M8 8h8M8 11.5h5"/><path d="M14 16v5l2-1.3 2 1.3v-5"/>')],
+ press:['СМИ',SV('<path d="M4 5h13v14H6a2 2 0 0 1-2-2z"/><path d="M17 9h3v8a2 2 0 0 1-2 2"/><path d="M8 9h5M8 12.5h5M8 16h3"/>')],
+ talk:['Выступление',SV('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>')],
+ case:['Проект',SV('<path d="M4 8h16v11H4z"/><path d="M9 8V5.5h6V8M4 13h16"/>')]
+};
+const QI={
+ phone:SV('<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>'),
+ wa:SV('<path d="M4 20l1.3-4A8 8 0 1 1 8 18.7z"/><path d="M9 9.5c.3 2.2 2.3 4.3 4.6 4.8l1.2-1.1 1.7.8"/>'),
+ tg:SV('<path d="M21 4 3 11l6 2 2 6 3.5-4 4.5 3z"/><path d="m9 13 8-6"/>'),
+ save:SV('<path d="M6 3h12v18l-6-4-6 4z"/>'),
+ qr:IC.room||'',
+ edit:SV('<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>'),
+ link:SV('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'),
+ eye:SV('<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>')
+};
+QI.qr=SV('<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 20h1M17 20h1"/>');
+function meAsPerson(){ return {...S.me,id:'p0'}; }
+function knownIds(){ const s=new Set(); Object.values(S.met).forEach(m=>Object.entries(m).forEach(([k,v])=>{if(v)s.add(k);})); return s; }
+function completeness(me){
+  const items=[['Бизнесы',me.biz.length>0],['Год и команда',me.biz.every(b=>b.year)],['Награды',(me.awards||[]).some(a=>!/^Пример/.test(a.t))],
+   ['Соцсети и сайт',Object.values(me.links||{}).filter(Boolean).length>=3],['Кейсы',(me.cases||[]).length>0],['Образование',!!me.edu],
+   ['«Спросите меня о»',!!me.askMe],['Ищу / Помогу',me.seeks.length>0&&me.helps.length>0],['Фото',true]];
+  return {pct:Math.round(items.filter(i=>i[1]).length/items.length*100),todo:items.filter(i=>!i[1]).map(i=>i[0])};
+}
+const ORGI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 4l9 5.5"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></svg>';
+const CHEV='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
+const LINKN={instagram:'Instagram',site:'Сайт',facebook:'Facebook',linkedin:'LinkedIn',youtube:'YouTube',tiktok:'TikTok'};
+let OPEN={};
+function fold(t,n,inner,id){ const key=id||t; return `<details class="fold" data-fold="${esc(key)}" ${OPEN[key]?'open':''}><summary><span>${t}</span>${n!=null&&n!==''?`<span class="n">${n}</span>`:''}<span class="chev">${CHEV}</span></summary><div class="fb">${inner}</div></details>`; }
+function profileBody(p,isMe,mid){
+  const free=isMe?S.previewFree:!p.pro;
+  const mt=mid?MEETINGS.find(x=>x.id===mid):null; const m=mt?metMap(mt.id):null;
+  const h=isMe?[]:helpsMe(p), n=isMe?[]:needsMe(p);
+  const where=MEETINGS.filter(x=>!x.upcoming&&(isMe?x.me:x.people.includes(p.id)));
+  const endorse=[...(p.endorse||[])]; if(!isMe&&S.endorsed[p.id]) endorse.push({from:'me',text:S.endorsed[p.id]});
+  const L=p.links||{};
+  const contacts=[['Телефон',p.phone],['WhatsApp',L.whatsapp],['Telegram',p.tg],['Instagram',L.instagram],['LinkedIn',L.linkedin],['Сайт',L.site],['Email',L.email]].filter(x=>x[1]);
+  const biz=free?[]:p.biz;
+  const st=p.stats||{meetings:where.length,helped:0};
+  const fromP=f=>f==='me'?{id:'p0',name:S.me.name}:byId(f);
+  const known=knownIds(); const mutual=isMe?[]:[...known].filter(id=>id!==p.id&&MEETINGS.some(x=>!x.upcoming&&x.people.includes(id)&&x.people.includes(p.id))).map(byId).slice(0,5);
+  const sec=t=>`<div class="sect">${t}</div>`;
+  const qa=isMe
+   ? `<button id="myqr">${QI.qr}Мой QR</button><button id="edit">${QI.edit}Изменить</button><button id="share">${QI.link}Ссылка</button><button id="pv" aria-pressed="${S.previewFree}">${QI.eye}${S.previewFree?'Вид Pro':'Вид Free'}</button>`
+   : `<button data-copy="${esc(p.phone)}" data-what="Номер">${QI.phone}Позвонить</button><button data-copy="${esc(L.whatsapp||p.phone)}" data-what="WhatsApp">${QI.wa}WhatsApp</button><button data-copy="${esc(p.tg||'')}" data-what="Telegram" ${p.tg?'':'disabled style="opacity:.45"'}>${QI.tg}Telegram</button><button id="savep" class="savebtn" aria-pressed="${!!S.saved[p.id]}">${S.saved[p.id]?IC.check:QI.save}${S.saved[p.id]?'Сохранён':'Сохранить'}</button>`;
+  let out=`<div class="ptop" style="${acol(p.id)}"><div class="band"></div><div class="pin">
+    ${avatar(p,'xl')}
+    <div class="pname">${esc(p.name)} ${p.pro&&!free?'<span class="pill pro">PRO</span>':''}</div>
+    <div class="hint" style="font-size:14px">${esc([p.role,...biz.map(b=>b.name)].filter(Boolean).join(' · '))}</div>
+    <div class="pmeta">${p.basic?`<span class="pill mute">Из телефонной книги</span><span>Ещё не в Smart Contacts</span>`:`<span class="pill ok">✓ Профиль проверен</span>`}${p.city?`<span>${esc(p.city)}</span>`:''}${!free&&p.langs?`<span>· ${p.langs.map(esc).join(' · ')}</span>`:''}</div>${!free&&(p.orgs||[]).length?`<div class="orgline">${ORGI}<span>${esc(p.orgs[0].n.replace(/^Пример: /,''))}${p.orgs.length>1?` и ещё ${p.orgs.length-1}`:''}</span></div>`:''}
+   </div></div>
+   <div class="qa">${qa}</div>`;
+  if(isMe&&!free){ const c=completeness(p); out+=`<div class="complete" style="margin-top:10px"><div style="display:flex;justify-content:space-between;gap:8px"><b>Профиль заполнен на ${c.pct}%</b><span class="hint">полный профиль чаще сохраняют</span></div><div class="bar"><i style="width:${c.pct}%"></i></div>${c.todo.length?`<div class="todo">${c.todo.map(t=>`<button data-todo>+ ${esc(t)}</button>`).join('')}</div>`:''}</div>`; }
+  if(!free&&p.bio) out+=`<p class="bio">${esc(p.bio)}</p>`;
+  if(biz.length) out+=sec(`Бренды и компании · ${biz.length}`)+`<div class="stack">${biz.map((b,i)=>{const bl=Object.keys(b.links||{}).filter(k=>b.links[k]);return `<button class="brand" data-brand="${i}" style="${acol('p'+(i+3+(parseInt(p.id.slice(1))||0)))}"><span class="mono">${esc(ini(b.name)||'?')}</span><span class="t"><span class="bn">${esc(b.name)}</span>
+     <span class="sp">${esc([b.sphere,b.year?'с '+b.year:''].filter(Boolean).join(' · '))}</span>${bl.length?`<span class="bl">${bl.map(k=>LINKN[k]).join(' · ')}</span>`:''}</span><span class="chev">${CHEV}</span></button>`;}).join('')}</div>`;
+  if(!free&&((p.orgs||[]).length||isMe)) out+=sec(`Членство в организациях${(p.orgs||[]).length?' · '+p.orgs.length:''}`)+((p.orgs||[]).length?`<div class="alist">${p.orgs.map(o=>`<div class="org"><span class="oi">${esc(ini(o.n.replace(/^Пример: /,'').replace(/[«»"]/g,'')))}</span><div class="t"><div class="on">${esc(o.n)}</div><div class="os">${esc(o.r)}${o.y?' · с '+o.y:''}</div></div>${o.v?'<span class="ov ok">✓ Подтверждено</span>':'<span class="ov">Не подтверждено</span>'}</div>`).join('')}</div>`:`<div class="hint">Добавьте клубы, палаты и ассоциации, в которых вы состоите.</div>`);
+  if(free){
+    out+=sec('Связь')+`<div class="alist">${contacts.slice(0,1).map(([k,v])=>`<div class="lrow"><span class="lk">${k}</span><span class="lv">${esc(v)}</span><button data-copy="${esc(v)}" data-what="${k}">Копировать</button></div>`).join('')}</div>
+     <div class="lock" style="margin-top:12px">${IC.lock}<span>${isMe?'Так вас видят без Pro: только роль и телефон.':esc(p.name.split(' ')[0])+' на бесплатном профиле.'} Бизнесы, бренды, награды, соцсети и рекомендации показываются в Pro.</span></div>`;
+  }
+  let F='', F0='';
+  const flat=(t,n,inner)=>sec(`${t}${n?' · '+n:''}`)+inner;
+  if(!free){
+    const aw=p.awards||[], cs=p.cases||[];
+    if(aw.length||isMe) F0+=flat('Награды и достижения',aw.length,aw.length?`<div class="alist">${aw.map(a=>`<div class="aw"><span class="ic k-${a.k}">${(KIND[a.k]||KIND.medal)[1]}</span><div style="min-width:0"><div class="at">${esc(a.t)}</div><div class="as">${(KIND[a.k]||KIND.medal)[0]} · ${esc([a.y,a.src].filter(Boolean).join(' · '))}</div></div></div>`).join('')}</div>`:`<div class="hint">Добавьте медали, сертификаты, публикации и выступления.</div>`);
+    if(cs.length) F0+=flat('Кейсы',cs.length,`<div class="stack">${cs.map(c=>`<div class="card"><b>${esc(c.t)}</b><div class="hint">${esc(c.d)}</div></div>`).join('')}</div>`);
+    F0+=flat('Чем может помочь',p.helps.length,`<div class="chips">${p.helps.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div>`);
+    if(p.seeks.length) F+=fold('Сейчас ищет',p.seeks.length,`<div class="chips">${p.seeks.map(t=>`<span class="chip" style="border-color:var(--accent)">${esc(t)}</span>`).join('')}</div>`);
+    F0+=flat('Рекомендации',endorse.length,(endorse.length?`<div class="stack">${endorse.map(e=>{const f=fromP(e.from);return `<div class="quote"><p>${esc(e.text)}</p><div class="by">${avatar(f)}${esc(f.name)}${e.from==='me'?' (вы)':''}</div></div>`;}).join('')}</div>`:`<div class="hint">Пока никто не рекомендовал.</div>`)
+      +(isMe?'':`<div id="endbox" style="margin-top:10px"><button class="btn ghost sm" id="endorse">${S.endorsed[p.id]?'Изменить мою рекомендацию':'+ Рекомендовать'}</button></div>`),'endf');
+    F+=fold('Контакты и соцсети',contacts.length,`<div class="alist">${contacts.map(([k,v])=>`<div class="lrow"><span class="lk">${k}</span><span class="lv">${esc(v)}</span><button data-copy="${esc(v)}" data-what="${k}">Копировать</button></div>`).join('')}</div>`);
+    if(p.edu||p.askMe||(p.interests||[]).length) F+=fold('Подробнее о себе',null,`<div class="kv">${p.askMe?`<div><div class="k">Спросите меня о</div>${esc(p.askMe)}</div>`:''}${p.edu?`<div><div class="k">Образование</div>${esc(p.edu)}</div>`:''}${(p.interests||[]).length?`<div><div class="k">Интересы вне работы</div><div class="chips">${p.interests.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div></div>`:''}</div>`);
+  }
+  F+=fold('Где пересекались',where.length,`<div class="kv"><div><div class="k">События</div>${where.map(x=>`${x.title}, ${dLong(x.date)}`).join('<br>')||'Пока не было'}</div>
+    ${mutual.length?`<div><div class="k">Вы оба знаете</div><div class="mut"><span class="faces">${mutual.map(x=>avatar(x,'sm')).join('')}</span><span class="hint" style="margin-left:6px">${esc(mutual.map(x=>x.name.split(' ')[0]).join(', '))}</span></div></div>`:''}</div>`);
+  if(!isMe){
+    F+=fold('Моя заметка',S.notes[p.id]?'✎':null,(mt&&!mt.upcoming?`<div class="met" style="margin-bottom:12px"><button class="btn ghost" id="talk" aria-pressed="${m[p.id]===true}">${m[p.id]?'✓ Говорили':'Мы говорили'}</button><button class="btn ghost" id="notalk" aria-pressed="${m[p.id]===false}">Не общались</button></div>`:'')
+      +`<div class="field" style="margin:0"><label for="note">Видите только вы</label><textarea id="note" placeholder="О чём говорили, что обещали…">${esc(S.notes[p.id]||'')}</textarea></div>`,'notef');
+  }
+  out+=F0+`<div class="folds">${F}</div>`;
+  if(isMe){
+    out+=`<div class="sect">Демо</div><div class="row-actions" id="rz"><button class="btn ghost sm" id="reset">Сбросить демо</button></div>`;
+  }
+  return out;
+}
+function bindProfile(p,isMe,mid){
+  document.querySelectorAll('[data-brand]').forEach(b=>b.onclick=()=>openSheet({type:'brand',pid:p.id,i:+b.dataset.brand}));
+  document.querySelectorAll('[data-fold]').forEach(d=>d.addEventListener('toggle',()=>{ OPEN[d.dataset.fold]=d.open; }));
+  document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>{ const v=b.dataset.copy; if(!v) return; (navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(()=>toast(`${b.dataset.what} скопирован: ${v}`),()=>toast(v)); });
+  if(isMe){
+    $('#myqr').onclick=()=>openSheet({type:'myqr'}); $('#edit').onclick=()=>openSheet({type:'edit'});
+    $('#share').onclick=()=>{ const u='https://smartcontacts.app/'+S.me.handle; (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Ссылка на профиль скопирована'),()=>toast(u)); };
+    $('#pv').onclick=()=>{ S.previewFree=!S.previewFree; save(); renderProfile(); };
+    document.querySelectorAll('[data-todo]').forEach(b=>b.onclick=()=>openSheet({type:'edit'}));
+    $('#reset').onclick=()=>{ $('#rz').innerHTML=`<span class="hint">Стереть отметки, заметки и профиль?</span><button class="btn sm" style="background:var(--danger);color:#fff" id="ry">Сбросить</button><button class="btn ghost sm" id="rn">Отмена</button>`;
+      $('#ry').onclick=()=>{S=fresh(); save(); render(); toast('Демо сброшено');}; $('#rn').onclick=renderProfile; };
+    return;
+  }
+  const m=mid?metMap(mid):null;
+  const sp=$('#savep'); sp.onclick=()=>{ S.saved[p.id]=true; save(); renderPersonPage(true); toast('Сохранён в телефон с компанией, соцсетями и заметкой'); };
+  const t=$('#talk'); if(t) t.onclick=()=>{ m[p.id]=true; save(); renderPersonPage(true); toast('Отмечено: вы знакомы'); };
+  const nt=$('#notalk'); if(nt) nt.onclick=()=>{ m[p.id]=false; save(); renderPersonPage(true); };
+  const note=$('#note'); note.oninput=()=>{ const v=note.value.trim(); if(v) S.notes[p.id]=v; else delete S.notes[p.id]; save(); };
+  const en=$('#endorse'); if(en) en.onclick=()=>{ $('#endbox').innerHTML=`<div class="field" style="margin:0"><label for="endt">Рекомендацию увидят все, кто откроет профиль</label><textarea id="endt" placeholder="Чем помог, за что рекомендуете">${esc(S.endorsed[p.id]||'')}</textarea></div><div class="row-actions" style="margin-top:8px"><button class="btn sm" id="ends">Опубликовать</button><button class="btn ghost sm" id="endc">Отмена</button></div>`;
+    $('#endt').focus(); $('#endc').onclick=()=>renderPersonPage(true);
+    $('#ends').onclick=()=>{ const v=$('#endt').value.trim(); if(!v){ $('#endt').focus(); return; } S.endorsed[p.id]=v; save(); renderPersonPage(true); toast('Рекомендация опубликована'); }; };
+}
+function renderPersonPage(keepScroll){
+  const y=$('#main').scrollTop; const {id,mid}=S.pp; const p=byId(id); const mt=mid&&MEETINGS.find(x=>x.id===mid);
+  $('#hdr').innerHTML=`<div class="hdr"><button class="back" id="back" aria-label="Назад">${IC.back}</button><h1 style="font-size:17px">${esc(p.name)}<span class="sub">${mt?'Со встречи «'+esc(mt.title)+'»':'Профиль участника'}</span></h1></div>`;
+  $('#main').innerHTML=`<div class="pad">${profileBody(p,false,mid)}</div>`;
+  $('#back').onclick=()=>{ const from=S.pp.from||0; S.pp=null; save(); render(); $('#main').scrollTop=from; };
+  bindProfile(p,false,mid);
+  if(keepScroll) $('#main').scrollTop=y;
+}
+const PLANS=[
+ {k:'free',n:'Free',m:'0 ֏',y:'0 ֏',who:'Для всех',f:['Имя, роль и телефон','Книжка: разделы, А–Я, заметки','Вход в комнаты встреч по QR','AI-помощник: 5 запросов в месяц']},
+ {k:'pro',n:'Pro',m:'5 000',y:'50 000',who:'Предпринимателю и специалисту',f:['Бренды, награды, членство, соцсети, рекомендации','Встречи и «вспомнить всех»','AI-помощник без лимита','Своя карта в Apple Wallet','Свои комнаты для встреч','Кто смотрел и сохранил профиль']},
+ {k:'biz',n:'Business',m:'25 000',y:'250 000',tag:'для компаний',who:'Команде до 5 человек',f:['Всё из Pro у каждого сотрудника','Страница компании со всеми брендами','Общая книжка: контакты остаются в компании','Фирменные Wallet-карты сотрудников','Лиды со всех QR команды, выгрузка в CRM и Excel','Комнаты для своих мероприятий с аналитикой','AI ищет по контактам всей команды']}
+];
+function renderProfile(){
+  const y=$('#main').scrollTop;
+  $('#hdr').innerHTML=`<div class="hdr"><h1>Мой профиль<span class="sub">${S.previewFree?'Так вас видят на Free':'Так вас видят ваши контакты'}</span></h1></div>`;
+  $('#main').innerHTML=`<div class="pad">${profileBody(meAsPerson(),true,null)}
+   <div class="sect secrow" id="plans"><span>Тарифы</span><div class="vtog"><button data-bill="m" aria-pressed="${S.bill!=='y'}">Месяц</button><button data-bill="y" aria-pressed="${S.bill==='y'}">Год −2 мес</button></div></div>
+   <div class="plans">${PLANS.map(pl=>`<div class="pl${pl.k==='pro'?' cur':''}${pl.k==='biz'?' biz':''}">
+     <div class="plh"><span class="pt">${pl.n}</span>${pl.k==='pro'?'<span class="pill pro">ваш</span>':''}${pl.tag?`<span class="pltag">${pl.tag}</span>`:''}</div>
+     <div class="pp"><b>${S.bill==='y'?pl.y:pl.m}</b> ${pl.k==='free'?'':S.bill==='y'?'֏ / год':'֏ / мес'}</div>
+     <div class="pfor">${pl.who}</div>
+     <ul>${pl.f.map(x=>`<li>${x}</li>`).join('')}</ul>
+     ${pl.k==='biz'?`<button class="btn acc sm" id="bizbtn">Подключить команду</button><div class="hint" style="font-size:12px">Каждый сотрудник сверх 5: +4 000 ֏ / мес</div>`:''}</div>`).join('')}</div>
+   <div class="card" style="margin-top:8px"><b>Клубам, палатам и ассоциациям</b><div class="hint">Business со страницей сообщества, комнатами для встреч и подтверждением членства. Цена обсуждается индивидуально.</div></div></div>`;
+  bindProfile(meAsPerson(),true,null);
+  document.querySelectorAll('[data-bill]').forEach(b=>b.onclick=()=>{ const yy=$('#main').scrollTop; S.bill=b.dataset.bill; save(); renderProfile(); $('#main').scrollTop=yy; });
+  const bb=$('#bizbtn'); if(bb) bb.onclick=()=>toast('В приложении здесь будет оформление Business');
+  $('#main').scrollTop=y;
+}
+
+/* ---------- edit (rich) ---------- */
+function shEdit(){
+  const me=S.me, L=me.links||{};
+  const f=(id,label,val,ph='')=>`<div class="field"><label for="${id}">${label}</label><input id="${id}" value="${esc(val||'')}" placeholder="${esc(ph)}"></div>`;
+  return `${head('Редактировать профиль')}<form id="ef">
+   <div class="two">${f('e-name','Имя',me.name)}${f('e-role','Роль',me.role)}</div>
+   <div class="two">${f('e-city','Город',me.city)}${f('e-langs','Языки',(me.langs||[]).join(', '))}</div>
+   <div class="field"><label for="e-bio">Описание о себе (видно всем сразу)</label><textarea id="e-bio">${esc(me.bio||'')}</textarea></div>
+   ${f('e-help','Могу помочь (через запятую)',me.helps.join(', '))}${f('e-seek','Ищу (через запятую)',me.seeks.join(', '))}
+   <div class="sect" style="margin-top:4px">Бренды и компании</div>
+   ${me.biz.map((b,i)=>`<div class="card" style="margin-bottom:10px">
+     <div class="two">${f('b-n'+i,'Название',b.name)}${f('b-s'+i,'Сфера',b.sphere)}</div>
+     <div class="two">${f('b-y'+i,'Год основания',b.year,'2019')}${f('b-t'+i,'Команда',b.team,'8 человек')}</div>
+     ${f('b-d'+i,'Что делаете',b.desc)}${f('b-o'+i,'Предложение для контактов',b.offer,'Скидка, бесплатная консультация')}
+     <div class="two">${f('b-ig'+i,'Instagram',(b.links||{}).instagram,'@brand')}${f('b-web'+i,'Сайт',(b.links||{}).site,'brand.am')}</div>
+     ${f('b-fb'+i,'Facebook',(b.links||{}).facebook)}
+     ${me.biz.length>1?`<button type="button" class="btn ghost sm" data-rm="${i}">Убрать</button>`:''}</div>`).join('')}
+   ${me.biz.length<5?`<button type="button" class="btn ghost wide" id="addb">+ Бренд или компания</button>`:''}
+   <div class="sect">Членство в организациях</div>
+   ${(me.orgs||[]).map((o,i)=>`<div class="card" style="margin-bottom:10px">${f('o-n'+i,'Организация',o.n,'Клуб, палата, ассоциация')}
+     <div class="two">${f('o-r'+i,'Статус',o.r,'Член')}${f('o-y'+i,'С какого года',o.y)}</div><button type="button" class="btn ghost sm" data-rmo="${i}">Убрать</button></div>`).join('')}
+   <button type="button" class="btn ghost wide" id="addo">+ Клуб, палата или ассоциация</button>
+   <p class="hint" style="margin:8px 2px 0">Организация может подтвердить ваше членство, и рядом появится «✓ Подтверждено».</p>
+   <div class="sect">Награды и достижения</div>
+   ${(me.awards||[]).map((a,i)=>`<div class="card" style="margin-bottom:10px">${f('w-t'+i,'Название',a.t)}
+     <div class="two">${f('w-y'+i,'Год',a.y)}<div class="field"><label for="w-k${i}">Тип</label><select id="w-k${i}">${Object.entries(KIND).map(([k,v])=>`<option value="${k}" ${a.k===k?'selected':''}>${v[0]}</option>`).join('')}</select></div></div>
+     ${f('w-s'+i,'Кем выдано / где',a.src)}<button type="button" class="btn ghost sm" data-rmw="${i}">Убрать</button></div>`).join('')}
+   <button type="button" class="btn ghost wide" id="addw">+ Медаль, сертификат, публикация</button>
+   <div class="sect">Контакты и соцсети</div>
+   <div class="two">${f('l-wa','WhatsApp',L.whatsapp)}${f('l-tg','Telegram',me.tg)}</div>
+   <div class="two">${f('l-ig','Instagram',L.instagram)}${f('l-li','LinkedIn',L.linkedin)}</div>
+   <div class="two">${f('l-site','Сайт',L.site)}${f('l-mail','Email',L.email)}</div>
+   <div class="sect">О себе</div>
+   ${f('e-ask','Спросите меня о',me.askMe)}${f('e-edu','Образование',me.edu)}${f('e-int','Интересы (через запятую)',(me.interests||[]).join(', '))}
+   <button class="btn acc wide" style="margin-top:8px" type="submit">Сохранить профиль</button></form>`;
+}
+function readEdit(){
+  const me=S.me; const v=id=>(document.getElementById(id)?.value||'').trim(); const list=s=>s.split(',').map(x=>x.trim()).filter(Boolean);
+  me.name=v('e-name')||me.name; me.role=v('e-role'); me.city=v('e-city'); me.langs=list(v('e-langs'));
+  me.helps=list(v('e-help')); me.seeks=list(v('e-seek'));
+  me.bio=v('e-bio');
+  me.biz=me.biz.map((b,i)=>({name:v('b-n'+i),sphere:v('b-s'+i),year:v('b-y'+i),team:v('b-t'+i),desc:v('b-d'+i),offer:v('b-o'+i),links:{...(b.links||{}),instagram:v('b-ig'+i),site:v('b-web'+i),facebook:v('b-fb'+i)}}));
+  me.orgs=(me.orgs||[]).map((o,i)=>({n:v('o-n'+i),r:v('o-r'+i),y:v('o-y'+i),v:!!o.v}));
+  me.awards=(me.awards||[]).map((a,i)=>({t:v('w-t'+i),y:v('w-y'+i),k:document.getElementById('w-k'+i)?.value||'medal',src:v('w-s'+i)}));
+  me.links={whatsapp:v('l-wa'),instagram:v('l-ig'),linkedin:v('l-li'),site:v('l-site'),email:v('l-mail')}; me.tg=v('l-tg');
+  me.askMe=v('e-ask'); me.edu=v('e-edu'); me.interests=list(v('e-int'));
+}
+function bEdit(){
+  const keep=()=>{const y=$('#sheet .sheet').scrollTop; renderSheet(); $('#sheet .sheet').scrollTop=y;};
+  const ab=$('#addb'); if(ab) ab.onclick=()=>{ readEdit(); S.me.biz.push({name:'',sphere:'',year:'',team:'',desc:'',offer:''}); keep(); };
+  $('#addo').onclick=()=>{ readEdit(); (S.me.orgs=S.me.orgs||[]).push({n:'',r:'Член',y:'',v:false}); keep(); };
+  document.querySelectorAll('[data-rmo]').forEach(b=>b.onclick=()=>{ readEdit(); S.me.orgs.splice(+b.dataset.rmo,1); keep(); });
+  $('#addw').onclick=()=>{ readEdit(); S.me.awards.push({t:'',y:'',k:'medal',src:''}); keep(); };
+  document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ readEdit(); S.me.biz.splice(+b.dataset.rm,1); keep(); });
+  document.querySelectorAll('[data-rmw]').forEach(b=>b.onclick=()=>{ readEdit(); S.me.awards.splice(+b.dataset.rmw,1); keep(); });
+  $('#ef').onsubmit=e=>{ e.preventDefault(); readEdit(); S.me.biz=S.me.biz.filter(b=>b.name); S.me.awards=S.me.awards.filter(a=>a.t); S.me.orgs=(S.me.orgs||[]).filter(o=>o.n);
+    if(!S.me.biz.length) S.me.biz=[{name:'Мой бизнес',sphere:'',year:'',team:'',desc:'',offer:''}]; save(); closeSheet(); toast('Профиль обновлён'); };
+}
+
+/* ---------- brand popup ---------- */
+const LINKI={instagram:'IG',site:'WWW',facebook:'FB',linkedin:'in',youtube:'YT',tiktok:'TT'};
+function brandOwner(){ return sheet.pid==='p0'?meAsPerson():byId(sheet.pid); }
+function shBrand(){
+  const p=brandOwner(); const b=p.biz[sheet.i]; const L=b.links||{}; const ks=Object.keys(L).filter(k=>L[k]);
+  return `${head('')}<div style="display:flex;gap:14px;align-items:center;margin:-4px 0 12px;${acol('p'+(sheet.i+3+(parseInt(p.id.slice(1))||0)))}">
+     <span class="mono" style="width:60px;height:60px;font-size:18px;border-radius:16px">${esc(ini(b.name)||'?')}</span>
+     <div style="min-width:0"><div style="font-family:var(--f-display);font-weight:700;font-size:20px">${esc(b.name)}</div><div class="hint">${esc([b.sphere,b.year?'с '+b.year:'',b.team].filter(Boolean).join(' · '))}</div></div></div>
+   ${b.desc?`<p style="margin:0 0 10px">${esc(b.desc)}</p>`:''}
+   ${b.offer?`<div class="offer" style="margin-bottom:12px">${esc(b.offer)}</div>`:''}
+   <div class="sect" style="margin-top:6px">Ссылки бренда</div>
+   ${ks.length?`<div class="alist">${ks.map(k=>`<button class="linkrow" data-link="${k}"><span class="li">${LINKI[k]}</span><span class="t"><b style="display:block;font-weight:600">${LINKN[k]}</b><span class="lv">${esc(L[k])}</span></span><span class="go">Открыть ↗</span></button>`).join('')}</div>`:`<div class="hint">Владелец пока не добавил ссылки.</div>`}
+   <div class="hint" style="margin-top:12px">Владелец: ${esc(p.name)}</div>`;
+}
+function bBrand(){
+  const p=brandOwner(); const L=p.biz[sheet.i].links||{};
+  document.querySelectorAll('[data-link]').forEach(b=>b.onclick=()=>toast(`В приложении откроется ${LINKN[b.dataset.link]}: ${L[b.dataset.link]}`));
+}
+
+/* ---------- AI assistant ---------- */
+let SAMPLE; const sampleReady=(async()=>{ try{ SAMPLE = window.claude?.use ? await window.claude.use('sample') : null; }catch(e){ SAMPLE=null; } })();
+let aiCtl=null, aiBusy=false;
+const SUGG=['Нужно решить вопрос с дверями в новом офисе','Ищу бухгалтера для нового ИП','Кто поможет с упаковкой и печатью для продукта?','Хочу провести тимбилдинг для команды на 30 человек'];
+function contactDir(){
+  return P.map(p=>{ const where=MEETINGS.filter(x=>!x.upcoming&&x.people.includes(p.id)).map(x=>`${x.title} ${dLong(x.date)}`);
+    const o={id:p.id,name:p.name,role:p.role,section:CAT[p.cat]?.name}; if(p.pro) o.businesses=p.biz.map(b=>[b.name,b.sphere,b.desc].filter(Boolean).join(' — '));
+    if(p.helps.length) o.helps=p.helps; if(p.seeks.length) o.seeks=p.seeks; if(where.length) o.met=where; if(S.notes[p.id]) o.myNote=S.notes[p.id]; return o; });
+}
+const AI_RULES=()=>`Ты AI-помощник в умной записной книжке бизнесмена по имени ${S.me.name}. Он описывает задачу, а ты ищешь в ЕГО контактах, кому позвонить.
+Ищи два типа людей:
+- "direct": человек сам делает то, что нужно;
+- "indirect": сам не делает, но по своей работе наверняка знает нужных людей (например, дизайнер интерьеров знает поставщиков дверей, строитель знает мастеров).
+category — раздел задачи: biz (бизнес и работа), personal (личные цели), friends (друзья), family (семья), med (медицина), home (дом и ремонт).
+Используй только людей из списка ниже, их id бери как есть. Учитывай заметки владельца (myNote) и где они познакомились. Не выдумывай факты о людях.
+Отвечай на языке пользователя, коротко и по-деловому.
+Верни ТОЛЬКО JSON такого вида:
+{"category":"biz|personal|friends|family|med|home","reply":"1-2 предложения: кому звонить в первую очередь и почему","people":[{"id":"p17","kind":"direct|indirect","why":"одно предложение, почему он","ask":"короткое готовое сообщение этому человеку от имени пользователя"}]}
+От 0 до 4 человек, сначала самые полезные. Если никто не подходит, people пустой, а в reply скажи, кого стоит поискать.
+
+Контакты пользователя (JSON):
+${JSON.stringify(contactDir())}`;
+
+const SYN={двер:['двер','интерьер','ремонт','строит','мебел'],бухгалт:['бухгалт','налог','отчёт','юрист'],упаков:['упаков','печат','дизайн упаковки','брендинг'],тимбилд:['тимбилд','тур','площадк','ивент','мероприят'],
+  ремонт:['ремонт','строит','интерьер','плитк'],реклам:['реклам','таргет','smm','маркет'],юрист:['юрист','договор','право'],сайт:['сайт','дизайн','ux'],инвест:['инвест','стартап'],доставк:['доставк','логист','импорт']};
+const STOP=['нужн','реши','вопр','ново','офис','хочу','помо','кому','нуже','провест','команд','челов','надо','ищу','найти','сдела','можн'];
+function offlineFind(q){
+  const words=q.toLowerCase().match(/[a-zа-яё]{4,}/g)||[];
+  const keys=Object.keys(SYN).filter(k=>words.some(w=>w.startsWith(k.slice(0,4))));
+  const stems=words.map(w=>w.slice(0,Math.max(4,w.length-3))).filter(st=>!STOP.some(x=>st.startsWith(x)));
+  const out=[];
+  P.forEach(p=>{ const h=hay(p)+' '+(S.notes[p.id]||'').toLowerCase(); let kind=null, hit='';
+    if(keys.length){ keys.forEach(k=>{ if(!kind&&h.includes(SYN[k][0])){kind='direct';hit=SYN[k][0];} });
+      if(!kind) keys.forEach(k=>SYN[k].slice(1).forEach(r=>{ if(!kind&&h.includes(r)){kind='indirect';hit=r;} })); }
+    else stems.forEach(st=>{ if(!kind&&h.includes(st)){kind='direct';hit=st;} });
+    if(kind) out.push({id:p.id,kind,why:kind==='direct'?`${p.role}: в профиле есть «${hit}».`:`${p.role}: по работе связан с «${hit}» и может знать нужных людей.`,ask:`Здравствуйте, ${p.name.split(' ')[0]}! Это ${S.me.name}. Подскажите, пожалуйста: ${q.replace(/[.!?]+$/,'').toLowerCase()}. Сможете помочь или посоветовать кого-то?`});
+  });
+  out.sort((a,b)=>(a.kind==='direct'?0:1)-(b.kind==='direct'?0:1));
+  const top=out.slice(0,4);
+  return {reply:top.length?'Вот кто из ваших контактов может помочь.':'Среди ваших контактов никто явно не подходит. Попробуйте описать задачу другими словами.',people:top};
+}
+function aiHistory(chat){
+  const turns=[{role:'user',content:AI_RULES()}];
+  chat.filter(m=>!m.pending).slice(-6).forEach(m=>{
+    if(m.role==='user') turns.push({role:'user',content:m.text});
+    else turns.push({role:'assistant',content:m.text+(m.people?.length?' Предложенные: '+m.people.map(x=>byId(x.id)?.name).join(', '):'')});
+  });
+  return turns;
+}
+const D=n=>Date.now()-n*864e5;
+function seedTasks(){ return [
+ {id:'t1',title:'Двери для нового офиса',cat:'biz',status:'open',at:D(1),chat:[{role:'user',text:'Нужно решить вопрос с дверями в новом офисе'},{role:'ai',text:'Начните с Карена: он сам делает двери. Если нужен готовый подбор под интерьер, спросите Ашота.',people:[
+   {id:'p18',kind:'direct',why:'Производит межкомнатные и входные двери. Вы познакомились на бизнес-конференции 22 октября.',ask:'Карен, здравствуйте! Это Ованнес, мы виделись на конференции. Нужны двери для нового офиса, сможете посчитать?'},
+   {id:'p17',kind:'indirect',why:'Дизайнер интерьеров, комплектует объекты дверями и знает проверенных поставщиков.',ask:'Ашот, привет! Подбираю двери для офиса. Кого из поставщиков посоветуешь?'},
+   {id:'p4',kind:'indirect',why:'BuildArm делает ремонт офисов под ключ, у них есть свои подрядчики по дверям.',ask:'Арман, добрый день! Кто у вас ставит двери в офисах? Ищу надёжного поставщика.'}]}]},
+ {id:'t2',title:'Тимбилдинг на 30 человек',cat:'biz',status:'open',at:D(3),chat:[{role:'user',text:'Хочу провести тимбилдинг для команды на 30 человек'},{role:'ai',text:'Тигран организует корпоративные выезды, а Самвел может дать зал, если делать в городе.',people:[
+   {id:'p6',kind:'direct',why:'Tour Armenia: корпоративные туры и тимбилдинг от 10 до 300 человек.',ask:'Тигран, здравствуйте! Нужен тимбилдинг на 30 человек, какие есть варианты?'},
+   {id:'p15',kind:'direct',why:'Coffee Point даёт зал для деловых встреч бесплатно.',ask:'Самвел, привет! Можно ли у вас провести командную встречу на 30 человек?'}]}]},
+ {id:'t3',title:'Бухгалтер для нового ИП',cat:'biz',status:'done',helper:'p3',at:D(6),chat:[{role:'user',text:'Ищу бухгалтера для нового ИП'},{role:'ai',text:'Мари ведёт бухгалтерию малого бизнеса на аутсорсе.',people:[{id:'p3',kind:'direct',why:'Бухгалтер на аутсорсе: налоги и отчётность.',ask:'Мари, здравствуйте! Нужен бухгалтер для нового ИП.'}]}]},
+ {id:'t5',title:'Хороший педиатр рядом с домом',cat:'med',status:'open',at:D(2),chat:[{role:'user',text:'Нужен хороший педиатр рядом с домом'},{role:'ai',text:'В контактах есть педиатр Лилит Григорян. Ещё можно спросить Сону из «Дентал Плюс»: она знает врачей в городе.',people:[
+   {id:'p23',kind:'direct',why:'Педиатр, номер сохранён в разделе «Медицина».',ask:'Лилит, здравствуйте! Подскажите, принимаете ли вы сейчас новых пациентов?'},
+   {id:'p9',kind:'indirect',why:'Руководит клиникой и знает многих врачей в городе.',ask:'Сона, привет! Не посоветуешь хорошего педиатра?'}]}]},
+ {id:'t6',title:'Где отметить день рождения Гора',cat:'friends',status:'open',at:D(4),chat:[{role:'user',text:'Где отметить день рождения Гора на 12 человек?'},{role:'ai',text:'Самвел может дать зал в Coffee Point, а Тигран предложит выезд за город.',people:[
+   {id:'p15',kind:'direct',why:'Сеть кофеен с залом для встреч.',ask:'Самвел, привет! Можно у вас отметить день рождения на 12 человек?'},
+   {id:'p6',kind:'direct',why:'Организует поездки и отдых для групп.',ask:'Тигран, здравствуйте! Есть ли идеи для выезда на день рождения, 12 человек?'}]}]},
+ {id:'t7',title:'Ремонт ванной у родителей',cat:'family',status:'open',at:D(9),chat:[{role:'user',text:'Нужно сделать ремонт ванной у родителей'},{role:'ai',text:'Сантехник Ваге сделает сантехнику, а BuildArm возьмёт ремонт целиком.',people:[
+   {id:'p25',kind:'direct',why:'Сантехник из ваших контактов.',ask:'Ваге, здравствуйте! Нужно поменять сантехнику в ванной, когда сможете посмотреть?'},
+   {id:'p4',kind:'direct',why:'Ремонт под ключ, работает по смете.',ask:'Арман, добрый день! Нужен ремонт ванной, сможете посчитать?'}]}]},
+ {id:'t4',title:'Упаковка для молочной продукции',cat:'biz',status:'done',helper:'p13',at:D(12),chat:[{role:'user',text:'Кто поможет с упаковкой для молочной продукции?'},{role:'ai',text:'PackPro делает пищевую упаковку с печатью.',people:[{id:'p13',kind:'direct',why:'Пищевая и подарочная упаковка, своё производство.',ask:'Артур, добрый день! Нужна упаковка для молочной продукции.'}]}]}
+];}
+function tasks(){ if(!S.tasks) S.tasks=seedTasks(); return S.tasks; }
+function taskPeople(t){ const ids=[]; t.chat.forEach(m=>(m.people||[]).forEach(x=>{ if(!ids.includes(x.id)) ids.push(x.id); })); return ids; }
+function ago(ts){ const d=Math.floor((Date.now()-ts)/864e5); return d<=0?'сегодня':d===1?'вчера':d<7?`${d} дн. назад`:dLong(new Date(ts).toISOString().slice(0,10)); }
+async function aiSend(q,t){
+  q=q.trim(); if(!q||aiBusy) return;
+  if(!t){ t={id:'t'+Date.now(),title:q.replace(/[.!?]+$/,'').slice(0,60),cat:guessCat(q),status:'open',at:Date.now(),chat:[]}; tasks().unshift(t); S.task=t.id; }
+  aiBusy=true; t.chat.push({role:'user',text:q}); const slot={role:'ai',pending:true}; t.chat.push(slot); save(); if(S.view==='ai'&&!S.pp) renderAI(true);
+  await sampleReady;
+  let res=null, offline=false, note='';
+  if(SAMPLE){
+    aiCtl=new AbortController(); if(S.view==='ai'&&!S.pp) renderAI(true);
+    try{ res=await SAMPLE.json(aiHistory(t.chat),{cache:false,signal:aiCtl.signal}); }
+    catch(e){ if(e?.code==='cancelled'){ note='Остановлено.'; res={reply:'Остановлено.',people:[]}; }
+      else { offline=true; note=({not_granted:'AI не разрешён для этой страницы, ищу по профилям.',rate_limited:'Слишком много запросов. Пока ищу по профилям.',sampling_disabled:'AI недоступен для аккаунта, ищу по профилям.'})[e?.code]||'AI сейчас не ответил, ищу по профилям.'; } }
+    aiCtl=null;
+  } else { offline=true; note='Офлайн-поиск по профилям. Полный AI работает при открытии в Claude.'; }
+  if(offline) res=offlineFind(q);
+  const people=Array.isArray(res?.people)?res.people.filter(x=>x&&byId(String(x.id))).map(x=>({id:String(x.id),kind:x.kind==='indirect'?'indirect':'direct',why:String(x.why||''),ask:String(x.ask||'')})).slice(0,4):[];
+  Object.assign(slot,{pending:false,text:String(res?.reply||note||'Не нашёл подходящих людей.'),people,src:offline?note:''});
+  if(t.chat.filter(m=>m.role==='user').length===1){ if(TCAT[res?.category]) t.cat=res.category; else if(people[0]) t.cat=({family:'family',friends:'friends',med:'med'})[byId(people[0].id).cat]||t.cat; }
+  aiBusy=false; save(); if(S.view==='ai'&&!S.pp) renderAI(true);
+}
+function recHTML(r){ const p=byId(r.id);
+  return `<div class="rec"><button class="top" data-open="${p.id}">${avatar(p)}<span class="t"><span class="nm" style="display:block">${esc(p.name)} <span class="kind ${r.kind}">${r.kind==='direct'?'Напрямую':'Может знать'}</span></span><span class="hint" style="display:block">${esc([p.role,...(p.pro?p.biz.map(b=>b.name):[])].join(' · '))}</span></span></button>
+    ${r.why?`<div class="why">${esc(r.why)}</div>`:''}${r.ask?`<div class="ask">«${esc(r.ask)}»</div>`:''}
+    <div class="acts"><button class="btn sm" data-copy="${esc(p.phone)}" data-what="Номер">Позвонить</button>${r.ask?`<button class="btn ghost sm" data-copy="${esc(r.ask)}" data-what="Сообщение">Копировать сообщение</button>`:''}<button class="btn ghost sm" data-open="${p.id}">Профиль</button></div></div>`; }
+const MIC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>';
+const SENDI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+const TCATS=[['biz','Бизнес'],['personal','Личное'],['friends','Друзья'],['family','Семья'],['med','Медицина'],['home','Дом и ремонт']];
+const TCAT=Object.fromEntries(TCATS);
+function guessCat(q){ const t=q.toLowerCase();
+  if(/врач|педиатр|стомат|клиник|здоров|анализ|болит/.test(t)) return 'med';
+  if(/(^|[^а-яё])(мам|пап|родител|брат|сестр|сын|доч|семь|жен[аеуы]|муж[аеу]?)([^а-яё]|$|[а-яё]{0,3}([^а-яё]|$))/.test(t)) return 'family';
+  if(/квартир|ремонт|сантех|электрик|ванн|кухн|дач/.test(t)&&!/офис/.test(t)) return 'home';
+  if(/друг|день рождения|отметить|вечеринк/.test(t)) return 'friends';
+  if(/спорт|английск|курс|хобби|путешеств|отпуск/.test(t)) return 'personal';
+  return 'biz'; }
+function composerHTML(ph){ return `<div class="dock"><form class="composer" id="aif"><input id="aiq" placeholder="${ph}" autocomplete="off" aria-label="Задача для AI"><button type="button" class="micb" id="mic" aria-label="Сказать голосом">${MIC}</button><button class="send" type="submit" aria-label="Отправить" hidden>${SENDI}</button></form></div>`; }
+function ideas(){
+  const out=[];
+  P.filter(p=>p.pro&&needsMe(p).length).slice(0,1).forEach(p=>out.push({id:p.id,t:`${p.name.split(' ')[0]} из ${p.biz[0].name} ищет ${needsMe(p)[0]}`,d:`Это ваше направление. Предложить ${S.me.biz[0]?.name||'свои услуги'}?`}));
+  P.filter(p=>p.pro&&helpsMe(p).length&&!MEETINGS[0].people.includes(p.id)).slice(0,1).forEach(p=>out.push({id:p.id,t:`Давно не общались: ${p.name}`,d:`${p.role}. Может помочь с тем, что вы ищете: ${helpsMe(p).join(', ')}.`}));
+  return out;
+}
+function renderAI(scrollEnd){
+  const T=tasks(); const t=S.task&&T.find(x=>x.id===S.task);
+  if(t) return renderTask(t,scrollEnd);
+  const f=S.tf&&TCAT[S.tf]?S.tf:'all';
+  const list=T.filter(x=>f==='all'||x.cat===f).sort((a,b)=>b.at-a.at);
+  const cnt=k=>T.filter(x=>x.cat===k).length;
+  $('#hdr').innerHTML=`<div class="hdr"><h1>AI-помощник<span class="sub">Скажите задачу — найду, кому позвонить</span></h1></div>`;
+  const card=x=>{ const ids=taskPeople(x).slice(0,4); const pend=x.chat.some(m=>m.pending);
+    const hint=x.status==='done'?(x.helper?`✓ Помог(ла) ${byId(x.helper).name}`:'✓ Решено'):pend?'AI ищет людей…':`${ids.length} ${ids.length===1?'человек':'человека'} · ${ago(x.at)}`;
+    return `<button class="task" data-task="${x.id}"><span class="tt"><b>${esc(x.title)}</b><span class="tcat">${TCAT[x.cat]||''}</span></span>
+      <span class="tl">${ids.length?`<span class="stack3">${ids.map(id=>avatar(byId(id))).join('')}</span>`:''}<span class="hint">${esc(hint)}</span></span></button>`; };
+  const recent=list.slice(0,2), rest=list.slice(2);
+  $('#main').innerHTML=`<div class="pad ai-pad">
+   <div class="seg" style="margin-top:0"><button data-tf="all" aria-pressed="${f==='all'}">Все<span class="n">${T.length}</span></button>${TCATS.filter(([k])=>cnt(k)).map(([k,l])=>`<button data-tf="${k}" aria-pressed="${f===k}">${l}<span class="n">${cnt(k)}</span></button>`).join('')}</div>
+   <div class="sect secrow"><span>Последние</span>${rest.length?`<button class="archlink" id="arch" aria-expanded="${!!S.arch}">${S.arch?'Скрыть архив ⌃':`Архив · ${rest.length} ⌄`}</button>`:''}</div>
+   <div class="stack">${recent.length?recent.map(card).join(''):`<div class="empty">Здесь пока пусто. Нажмите на микрофон и скажите задачу.</div>`}</div>
+   ${rest.length&&S.arch?`<div class="stack" style="margin-top:10px">${rest.map(card).join('')}</div>`:''}
+   </div>${composerHTML('Напишите или скажите задачу')}`;
+  document.querySelectorAll('[data-tf]').forEach(b=>b.onclick=()=>{S.tf=b.dataset.tf; save(); renderAI();});
+  document.querySelectorAll('[data-task]').forEach(b=>b.onclick=()=>{S.task=b.dataset.task; save(); renderAI(); $('#main').scrollTop=0;});
+  const ar=$('#arch'); if(ar) ar.onclick=()=>{S.arch=!S.arch; save(); renderAI();};
+  bindComposer(null);
+}
+function bindComposer(t){
+  const inp=$('#aiq'), snd=$('#aif .send'), mic=$('#mic');
+  inp.oninput=()=>{ const has=!!inp.value.trim(); snd.hidden=!has; mic.hidden=has; };
+  $('#aif').onsubmit=e=>{ e.preventDefault(); if(inp.value.trim()) aiSend(inp.value,t); };
+  mic.onclick=()=>startRec(t);
+}
+function renderTask(t,scrollEnd){
+  const ids=taskPeople(t);
+  $('#hdr').innerHTML=`<div class="hdr"><button class="back" id="back" aria-label="К задачам">${IC.back}</button><h1 style="font-size:18px">${esc(t.title)}<span class="sub">${TCAT[t.cat]||''} · ${t.status==='done'?'решено':'в работе'} · ${ago(t.at)}</span></h1></div>`;
+  const status = t.status==='done'
+    ? `<div class="donebar"><span>✓ Решено${t.helper?` · помог(ла) <b>${esc(byId(t.helper).name)}</b>`:''}</span><button class="btn ghost sm" id="reopen">Вернуть в работу</button></div>`
+    : (S.closing?`<div class="donebar" style="display:grid;gap:10px"><span>Кто помог решить?</span><div class="chips">${ids.map(id=>`<button class="chip pick" data-helper="${id}">${avatar(byId(id),'sm')} ${esc(byId(id).name.split(' ')[0])}</button>`).join('')}<button class="chip pick" data-helper="">Решил сам</button></div></div>`
+    : `<button class="btn ghost wide" id="close">✓ Отметить решённой</button>`);
+  $('#main').innerHTML=`<div class="pad ai-pad">${status}
+   <div class="msgs" style="margin-top:14px">${t.chat.map(m=>m.role==='user'?`<div class="msg-u">${esc(m.text)}</div>`:
+     m.pending?`<div class="msg-a"><div class="thinking"><i></i><i></i><i></i>Смотрю ваши контакты…</div>${aiCtl?'<button class="btn ghost sm" id="aistop" style="justify-self:start">Остановить</button>':''}</div>`:
+     `<div class="msg-a"><div class="txt">${esc(m.text)}</div>${(m.people||[]).map(recHTML).join('')}${m.src?`<div class="src">${esc(m.src)}</div>`:''}</div>`).join('')}</div>
+   </div>${composerHTML('Уточнить: например, кто ближе к Дилижану?')}`;
+  $('#back').onclick=()=>{S.task=null; S.closing=false; save(); renderAI();};
+  const c=$('#close'); if(c) c.onclick=()=>{S.closing=true; renderAI();};
+  const r=$('#reopen'); if(r) r.onclick=()=>{t.status='open'; t.helper=null; save(); renderAI();};
+  document.querySelectorAll('[data-helper]').forEach(b=>b.onclick=()=>{t.status='done'; t.helper=b.dataset.helper||null; S.closing=false; save(); renderAI(); toast('Задача решена');});
+  document.querySelectorAll('#main [data-open]').forEach(b=>b.onclick=()=>openPerson(b.dataset.open,null));
+  document.querySelectorAll('#main [data-copy]').forEach(b=>b.onclick=()=>{ const v=b.dataset.copy; (navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(()=>toast(`${b.dataset.what} скопирован`),()=>toast(v)); });
+  const st=$('#aistop'); if(st) st.onclick=()=>aiCtl?.abort();
+  bindComposer(t);
+  if(scrollEnd) $('#main').scrollTop=$('#main').scrollHeight;
+}
+/* inline voice recording (demo text) */
+let recTimer=null;
+function startRec(t){
+  const phrase=t?'А кто из них ближе к Дилижану и сможет на этой неделе?':'Нужно решить вопрос с дверями в новом офисе';
+  const f=$('#aif'); f.classList.add('recording');
+  const bars=Array.from({length:34},(_,i)=>`<i style="animation-delay:${(i*53)%700}ms"></i>`).join('');
+  f.innerHTML=`<div class="rtext" id="rtext"><span class="rph">Говорите…</span></div>
+   <div class="rbar"><button type="button" class="rbtn" id="rcancel" aria-label="Отменить">${IC.x}</button>
+   <div class="wave" id="wave">${bars}</div>
+   <button type="button" class="rbtn" id="rstop" aria-label="Остановить запись"><span class="sq"></span></button>
+   <button type="submit" class="send" aria-label="Отправить">${SENDI}</button></div>
+   <div class="rdemo">Демо: в приложении здесь будет распознавание речи</div>`;
+  let i=0; const words=phrase.split(' '); const out=$('#rtext');
+  const step=()=>{ i++; out.innerHTML=esc(words.slice(0,i).join(' '))+(i<words.length?'<span class="caret"></span>':''); if(i<words.length) recTimer=setTimeout(step,260); else stop(); };
+  const stop=()=>{ clearTimeout(recTimer); f.classList.add('stopped'); const sb=$('#rstop'); if(sb) sb.hidden=true; };
+  recTimer=setTimeout(step,600);
+  $('#rstop').onclick=stop;
+  $('#rcancel').onclick=()=>{ clearTimeout(recTimer); renderAI(); };
+  f.onsubmit=e=>{ e.preventDefault(); clearTimeout(recTimer); const txt=words.slice(0,Math.max(i,1)).join(' '); aiSend(txt,t); };
+}
+/* voice (demo) */
+const VOICE_DEMO='Нужно решить вопрос с дверями в новом офисе';
+let voiceTimer=null;
+function shVoice(){ return `${head('')}<div class="voice"><div class="orb" id="orb">${MIC}</div><div class="vt" id="vt">Слушаю…</div><div class="hint" id="vh">Скажите задачу, например «нужны двери для офиса»</div>
+  <div class="row-actions" style="justify-content:center"><button class="btn ghost sm" data-close>Отмена</button><button class="btn sm" id="vdone" disabled>Отправить</button></div>
+  <div class="hint" style="font-size:12px;margin-top:6px">Демо: в приложении здесь будет распознавание речи</div></div>`; }
+function bVoice(){
+  clearTimeout(voiceTimer); let i=0; const vt=$('#vt');
+  const step=()=>{ if(!sheet||sheet.type!=='voice') return; i+=3; vt.textContent=VOICE_DEMO.slice(0,i)+(i<VOICE_DEMO.length?'…':''); if(i<VOICE_DEMO.length) voiceTimer=setTimeout(step,70); else { $('#vh').textContent='Готово. Отправить?'; $('#vdone').disabled=false; } };
+  voiceTimer=setTimeout(step,700);
+  $('#vdone').onclick=()=>{ const tid=sheet.task; const t=tid?tasks().find(x=>x.id===tid):null; sheet=null; renderSheet(); aiSend(VOICE_DEMO,t); };
+}
+
+render();
+</script>

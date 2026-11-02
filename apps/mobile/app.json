@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Smart Contacts",
+    "slug": "smart-contacts",
+    "scheme": "smartcontacts",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "bundleIdentifier": "am.smartcontacts.app",
+      "supportsTablet": false,
+      "associatedDomains": ["applinks:smartcontacts.app"],
+      "infoPlist": {
+        "NSContactsUsageDescription": "Чтобы разложить ваши контакты по разделам и помочь найти нужного человека. Контакты видите только вы.",
+        "NSCameraUsageDescription": "Чтобы сканировать QR-код профиля или комнаты встречи.",
+        "NSMicrophoneUsageDescription": "Чтобы вы могли надиктовать задачу AI-помощнику.",
+        "NSSpeechRecognitionUsageDescription": "Чтобы превращать вашу речь в текст задачи."
+      }
+    },
+    "plugins": ["expo-router", "expo-secure-store", "expo-contacts", "expo-camera", "expo-speech-recognition"],
+    "experiments": { "typedRoutes": true }
+  }
+}
