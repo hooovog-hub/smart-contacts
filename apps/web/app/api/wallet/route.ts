@@ -36,5 +36,5 @@ export async function GET(req: Request) {
   pass.setBarcodes({ format: "PKBarcodeFormatQR", message: `${process.env.NEXT_PUBLIC_SITE_URL}/${p.handle}`, messageEncoding: "iso-8859-1" });
   // TODO(integrations-engineer): иконки icon.png/logo.png (pass.addBuffer), webServiceURL + authenticationToken для обновлений
 
-  return new Response(pass.getAsBuffer(), { headers: { "Content-Type": "application/vnd.apple.pkpass", "Content-Disposition": `attachment; filename="${p.handle}.pkpass"` } });
+  return new Response(new Uint8Array(pass.getAsBuffer()), { headers: { "Content-Type": "application/vnd.apple.pkpass", "Content-Disposition": `attachment; filename="${p.handle}.pkpass"` } });
 }
