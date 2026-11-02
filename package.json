@@ -1,18 +1,10 @@
 {
   "name": "smart-contacts",
   "private": true,
-  "workspaces": [
-    "apps/mobile",
-    "packages/*"
-  ],
   "scripts": {
-    "mobile": "npm run start -w apps/mobile",
-    "web": "npm run dev --prefix apps/web",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
-    "db:reset": "supabase db reset",
-    "db:types": "supabase gen types typescript --local > packages/shared/src/db.types.ts"
+    "mobile": "npm start --prefix apps/mobile",
+    "web": "echo 'apps/web: deploy via Vercel (vercel dev for local)'",
+    "db:types": "supabase gen types typescript --project-id nqaooorpdptdsucgmwkg > packages/shared/src/db.types.ts"
   },
   "devDependencies": {
     "supabase": "^1.200.0",

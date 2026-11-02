@@ -1,5 +1,5 @@
-// Токены дизайн-системы. Источник: docs/02-design/design-system.md
-export const colors = {
+// Design tokens. Source: docs/02-design/design-system.md
+export const c = {
   bg: "#000000",
   surface: "#161618",
   surface2: "#222225",
@@ -7,16 +7,13 @@ export const colors = {
   muted: "#8E8E93",
   line: "#2A2A2E",
   accent: "#FF8A3D",
+  accentInk: "#FFB57A",
   ok: "#5BD08A",
+  okBg: "#1C2A22",
   gold: "#F5C451",
-  gradient: ["#FFB547", "#FF7A59", "#E85BC4"] as const,
-  avatar: { a1: "#6E7BFF", a2: "#FF8A3D", a3: "#E85BC4", a4: "#3CC9A0", a5: "#4AB4F0", a6: "#A57CFF" },
+  danger: "#FF6B81",
+  onGrad: "#1a0d00",
 };
-export const radius = { card: 18, cardLg: 24, pill: 999, sheet: 28 };
-export const space = { gutter: 16, gap: 8, section: 22 };
-export const type = {
-  title: { fontSize: 24, fontWeight: "700" as const, letterSpacing: -0.5 },
-  body: { fontSize: 15 },
-  meta: { fontSize: 13, color: colors.muted },
-  section: { fontSize: 13, fontWeight: "500" as const, color: colors.muted },
-};
+export const grad = ["#FFB547", "#FF7A59", "#E85BC4"] as const;
+export const avatarColors = ["#6E7BFF", "#FF8A3D", "#E85BC4", "#3CC9A0", "#4AB4F0", "#A57CFF"];
+export const r = { card: 18, lg: 24, pill: 999 };

@@ -1,26 +1,26 @@
-# apps/mobile — приложение (Expo)
+# apps/mobile — приложение (Expo SDK 58)
 
+Работает в **Expo Go** (без нативных модулей вне Expo Go). Голосовая запись в доке появится в собственной сборке (EAS Build).
+
+## Запуск
 ```bash
-npm run start      # Expo dev server → Expo Go на iPhone
-npm run ios        # сборка в симуляторе (нужен Mac)
-npx eas build -p ios --profile preview   # облачная сборка для TestFlight
+npm install
+npx expo start          # QR → Expo Go на iPhone
+eas update --branch preview --message "..."   # опубликовать JS-обновление для Expo Go
 ```
 
 ## Структура
 ```
-app/                         ← маршруты (Expo Router)
-  _layout.tsx                ← провайдеры, тема
-  (tabs)/_layout.tsx         ← плавающая панель из 4 иконок
-  (tabs)/index.tsx           ← Знакомства
-  (tabs)/contacts.tsx        ← Контакты (Разделы / А–Я)
-  (tabs)/assistant.tsx       ← AI-помощник
-  (tabs)/profile.tsx         ← Мой профиль
-  person/[id].tsx            ← профиль человека
-  task/[id].tsx              ← задача AI
+app/
+  _layout.tsx            ← AuthProvider + редиректы (вход → создание профиля → вкладки)
+  sign-in.tsx            ← вход по почте и паролю
+  onboarding.tsx         ← создание профиля (имя, адрес профиля, роль, телефон)
+  (tabs)/index.tsx       ← Знакомства
+  (tabs)/contacts.tsx    ← Контакты: импорт из телефона, Разделы / А–Я, чипы
+  (tabs)/assistant.tsx   ← AI-помощник: последние 2 + архив, док ввода
+  (tabs)/profile.tsx     ← Мой профиль: бренды, членство, QR, поделиться
+  profile/edit.tsx, profile/qr.tsx, contact/[id].tsx, task/[id].tsx
 src/
-  theme/tokens.ts            ← цвета и размеры (docs/02-design/design-system.md)
-  lib/supabase.ts            ← клиент Supabase
-  features/<feature>/        ← api.ts, hooks.ts, components/
-  i18n/                      ← тексты RU / EN / HY
+  lib/ (supabase, auth, config, types, sections)  components/ (ui, Icon, Dock)  features/assistant.ts  theme/tokens.ts
 ```
-Эталон UI: `prototype/smart-contacts-prototype.html`. Ответственный: `mobile-engineer`.
+Конфигурация Supabase и адрес сайта — в `app.json → expo.extra` (publishable key безопасен в клиенте, данные защищает RLS).

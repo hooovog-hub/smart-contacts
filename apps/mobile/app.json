@@ -6,18 +6,24 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
+    "backgroundColor": "#000000",
     "ios": {
       "bundleIdentifier": "am.smartcontacts.app",
       "supportsTablet": false,
-      "associatedDomains": ["applinks:smartcontacts.app"],
       "infoPlist": {
-        "NSContactsUsageDescription": "Чтобы разложить ваши контакты по разделам и помочь найти нужного человека. Контакты видите только вы.",
-        "NSCameraUsageDescription": "Чтобы сканировать QR-код профиля или комнаты встречи.",
-        "NSMicrophoneUsageDescription": "Чтобы вы могли надиктовать задачу AI-помощнику.",
-        "NSSpeechRecognitionUsageDescription": "Чтобы превращать вашу речь в текст задачи."
+        "NSContactsUsageDescription": "Чтобы разложить ваши контакты по разделам и помочь найти нужного человека. Контакты видите только вы."
       }
     },
-    "plugins": ["expo-router", "expo-secure-store", "expo-contacts", "expo-camera", "expo-speech-recognition"],
-    "experiments": { "typedRoutes": true }
+    "android": { "package": "am.smartcontacts.app" },
+    "plugins": [
+      "expo-router",
+      ["expo-contacts", { "contactsPermission": "Чтобы разложить ваши контакты по разделам и помочь найти нужного человека. Контакты видите только вы." }]
+    ],
+    "experiments": { "typedRoutes": false },
+    "extra": {
+      "supabaseUrl": "https://nqaooorpdptdsucgmwkg.supabase.co",
+      "supabaseKey": "sb_publishable_GfWvjvyRAIdtg95QRTjdUg_UjFysWxI",
+      "siteUrl": "https://smart-contacts-how-iq.vercel.app"
+    }
   }
 }
