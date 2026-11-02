@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
 import { Avatar, Button, Chip, Section, Title, st } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
-import { TEMP_RE, classify, orderedSections, sectionOf } from "@/lib/sections";
+import { TEMP_RE, aiSort, orderedSections, useSections } from "@/lib/sections";
 import { supabase } from "@/lib/supabase";
 import type { Contact } from "@/lib/types";
 import { c, r } from "@/theme/tokens";
@@ -22,12 +22,40 @@ export default function ContactsScreen() {
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState("");
+  const { sections: allSections, sectionOf, reload: reloadSections } = useSections();
 
+  // Load the whole book page by page (the server returns max 1000 rows per request).
   const load = useCallback(async () => {
-    const { data } = await supabase.from("contacts").select("*").eq("archived", false).order("display_name");
-    setList((data as Contact[]) ?? []);
+    const all: Contact[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data } = await supabase.from("contacts").select("*").eq("archived", false).order("display_name").range(from, from + 999);
+      all.push(...((data as Contact[]) ?? []));
+      if (!data || data.length < 1000) break;
+    }
+    setList(all);
   }, []);
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(useCallback(() => { load(); reloadSections(); }, [load, reloadSections]));
+
+  /** Claude sorts the given contacts into sections (and may create personal groups). */
+  async function runAiSort(ids: string[]) {
+    if (!ids.length) return;
+    setProgress("AI изучает вашу книжку…");
+    const res = await aiSort(ids, (done, total) => setProgress(`AI раскладывает… ${done} из ${total}`));
+    await reloadSections();
+    await load();
+    const extra = res.added.length ? `\nНовые разделы: ${res.added.join(", ")}.` : "";
+    const fail = res.failed ? `\nНе успел: ${res.failed} — нажмите «Разложить с AI» ещё раз.` : "";
+    Alert.alert("Готово", `Разложено по разделам: ${res.sorted} из ${ids.length}.${extra}${fail}`);
+  }
+
+  async function sortWithAi(onlyUnsorted: boolean) {
+    if (busy) return;
+    const ids = list.filter((x) => !x.category_locked && (!onlyUnsorted || x.category_key === "unsorted")).map((x) => x.id);
+    setBusy(true);
+    try { await runAiSort(ids); }
+    catch (e) { Alert.alert("Ошибка AI", e instanceof Error ? e.message : String(e)); }
+    finally { setBusy(false); setProgress(""); }
+  }
 
   async function importPhone() {
     if (!session || busy) return;
@@ -64,7 +92,7 @@ export default function ContactsScreen() {
           const name = (p.name || [p.firstName, p.lastName].filter(Boolean).join(" ") || p.company || "").trim();
           const phone = p.phoneNumbers?.find((n) => n.number)?.number?.trim() ?? "";
           const text = [name, p.company, p.jobTitle].filter(Boolean).join(" ");
-          return { owner_id: session.user.id, display_name: name, phone, role: [p.jobTitle, p.company].filter(Boolean).join(", ") || null, category_key: classify(text), source: "phonebook", is_temporary: TEMP_RE.test(text) };
+          return { owner_id: session.user.id, display_name: name, phone, role: [p.jobTitle, p.company].filter(Boolean).join(", ") || null, category_key: "unsorted", source: "phonebook", is_temporary: TEMP_RE.test(text) };
         })
         .filter((x) => {
           const d = x.phone.replace(/\D/g, "");
@@ -72,14 +100,16 @@ export default function ContactsScreen() {
           seen.add(d);
           return true;
         });
+      const newIds: string[] = [];
       for (let i = 0; i < rows.length; i += 200) {
         setProgress(`Сохраняю… ${Math.min(i + 200, rows.length)} из ${rows.length}`);
-        const { error } = await supabase.from("contacts").insert(rows.slice(i, i + 200));
+        const { data, error } = await supabase.from("contacts").insert(rows.slice(i, i + 200)).select("id");
         if (error) throw new Error(error.message);
+        newIds.push(...(data ?? []).map((d) => d.id as string));
       }
       await load();
-      const sorted = rows.filter((x) => x.category_key !== "unsorted").length;
-      Alert.alert("Готово", `В телефоне ${people.length}. Добавлено ${rows.length}. Разложено по разделам: ${sorted}.`);
+      if (newIds.length) await runAiSort(newIds);
+      else Alert.alert("Готово", "Новых контактов нет — все уже в книжке.");
     } catch (e) {
       Alert.alert("Ошибка импорта", e instanceof Error ? e.message : String(e));
     } finally {
@@ -91,9 +121,10 @@ export default function ContactsScreen() {
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();
     return s ? list.filter((x) => [x.display_name, x.role, x.note, sectionOf(x.category_key).name].join(" ").toLowerCase().includes(s)) : list;
-  }, [list, q]);
+  }, [list, q, sectionOf]);
   const counts = useMemo(() => shown.reduce<Record<string, number>>((a, x) => ((a[x.category_key] = (a[x.category_key] ?? 0) + 1), a), {}), [shown]);
-  const sections = orderedSections(counts);
+  const sections = orderedSections(allSections, counts);
+  const unsortedCount = list.filter((x) => x.category_key === "unsorted").length;
 
   const Row = ({ x, showCat }: { x: Contact; showCat?: boolean }) => (
     <Pressable onPress={() => router.push(`/contact/${x.id}`)} style={st.row}>
@@ -161,8 +192,19 @@ export default function ContactsScreen() {
             {sections.map((s) => <Chip key={s.key} label={`${s.name} ${counts[s.key]}`} color={s.color} active={cat === s.key} onPress={() => setCat(s.key)} />)}
           </ScrollView>
         ) : null}
+        {list.length > 0 && (busy || unsortedCount > 0) ? (
+          <View style={{ marginTop: 12, gap: 8 }}>
+            {unsortedCount > 0 ? <Button kind="grad" title={`✨ Разложить с AI · ${unsortedCount} без раздела`} onPress={() => sortWithAi(true)} loading={busy} /> : null}
+            {progress ? <Text style={[st.text, { color: c.muted, textAlign: "center" }]}>{progress}</Text> : null}
+          </View>
+        ) : null}
         {body}
-        {list.length > 0 ? <Button kind="ghost" small title="Импортировать ещё из телефона" onPress={importPhone} loading={busy} style={{ marginTop: 20 }} /> : null}
+        {list.length > 0 ? (
+          <View style={{ marginTop: 20, gap: 8 }}>
+            <Button kind="ghost" small title="Импортировать ещё из телефона" onPress={importPhone} loading={busy} />
+            <Button kind="ghost" small title="Переразложить всё с AI" onPress={() => Alert.alert("Переразложить всё?", "AI заново разложит все контакты. Те, что вы переносили вручную, останутся на месте.", [{ text: "Отмена", style: "cancel" }, { text: "Да", onPress: () => sortWithAi(false) }])} loading={busy} />
+          </View>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );

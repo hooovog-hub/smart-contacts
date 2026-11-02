@@ -4,7 +4,7 @@ import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
 import { Avatar, Button, Chip, Field, Section } from "@/components/ui";
-import { SECTIONS } from "@/lib/sections";
+import { useSections } from "@/lib/sections";
 import { supabase } from "@/lib/supabase";
 import type { Contact } from "@/lib/types";
 import { c } from "@/theme/tokens";
@@ -15,13 +15,15 @@ export default function ContactScreen() {
   const [x, setX] = useState<Contact | null>(null);
   const [note, setNote] = useState("");
   const [saved, setSaved] = useState(false);
+  const { sections } = useSections();
 
   useEffect(() => {
     supabase.from("contacts").select("*").eq("id", id).single().then(({ data }) => { setX(data as Contact); setNote((data as Contact)?.note ?? ""); });
   }, [id]);
   if (!x) return <View style={{ flex: 1, backgroundColor: c.bg }} />;
 
-  async function setCat(k: string) { setX({ ...x!, category_key: k }); await supabase.from("contacts").update({ category_key: k }).eq("id", x!.id); }
+  // A hand-picked section is locked: the AI never moves this contact again.
+  async function setCat(k: string) { setX({ ...x!, category_key: k }); await supabase.from("contacts").update({ category_key: k, category_locked: true }).eq("id", x!.id); }
   async function saveNote() { await supabase.from("contacts").update({ note: note.trim() || null }).eq("id", x!.id); setSaved(true); }
 
   return (
@@ -36,7 +38,7 @@ export default function ContactScreen() {
         {x.phone ? <Button kind="grad" title={`Позвонить ${x.phone}`} onPress={() => Linking.openURL(`tel:${x.phone!.replace(/\s/g, "")}`)} style={{ marginTop: 18 }} /> : null}
         <Section>Раздел</Section>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {SECTIONS.map((s) => <Chip key={s.key} label={s.name} color={s.color} active={x.category_key === s.key} onPress={() => setCat(s.key)} />)}
+          {sections.map((s) => <Chip key={s.key} label={s.name} color={s.color} active={x.category_key === s.key} onPress={() => setCat(s.key)} />)}
         </View>
         <Section>Моя заметка (видите только вы)</Section>
         <Field label="" value={note} onChangeText={(v) => { setNote(v); setSaved(false); }} multiline placeholder="Где познакомились, о чём говорили…" />
