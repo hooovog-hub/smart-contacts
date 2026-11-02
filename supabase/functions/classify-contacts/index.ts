@@ -14,14 +14,17 @@ const API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 const PALETTE = ["#3CC9A0", "#6E7BFF", "#4AB4F0", "#FF8A3D", "#E85BC4", "#A57CFF", "#FFB547", "#FF7A59"];
 
 const RULES = `Как понимать записи:
-- Записи на армянском, русском, английском и в транслите (Hayk jan, Ашот ախպեր, Varpet Armen, Mama, Papik, Tatik, Kuyrik, Exbayr, Qavor, Kn = жена, Ktor).
-- Раздел «Семья» — ТОЛЬКО если запись прямо называет родство владельцу как отдельное слово: «Папа», «Mama jan», «Tatik», «Брат Арам», «Kuyrik». Подстроки не считаются: «Papaya», «Mamikonyan», «Bratstvo» — НЕ семья.
-- Слово после имени часто компания или бренд: «Gor Papaya» = Гор из компании Papaya → работа/бизнес-контакт, а не семья.
+- Записи на армянском, русском, английском и в транслите. Владелец — армянин из Еревана, учитывай армянские привычки.
+- «Семья» — только явное родство владельцу, отдельным словом: Mama, Papa, Папа, Мама, Papik, Tatik (бабушка/дедушка), Exbayr/Axper как «брат», Qur (сестра), Kuyrik, Qavor/Кавор (крёстный), Knqahayr, Knqamayr, Zokanch, Sves, Барекам/Barekam/բարեկամ (= РОДСТВЕННИК, это семья, а не друг).
+- ВАЖНО: «Qeri», «Hopar», «Дядя», «Dzyadz», «Тётя», «Mor», «Akhper/Ахпер», «Jan» в Армении часто говорят из уважения чужим людям («дядя Армен», «Ашот ахпер»). Это НЕ доказательство родства. Без других подсказок → "unsorted".
+- Подстроки не считаются родством: «Papaya», «Mamikonyan» — не семья.
+- Если в записи непонятное слово (Ktor, Krug, @nker и т. п.) и ты не уверен — "unsorted". Не угадывай.
+- Слово после имени часто компания или бренд: «Gor Papaya» = Гор из компании Papaya.
 - «taxi», «такси», «Yandex», «GG» → такси/транспорт. Hotel, отель → путешествия.
 - «varpet», «мастер», «сантехник», «электрик», «двери», «окна» → ремонт.
 - Dr., бжишк (բժիշկ), стоматолог, клиника → медицина.
-- Если владелец указал свою компанию — люди с её названием в записи это его команда.
-- Если не понятно, кто это (просто имя без подсказок) — key "unsorted". Лучше честно не знать, чем ошибиться.`;
+- Люди с названием компании владельца — его команда.
+- Просто имя без подсказок → "unsorted". Лучше честно не знать, чем ошибиться.`;
 
 type Cat = { key: string; name: string; color: string | null; is_system: boolean; position: number };
 
@@ -78,22 +81,31 @@ ${RULES}
       if (!todo.length) return Response.json({ done: 0, sorted: 0 });
       const list = todo.map((r: any, i: number) => `${i}\t${r.display_name}${r.role ? ` — ${r.role}` : ""}${r.note ? ` (заметка: ${r.note})` : ""}`).join("\n");
       const keys = new Set(cats.map((c) => c.key));
+      // The owner's own manual choices teach the model his personal vocabulary.
+      const { data: taught } = await sb.from("contacts").select("display_name, role, category_key").eq("category_locked", true).limit(80);
+      const lessons = (taught ?? []).map((t: any) => `${t.display_name}${t.role ? ` — ${t.role}` : ""} → ${t.category_key}`).join("\n");
       const out = await claude(
         `Ты раскладываешь записную книжку бизнесмена (${owner}) по разделам.
 Разделы (key=название): ${cats.map((c) => `${c.key}=${c.name}`).join(", ")}, unsorted=Без раздела.
 ${RULES}
+${lessons ? `\nВладелец сам разложил эти контакты. Это его личный словарь — для похожих записей следуй ЕГО логике, она важнее общих правил:\n${lessons}\n` : ""}
 Подумай над каждой записью: кто это скорее всего такой для владельца книжки.
-Верни ТОЛЬКО JSON: {"r":[[номер,"key"], ...]} для каждой строки.`,
+Верни ответ через инструмент save: для КАЖДОЙ строки объект {i: номер строки, k: "key"}.`,
         list,
-        4000,
+        6000,
+        SAVE_TOOL,
       );
       const byKey = new Map<string, string[]>();
-      for (const pair of (out?.r ?? []) as [number, string][]) {
-        const row = todo[Number(pair?.[0])];
+      for (const item of (out?.r ?? []) as { i: number; k: string }[]) {
+        const row = todo[Number(item?.i)];
         if (!row) continue;
-        const k = keys.has(pair[1]) ? pair[1] : "unsorted";
+        const k = keys.has(item.k) ? item.k : "unsorted";
         byKey.set(k, [...(byKey.get(k) ?? []), row.id]);
       }
+      // Rows the model skipped are marked as processed too, as "unsorted".
+      const answered = new Set([...byKey.values()].flat());
+      const missed = todo.filter((r: any) => !answered.has(r.id)).map((r: any) => r.id);
+      if (missed.length) byKey.set("unsorted", [...(byKey.get("unsorted") ?? []), ...missed]);
       const now = new Date().toISOString();
       let sorted = 0;
       for (const [k, list] of byKey) {
@@ -118,14 +130,28 @@ async function allContacts(sb: any, cols: string) {
   }
 }
 
-async function claude(system: string, user: string, maxTokens: number) {
+const SAVE_TOOL = {
+  name: "save",
+  description: "Save the section for every contact line.",
+  input_schema: {
+    type: "object",
+    properties: { r: { type: "array", items: { type: "object", properties: { i: { type: "integer" }, k: { type: "string" } }, required: ["i", "k"] } } },
+    required: ["r"],
+  },
+};
+
+async function claude(system: string, user: string, maxTokens: number, tool?: typeof SAVE_TOOL) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, system, messages: [{ role: "user", content: user }] }),
+    body: JSON.stringify({
+      model: MODEL, max_tokens: maxTokens, system, messages: [{ role: "user", content: user }],
+      ...(tool ? { tools: [tool], tool_choice: { type: "tool", name: tool.name } } : {}),
+    }),
   });
   if (!res.ok) throw new Error(`Claude ${res.status}: ${(await res.text()).slice(0, 200)}`);
   const j = await res.json();
+  if (tool) return j.content?.find((b: any) => b.type === "tool_use")?.input ?? null;
   const text: string = j.content?.find((b: any) => b.type === "text")?.text ?? "";
   try { return JSON.parse(text); } catch { /* fallthrough */ }
   const m = text.match(/\{[\s\S]*\}/);
