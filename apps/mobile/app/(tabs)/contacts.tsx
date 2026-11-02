@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import type { Contact } from "@/lib/types";
 import { c, r } from "@/theme/tokens";
 
+type PhoneContact = Awaited<ReturnType<typeof Contacts.getContactsAsync>>["data"][number];
 // Spec: docs/01-product/features/contacts-book.md
 export default function ContactsScreen() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function ContactsScreen() {
   const [cat, setCat] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState("");
 
   const load = useCallback(async () => {
     const { data } = await supabase.from("contacts").select("*").eq("archived", false).order("display_name");
@@ -28,28 +30,62 @@ export default function ContactsScreen() {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   async function importPhone() {
-    if (!session) return;
-    const { status } = await Contacts.requestPermissionsAsync();
-    if (status !== "granted") return Alert.alert("Нет доступа", "Разрешите доступ к контактам в настройках iPhone.");
+    if (!session || busy) return;
     setBusy(true);
-    const { data } = await Contacts.getContactsAsync({ fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Company, Contacts.Fields.JobTitle] });
-    const existing = new Set(list.map((x) => (x.phone ?? "").replace(/\D/g, "")));
-    const rows = data
-      .filter((p) => p.name && p.phoneNumbers?.[0]?.number)
-      .map((p) => {
-        const phone = p.phoneNumbers![0].number!;
-        const text = [p.name, p.company, p.jobTitle].filter(Boolean).join(" ");
-        return { owner_id: session.user.id, display_name: p.name!, phone, role: [p.jobTitle, p.company].filter(Boolean).join(", ") || null, category_key: classify(text), source: "phonebook", is_temporary: TEMP_RE.test(text) };
-      })
-      .filter((x) => !existing.has(x.phone.replace(/\D/g, "")));
-    for (let i = 0; i < rows.length; i += 200) {
-      const { error } = await supabase.from("contacts").insert(rows.slice(i, i + 200));
-      if (error) { setBusy(false); return Alert.alert("Ошибка импорта", error.message); }
+    setProgress("Запрашиваю доступ…");
+    try {
+      const { status } = await Contacts.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Нет доступа", "Разрешите доступ к контактам: Настройки → Expo Go → Контакты → Полный доступ.");
+        return;
+      }
+      // Read the address book in pages so big books don't freeze the app.
+      const people: PhoneContact[] = [];
+      let pageOffset = 0;
+      for (;;) {
+        setProgress(`Читаю контакты… ${people.length}`);
+        const page = await Contacts.getContactsAsync({
+          fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Company, Contacts.Fields.JobTitle],
+          pageSize: 500,
+          pageOffset,
+        });
+        people.push(...page.data);
+        if (!page.hasNextPage || page.data.length === 0) break;
+        pageOffset += page.data.length;
+      }
+      if (people.length === 0) {
+        Alert.alert("Контакты не видны", "iPhone дал доступ к 0 контактам. Откройте Настройки → Expo Go → Контакты и выберите «Полный доступ».");
+        return;
+      }
+      const existing = new Set(list.map((x) => (x.phone ?? "").replace(/\D/g, "")));
+      const seen = new Set<string>();
+      const rows = people
+        .map((p) => {
+          const name = (p.name || [p.firstName, p.lastName].filter(Boolean).join(" ") || p.company || "").trim();
+          const phone = p.phoneNumbers?.find((n) => n.number)?.number?.trim() ?? "";
+          const text = [name, p.company, p.jobTitle].filter(Boolean).join(" ");
+          return { owner_id: session.user.id, display_name: name, phone, role: [p.jobTitle, p.company].filter(Boolean).join(", ") || null, category_key: classify(text), source: "phonebook", is_temporary: TEMP_RE.test(text) };
+        })
+        .filter((x) => {
+          const d = x.phone.replace(/\D/g, "");
+          if (!x.display_name || !d || existing.has(d) || seen.has(d)) return false;
+          seen.add(d);
+          return true;
+        });
+      for (let i = 0; i < rows.length; i += 200) {
+        setProgress(`Сохраняю… ${Math.min(i + 200, rows.length)} из ${rows.length}`);
+        const { error } = await supabase.from("contacts").insert(rows.slice(i, i + 200));
+        if (error) throw new Error(error.message);
+      }
+      await load();
+      const sorted = rows.filter((x) => x.category_key !== "unsorted").length;
+      Alert.alert("Готово", `В телефоне ${people.length}. Добавлено ${rows.length}. Разложено по разделам: ${sorted}.`);
+    } catch (e) {
+      Alert.alert("Ошибка импорта", e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+      setProgress("");
     }
-    setBusy(false);
-    await load();
-    const sorted = rows.filter((x) => x.category_key !== "unsorted").length;
-    Alert.alert("Готово", `Добавлено ${rows.length}. Разложено по разделам: ${sorted}.`);
   }
 
   const shown = useMemo(() => {
@@ -78,6 +114,7 @@ export default function ContactsScreen() {
       <View style={{ marginTop: 24, gap: 12 }}>
         <Text style={[st.text, { color: c.muted }]}>Книжка пока пустая. Импортируйте контакты из телефона — разложим их по разделам: Семья, Работа, Друзья, Ремонт…</Text>
         <Button kind="grad" title="Импортировать из телефона" onPress={importPhone} loading={busy} />
+        {progress ? <Text style={[st.text, { color: c.muted, textAlign: "center" }]}>{progress}</Text> : null}
       </View>
     );
   } else if (mode === "az" || q) {

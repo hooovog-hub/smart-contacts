@@ -19,4 +19,4 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Publish update
         working_directory: ./apps/mobile
-        run: npx -y eas-cli@latest update --branch preview --platform ios --non-interactive --message "Preview update"
+        run: npx -y eas-cli@latest update --channel preview --platform ios --non-interactive --message "Preview update"
