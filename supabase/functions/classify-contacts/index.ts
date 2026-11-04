@@ -82,7 +82,7 @@ ${RULES}
       const list = todo.map((r: any, i: number) => `${i}\t${r.display_name}${r.role ? ` — ${r.role}` : ""}${r.note ? ` (заметка: ${r.note})` : ""}`).join("\n");
       const keys = new Set(cats.map((c) => c.key));
       // The owner's own manual choices teach the model his personal vocabulary.
-      const { data: taught } = await sb.from("contacts").select("display_name, role, category_key").eq("category_locked", true).limit(80);
+      const { data: taught } = await sb.from("contacts").select("display_name, role, category_key").eq("category_locked", true).eq("is_demo", false).limit(80);
       const lessons = (taught ?? []).map((t: any) => `${t.display_name}${t.role ? ` — ${t.role}` : ""} → ${t.category_key}`).join("\n");
       const out = await claude(
         `Ты раскладываешь записную книжку бизнесмена (${owner}) по разделам.

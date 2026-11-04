@@ -10,7 +10,7 @@ export interface Profile {
 }
 export interface Contact {
   id: string; display_name: string; phone?: string | null; role?: string | null; category_key: string;
-  note?: string | null; category_locked?: boolean; source: "phonebook" | "qr" | "room" | "manual"; created_at: string;
+  note?: string | null; category_locked?: boolean; linked_profile_id?: string | null; met_room_id?: string | null; met_at?: string | null; source: "phonebook" | "qr" | "room" | "manual"; created_at: string;
 }
 export interface AiPerson { contactId: string; kind: "direct" | "indirect"; why: string; ask: string }
 export interface AiTask { id: string; title: string; category: string; status: "open" | "done"; created_at: string }
