@@ -1,0 +1,11 @@
+node_modules
+**/package-lock.json
+.expo
+dist
+prototype
+marketing
+docs
+*.md
+*.sql
+*.html
+packages/shared/src/db.types.ts

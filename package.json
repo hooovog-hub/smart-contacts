@@ -4,10 +4,37 @@
   "scripts": {
     "mobile": "npm start --prefix apps/mobile",
     "web": "echo 'apps/web: deploy via Vercel (vercel dev for local)'",
-    "db:types": "supabase gen types typescript --project-id nqaooorpdptdsucgmwkg > packages/shared/src/db.types.ts"
+    "db:types": "supabase gen types typescript --project-id nqaooorpdptdsucgmwkg > packages/shared/src/db.types.ts",
+    "typecheck": "tsc -p tsconfig.json && tsc -p packages/shared && npm run typecheck --prefix apps/mobile",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.14.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.10.0",
     "supabase": "^1.200.0",
-    "typescript": "^5.5.0"
+    "typescript": "^5.5.0",
+    "typescript-eslint": "^8.72.2",
+    "vitest": "^5.1.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }

@@ -20,8 +20,12 @@ export const CONTACT_SECTIONS = [
 ] as const;
 
 export const TASK_CATEGORIES: { key: TaskCategory; name: string }[] = [
-  { key: "biz", name: "Бизнес" }, { key: "personal", name: "Личное" }, { key: "friends", name: "Друзья" },
-  { key: "family", name: "Семья" }, { key: "med", name: "Медицина" }, { key: "home", name: "Дом и ремонт" },
+  { key: "biz", name: "Бизнес" },
+  { key: "personal", name: "Личное" },
+  { key: "friends", name: "Друзья" },
+  { key: "family", name: "Семья" },
+  { key: "med", name: "Медицина" },
+  { key: "home", name: "Дом и ремонт" },
 ];
 
 export const PLANS = {
@@ -30,10 +34,68 @@ export const PLANS = {
   business: { monthAMD: 25000, yearAMD: 250000, seats: 5, extraSeatAMD: 4000, aiTasksPerMonth: Infinity },
 } as const;
 
-export interface Brand { id: string; name: string; sphere?: string; description?: string; foundedYear?: number; teamSize?: string; offer?: string; links: Partial<Record<"instagram" | "site" | "facebook" | "linkedin" | "youtube" | "tiktok", string>>; }
-export interface Membership { id: string; orgName: string; statusTitle: string; sinceYear?: number; verified: boolean; }
-export interface Award { id: string; title: string; kind: AwardKind; year?: number; source?: string; }
-export interface Profile { id: string; handle: string; fullName: string; role?: string; bio?: string; city?: string; languages: string[]; phone?: string; links: Record<string, string>; helps: string[]; seeks: string[]; avatarUrl?: string; plan: Plan; brands: Brand[]; memberships: Membership[]; awards: Award[]; }
-export interface Contact { id: string; displayName: string; phone?: string; role?: string; categoryKey: string; note?: string; linkedProfileId?: string; source: "phonebook" | "qr" | "room" | "manual"; isTemporary: boolean; }
-export interface AiPerson { contactId: string; kind: "direct" | "indirect"; why: string; ask: string; }
-export interface AiReply { taskId: string; category: TaskCategory; reply: string; people: AiPerson[]; }
+export interface Brand {
+  id: string;
+  name: string;
+  sphere?: string;
+  description?: string;
+  foundedYear?: number;
+  teamSize?: string;
+  offer?: string;
+  links: Partial<Record<"instagram" | "site" | "facebook" | "linkedin" | "youtube" | "tiktok", string>>;
+}
+export interface Membership {
+  id: string;
+  orgName: string;
+  statusTitle: string;
+  sinceYear?: number;
+  verified: boolean;
+}
+export interface Award {
+  id: string;
+  title: string;
+  kind: AwardKind;
+  year?: number;
+  source?: string;
+}
+export interface Profile {
+  id: string;
+  handle: string;
+  fullName: string;
+  role?: string;
+  bio?: string;
+  city?: string;
+  languages: string[];
+  phone?: string;
+  links: Record<string, string>;
+  helps: string[];
+  seeks: string[];
+  avatarUrl?: string;
+  plan: Plan;
+  brands: Brand[];
+  memberships: Membership[];
+  awards: Award[];
+}
+export interface Contact {
+  id: string;
+  displayName: string;
+  phone?: string;
+  role?: string;
+  categoryKey: string;
+  note?: string;
+  linkedProfileId?: string;
+  source: "phonebook" | "qr" | "room" | "manual";
+  isTemporary: boolean;
+}
+export interface AiPerson {
+  contactId: string;
+  kind: "direct" | "indirect";
+  why: string;
+  ask: string;
+}
+export interface AiReply {
+  taskId: string;
+  category: TaskCategory;
+  reply: string;
+  people: AiPerson[];
+}

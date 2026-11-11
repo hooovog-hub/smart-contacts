@@ -15,12 +15,33 @@ export default function MyQR() {
   const url = `${SITE_URL}/${profile.handle}`;
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg, padding: 20 }}>
-      <Pressable onPress={() => router.back()} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: c.surface, alignItems: "center", justifyContent: "center" }}><Icon name="x" size={18} /></Pressable>
+      <Pressable
+        onPress={() => router.back()}
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 19,
+          backgroundColor: c.surface,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Icon name="x" size={18} />
+      </Pressable>
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 18 }}>
         <Text style={{ color: c.ink, fontSize: 24, fontWeight: "700" }}>{profile.full_name}</Text>
-        <View style={{ backgroundColor: "#fff", padding: 18, borderRadius: 24 }}><QRCode value={url} size={240} /></View>
-        <Text style={{ color: c.muted, textAlign: "center" }}>Наведите камеру — откроется ваш профиль{"\n"}с кнопкой «Сохранить контакт»</Text>
-        <Button kind="grad" title="Отправить ссылку" onPress={() => Share.share({ message: url })} style={{ alignSelf: "stretch" }} />
+        <View style={{ backgroundColor: "#fff", padding: 18, borderRadius: 24 }}>
+          <QRCode value={url} size={240} />
+        </View>
+        <Text style={{ color: c.muted, textAlign: "center" }}>
+          Наведите камеру — откроется ваш профиль{"\n"}с кнопкой «Сохранить контакт»
+        </Text>
+        <Button
+          kind="grad"
+          title="Отправить ссылку"
+          onPress={() => Share.share({ message: url })}
+          style={{ alignSelf: "stretch" }}
+        />
       </View>
     </SafeAreaView>
   );

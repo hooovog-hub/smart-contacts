@@ -4,12 +4,18 @@ export const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
 
 export async function rest(path, headers = {}) {
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers: { apikey: SUPABASE_KEY, Accept: "application/json", ...headers } });
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    headers: { apikey: SUPABASE_KEY, Accept: "application/json", ...headers },
+  });
   if (!r.ok) throw new Error(`Supabase ${r.status}`);
   return r.json();
 }
 
-export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+export const esc = (s) =>
+  String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
 
 // Design tokens: docs/02-design/design-system.md
 export function page(title, body) {

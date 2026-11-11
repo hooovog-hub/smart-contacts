@@ -28,13 +28,23 @@ export default function ContactsScreen() {
   const load = useCallback(async () => {
     const all: Contact[] = [];
     for (let from = 0; ; from += 1000) {
-      const { data } = await supabase.from("contacts").select("*").eq("archived", false).order("display_name").range(from, from + 999);
+      const { data } = await supabase
+        .from("contacts")
+        .select("*")
+        .eq("archived", false)
+        .order("display_name")
+        .range(from, from + 999);
       all.push(...((data as Contact[]) ?? []));
       if (!data || data.length < 1000) break;
     }
     setList(all);
   }, []);
-  useFocusEffect(useCallback(() => { load(); reloadSections(); }, [load, reloadSections]));
+  useFocusEffect(
+    useCallback(() => {
+      load();
+      reloadSections();
+    }, [load, reloadSections]),
+  );
 
   /** Claude sorts the given contacts into sections (and may create personal groups). */
   async function runAiSort(ids: string[]) {
@@ -50,11 +60,18 @@ export default function ContactsScreen() {
 
   async function sortWithAi(onlyUnsorted: boolean) {
     if (busy) return;
-    const ids = list.filter((x) => !x.category_locked && (!onlyUnsorted || x.category_key === "unsorted")).map((x) => x.id);
+    const ids = list
+      .filter((x) => !x.category_locked && (!onlyUnsorted || x.category_key === "unsorted"))
+      .map((x) => x.id);
     setBusy(true);
-    try { await runAiSort(ids); }
-    catch (e) { Alert.alert("Ошибка AI", e instanceof Error ? e.message : String(e)); }
-    finally { setBusy(false); setProgress(""); }
+    try {
+      await runAiSort(ids);
+    } catch (e) {
+      Alert.alert("Ошибка AI", e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+      setProgress("");
+    }
   }
 
   async function importPhone() {
@@ -82,7 +99,10 @@ export default function ContactsScreen() {
         pageOffset += page.data.length;
       }
       if (people.length === 0) {
-        Alert.alert("Контакты не видны", "iPhone дал доступ к 0 контактам. Откройте Настройки → Expo Go → Контакты и выберите «Полный доступ».");
+        Alert.alert(
+          "Контакты не видны",
+          "iPhone дал доступ к 0 контактам. Откройте Настройки → Expo Go → Контакты и выберите «Полный доступ».",
+        );
         return;
       }
       const existing = new Set(list.map((x) => (x.phone ?? "").replace(/\D/g, "")));
@@ -92,7 +112,15 @@ export default function ContactsScreen() {
           const name = (p.name || [p.firstName, p.lastName].filter(Boolean).join(" ") || p.company || "").trim();
           const phone = p.phoneNumbers?.find((n) => n.number)?.number?.trim() ?? "";
           const text = [name, p.company, p.jobTitle].filter(Boolean).join(" ");
-          return { owner_id: session.user.id, display_name: name, phone, role: [p.jobTitle, p.company].filter(Boolean).join(", ") || null, category_key: "unsorted", source: "phonebook", is_temporary: TEMP_RE.test(text) };
+          return {
+            owner_id: session.user.id,
+            display_name: name,
+            phone,
+            role: [p.jobTitle, p.company].filter(Boolean).join(", ") || null,
+            category_key: "unsorted",
+            source: "phonebook",
+            is_temporary: TEMP_RE.test(text),
+          };
         })
         .filter((x) => {
           const d = x.phone.replace(/\D/g, "");
@@ -103,7 +131,10 @@ export default function ContactsScreen() {
       const newIds: string[] = [];
       for (let i = 0; i < rows.length; i += 200) {
         setProgress(`Сохраняю… ${Math.min(i + 200, rows.length)} из ${rows.length}`);
-        const { data, error } = await supabase.from("contacts").insert(rows.slice(i, i + 200)).select("id");
+        const { data, error } = await supabase
+          .from("contacts")
+          .insert(rows.slice(i, i + 200))
+          .select("id");
         if (error) throw new Error(error.message);
         newIds.push(...(data ?? []).map((d) => d.id as string));
       }
@@ -120,9 +151,16 @@ export default function ContactsScreen() {
 
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return s ? list.filter((x) => [x.display_name, x.role, x.note, sectionOf(x.category_key).name].join(" ").toLowerCase().includes(s)) : list;
+    return s
+      ? list.filter((x) =>
+          [x.display_name, x.role, x.note, sectionOf(x.category_key).name].join(" ").toLowerCase().includes(s),
+        )
+      : list;
   }, [list, q, sectionOf]);
-  const counts = useMemo(() => shown.reduce<Record<string, number>>((a, x) => ((a[x.category_key] = (a[x.category_key] ?? 0) + 1), a), {}), [shown]);
+  const counts = useMemo(
+    () => shown.reduce<Record<string, number>>((a, x) => ((a[x.category_key] = (a[x.category_key] ?? 0) + 1), a), {}),
+    [shown],
+  );
   const sections = orderedSections(allSections, counts);
   const unsortedCount = list.filter((x) => x.category_key === "unsorted").length;
 
@@ -130,38 +168,79 @@ export default function ContactsScreen() {
     <Pressable onPress={() => router.push(`/contact/${x.id}`)} style={st.row}>
       <Avatar name={x.display_name} seed={x.id} />
       <View style={{ flex: 1 }}>
-        <Text style={st.name} numberOfLines={1}>{x.display_name}</Text>
-        <Text style={st.meta} numberOfLines={1}>{[x.role, showCat ? sectionOf(x.category_key).name : null].filter(Boolean).join(" · ") || x.phone}</Text>
+        <Text style={st.name} numberOfLines={1}>
+          {x.display_name}
+        </Text>
+        <Text style={st.meta} numberOfLines={1}>
+          {[x.role, showCat ? sectionOf(x.category_key).name : null].filter(Boolean).join(" · ") || x.phone}
+        </Text>
       </View>
     </Pressable>
   );
   const Group = ({ items, showCat }: { items: Contact[]; showCat?: boolean }) => (
-    <View style={{ backgroundColor: c.surface, borderRadius: r.card, overflow: "hidden" }}>{items.map((x) => <Row key={x.id} x={x} showCat={showCat} />)}</View>
+    <View style={{ backgroundColor: c.surface, borderRadius: r.card, overflow: "hidden" }}>
+      {items.map((x) => (
+        <Row key={x.id} x={x} showCat={showCat} />
+      ))}
+    </View>
   );
 
   let body;
   if (!list.length) {
     body = (
       <View style={{ marginTop: 24, gap: 12 }}>
-        <Text style={[st.text, { color: c.muted }]}>Книжка пока пустая. Импортируйте контакты из телефона — разложим их по разделам: Семья, Работа, Друзья, Ремонт…</Text>
+        <Text style={[st.text, { color: c.muted }]}>
+          Книжка пока пустая. Импортируйте контакты из телефона — разложим их по разделам: Семья, Работа, Друзья,
+          Ремонт…
+        </Text>
         <Button kind="grad" title="Импортировать из телефона" onPress={importPhone} loading={busy} />
         {progress ? <Text style={[st.text, { color: c.muted, textAlign: "center" }]}>{progress}</Text> : null}
       </View>
     );
   } else if (mode === "az" || q) {
     const groups = new Map<string, Contact[]>();
-    shown.forEach((x) => { const L = (x.display_name[0] ?? "#").toUpperCase(); groups.set(L, [...(groups.get(L) ?? []), x]); });
-    body = [...groups.entries()].map(([L, items]) => (<View key={L}><Text style={{ color: c.accent, fontWeight: "700", marginTop: 16, marginBottom: 6, marginLeft: 2 }}>{L}</Text><Group items={items} showCat /></View>));
+    shown.forEach((x) => {
+      const L = (x.display_name[0] ?? "#").toUpperCase();
+      groups.set(L, [...(groups.get(L) ?? []), x]);
+    });
+    body = [...groups.entries()].map(([L, items]) => (
+      <View key={L}>
+        <Text style={{ color: c.accent, fontWeight: "700", marginTop: 16, marginBottom: 6, marginLeft: 2 }}>{L}</Text>
+        <Group items={items} showCat />
+      </View>
+    ));
   } else if (cat) {
     const s = sectionOf(cat);
-    body = (<><Section right={<Pressable onPress={() => setCat(null)}><Text style={{ color: c.muted }}>‹ Все разделы</Text></Pressable>}>{s.name} · {counts[cat] ?? 0}</Section><Group items={shown.filter((x) => x.category_key === cat)} /></>);
+    body = (
+      <>
+        <Section
+          right={
+            <Pressable onPress={() => setCat(null)}>
+              <Text style={{ color: c.muted }}>‹ Все разделы</Text>
+            </Pressable>
+          }
+        >
+          {s.name} · {counts[cat] ?? 0}
+        </Section>
+        <Group items={shown.filter((x) => x.category_key === cat)} />
+      </>
+    );
   } else {
     body = sections.map((s) => {
       const items = shown.filter((x) => x.category_key === s.key);
       return (
         <View key={s.key}>
-          <Section right={items.length > 3 ? <Pressable onPress={() => setCat(s.key)}><Text style={{ color: c.muted }}>Все ›</Text></Pressable> : null}>
-            <Text style={{ color: s.color }}>● </Text>{s.name} · {items.length}
+          <Section
+            right={
+              items.length > 3 ? (
+                <Pressable onPress={() => setCat(s.key)}>
+                  <Text style={{ color: c.muted }}>Все ›</Text>
+                </Pressable>
+              ) : null
+            }
+          >
+            <Text style={{ color: s.color }}>● </Text>
+            {s.name} · {items.length}
           </Section>
           <Group items={items.slice(0, 3)} />
         </View>
@@ -176,25 +255,75 @@ export default function ContactsScreen() {
           <Title sub={`${list.length} человек`}>Контакты</Title>
           <View style={{ flexDirection: "row", backgroundColor: c.surface, borderRadius: r.pill, padding: 3 }}>
             {(["sec", "az"] as const).map((m) => (
-              <Pressable key={m} onPress={() => { setMode(m); setCat(null); }} style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: r.pill, backgroundColor: mode === m ? c.ink : "transparent" }}>
-                <Text style={{ color: mode === m ? "#000" : c.muted, fontWeight: "600", fontSize: 12.5 }}>{m === "sec" ? "Разделы" : "А–Я"}</Text>
+              <Pressable
+                key={m}
+                onPress={() => {
+                  setMode(m);
+                  setCat(null);
+                }}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 7,
+                  borderRadius: r.pill,
+                  backgroundColor: mode === m ? c.ink : "transparent",
+                }}
+              >
+                <Text style={{ color: mode === m ? "#000" : c.muted, fontWeight: "600", fontSize: 12.5 }}>
+                  {m === "sec" ? "Разделы" : "А–Я"}
+                </Text>
               </Pressable>
             ))}
           </View>
         </View>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: c.surface, borderRadius: r.pill, height: 44, paddingHorizontal: 14 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+            backgroundColor: c.surface,
+            borderRadius: r.pill,
+            height: 44,
+            paddingHorizontal: 14,
+          }}
+        >
           <Icon name="search" size={18} color={c.muted} />
-          <TextInput value={q} onChangeText={setQ} placeholder="Имя, роль или «кто чинит двери»" placeholderTextColor={c.muted} style={{ flex: 1, color: c.ink, fontSize: 15 }} />
+          <TextInput
+            value={q}
+            onChangeText={setQ}
+            placeholder="Имя, роль или «кто чинит двери»"
+            placeholderTextColor={c.muted}
+            style={{ flex: 1, color: c.ink, fontSize: 15 }}
+          />
         </View>
         {mode === "sec" && list.length > 0 && !q ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }} contentContainerStyle={{ gap: 8 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginTop: 12 }}
+            contentContainerStyle={{ gap: 8 }}
+          >
             <Chip label={`Все ${list.length}`} active={!cat} onPress={() => setCat(null)} />
-            {sections.map((s) => <Chip key={s.key} label={`${s.name} ${counts[s.key]}`} color={s.color} active={cat === s.key} onPress={() => setCat(s.key)} />)}
+            {sections.map((s) => (
+              <Chip
+                key={s.key}
+                label={`${s.name} ${counts[s.key]}`}
+                color={s.color}
+                active={cat === s.key}
+                onPress={() => setCat(s.key)}
+              />
+            ))}
           </ScrollView>
         ) : null}
         {list.length > 0 && (busy || unsortedCount > 0) ? (
           <View style={{ marginTop: 12, gap: 8 }}>
-            {unsortedCount > 0 ? <Button kind="grad" title={`✨ Разложить с AI · ${unsortedCount} без раздела`} onPress={() => sortWithAi(true)} loading={busy} /> : null}
+            {unsortedCount > 0 ? (
+              <Button
+                kind="grad"
+                title={`✨ Разложить с AI · ${unsortedCount} без раздела`}
+                onPress={() => sortWithAi(true)}
+                loading={busy}
+              />
+            ) : null}
             {progress ? <Text style={[st.text, { color: c.muted, textAlign: "center" }]}>{progress}</Text> : null}
           </View>
         ) : null}
@@ -202,7 +331,22 @@ export default function ContactsScreen() {
         {list.length > 0 ? (
           <View style={{ marginTop: 20, gap: 8 }}>
             <Button kind="ghost" small title="Импортировать ещё из телефона" onPress={importPhone} loading={busy} />
-            <Button kind="ghost" small title="Переразложить всё с AI" onPress={() => Alert.alert("Переразложить всё?", "AI заново разложит все контакты. Те, что вы переносили вручную, останутся на месте.", [{ text: "Отмена", style: "cancel" }, { text: "Да", onPress: () => sortWithAi(false) }])} loading={busy} />
+            <Button
+              kind="ghost"
+              small
+              title="Переразложить всё с AI"
+              onPress={() =>
+                Alert.alert(
+                  "Переразложить всё?",
+                  "AI заново разложит все контакты. Те, что вы переносили вручную, останутся на месте.",
+                  [
+                    { text: "Отмена", style: "cancel" },
+                    { text: "Да", onPress: () => sortWithAi(false) },
+                  ],
+                )
+              }
+              loading={busy}
+            />
           </View>
         ) : null}
       </ScrollView>
