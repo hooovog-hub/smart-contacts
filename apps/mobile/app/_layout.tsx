@@ -18,7 +18,12 @@ function Gate() {
     else if (session && profile && (top === "sign-in" || top === "onboarding")) router.replace("/");
   }, [session, profile, loading, segments, router]);
 
-  if (loading) return <View style={{ flex: 1, backgroundColor: c.bg, alignItems: "center", justifyContent: "center" }}><ActivityIndicator color={c.ink} /></View>;
+  if (loading)
+    return (
+      <View style={{ flex: 1, backgroundColor: c.bg, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator color={c.ink} />
+      </View>
+    );
   return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }} />;
 }
 

@@ -14,36 +14,135 @@ const ctx = {};
 vm.runInNewContext(src.replace(/\bconst (P|MEETINGS)\b/g, "globalThis.$1").replace(/^const /gm, "var "), ctx);
 const { P, MEETINGS } = ctx;
 
-const TR = { а:"a",б:"b",в:"v",г:"g",д:"d",е:"e",ё:"e",ж:"zh",з:"z",и:"i",й:"y",к:"k",л:"l",м:"m",н:"n",о:"o",п:"p",р:"r",с:"s",т:"t",у:"u",ф:"f",х:"kh",ц:"ts",ч:"ch",ш:"sh",щ:"sh",ъ:"",ы:"y",ь:"",э:"e",ю:"yu",я:"ya" };
-const handle = (n) => n.toLowerCase().split("").map((ch) => TR[ch] ?? ch).join("").replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "").slice(0, 30);
+const TR = {
+  а: "a",
+  б: "b",
+  в: "v",
+  г: "g",
+  д: "d",
+  е: "e",
+  ё: "e",
+  ж: "zh",
+  з: "z",
+  и: "i",
+  й: "y",
+  к: "k",
+  л: "l",
+  м: "m",
+  н: "n",
+  о: "o",
+  п: "p",
+  р: "r",
+  с: "s",
+  т: "t",
+  у: "u",
+  ф: "f",
+  х: "kh",
+  ц: "ts",
+  ч: "ch",
+  ш: "sh",
+  щ: "sh",
+  ъ: "",
+  ы: "y",
+  ь: "",
+  э: "e",
+  ю: "yu",
+  я: "ya",
+};
+const handle = (n) =>
+  n
+    .toLowerCase()
+    .split("")
+    .map((ch) => TR[ch] ?? ch)
+    .join("")
+    .replace(/[^a-z0-9]+/g, ".")
+    .replace(/^\.|\.$/g, "")
+    .slice(0, 30);
 const clean = (o) => Object.fromEntries(Object.entries(o ?? {}).filter(([, v]) => v !== "" && v != null));
 
 const pro = P.filter((p) => !p.basic);
 const D = { orgs: [], profiles: [], brands: [], members: [], awards: [], endorse: [], rooms: [], rm: [], contacts: [] };
 const orgs = new Map();
-for (const p of P) for (const o of p.orgs ?? []) orgs.set(o.n, { n: o.n, k: /клуб/i.test(o.n) ? "club" : /палат/i.test(o.n) ? "chamber" : "association", v: !!o.v });
+for (const p of P)
+  for (const o of p.orgs ?? [])
+    orgs.set(o.n, { n: o.n, k: /клуб/i.test(o.n) ? "club" : /палат/i.test(o.n) ? "chamber" : "association", v: !!o.v });
 D.orgs = [...orgs.values()];
 for (const p of pro) {
-  D.profiles.push(clean({ k: p.id, h: handle(p.name), n: p.name, r: p.role, b: p.bio, c: p.city ?? "Ереван", lg: p.langs ?? [], ph: p.phone,
-    l: clean({ ...(p.links ?? {}), telegram: p.tg }), he: p.helps ?? [], se: p.seeks ?? [], pl: p.pro ? "pro" : "free" }));
-  (p.biz ?? []).forEach((b, i) => { if (b.name && !/^(Фриланс|Частная практика|Частное производство)$/.test(b.name)) D.brands.push(clean({ k: p.id, i, n: b.name, s: b.sphere, d: b.desc, y: b.year ? Number(b.year) : null, t: b.team, o: b.offer, l: b.links ?? {} })); });
+  D.profiles.push(
+    clean({
+      k: p.id,
+      h: handle(p.name),
+      n: p.name,
+      r: p.role,
+      b: p.bio,
+      c: p.city ?? "Ереван",
+      lg: p.langs ?? [],
+      ph: p.phone,
+      l: clean({ ...(p.links ?? {}), telegram: p.tg }),
+      he: p.helps ?? [],
+      se: p.seeks ?? [],
+      pl: p.pro ? "pro" : "free",
+    }),
+  );
+  (p.biz ?? []).forEach((b, i) => {
+    if (b.name && !/^(Фриланс|Частная практика|Частное производство)$/.test(b.name))
+      D.brands.push(
+        clean({
+          k: p.id,
+          i,
+          n: b.name,
+          s: b.sphere,
+          d: b.desc,
+          y: b.year ? Number(b.year) : null,
+          t: b.team,
+          o: b.offer,
+          l: b.links ?? {},
+        }),
+      );
+  });
   (p.orgs ?? []).forEach((o, i) => D.members.push(clean({ k: p.id, i, n: o.n, r: o.r, y: o.y, v: !!o.v })));
   (p.awards ?? []).forEach((a, i) => D.awards.push(clean({ k: p.id, i, t: a.t, kd: a.k, y: a.y, s: a.src })));
-  for (const e of p.endorse ?? []) if (pro.some((x) => x.id === e.from) && e.from !== p.id) D.endorse.push({ f: e.from, t: p.id, x: e.text });
+  for (const e of p.endorse ?? [])
+    if (pro.some((x) => x.id === e.from) && e.from !== p.id) D.endorse.push({ f: e.from, t: p.id, x: e.text });
 }
 const roomOwner = { m1: "p15", m2: "p11", m3: null, m0: "p11" };
 const times = { m1: "09:00", m2: "10:00", m3: "13:30", m0: "19:30" };
 const metIn = {};
 for (const m of MEETINGS) {
-  D.rooms.push(clean({ k: m.id, o: roomOwner[m.id], t: m.title, kd: m.kind, p: m.place, at: `${m.date} ${times[m.id]}+04`, c: m.code.replace("-", "") }));
+  D.rooms.push(
+    clean({
+      k: m.id,
+      o: roomOwner[m.id],
+      t: m.title,
+      kd: m.kind,
+      p: m.place,
+      at: `${m.date} ${times[m.id]}+04`,
+      c: m.code.replace("-", ""),
+    }),
+  );
   [...m.people, "me"].forEach((p, i) => D.rm.push({ r: m.id, p, i }));
   if (!m.upcoming) for (const p of m.people) metIn[p] ??= m;
 }
 const notes = { p15: "Хозяин кофейни, предложил зал для нашего воркшопа" };
 for (const p of P) {
   const m = metIn[p.id];
-  D.contacts.push(clean({ k: p.id, linked: !p.basic, n: p.name, ph: p.phone, r: p.basic ? p.role : [p.role, p.biz?.[0]?.name].filter((x) => x && !/^(Фриланс|Частная практика|Частное производство)$/.test(x)).join(", "),
-    c: p.cat === "mant" ? "mantashyants" : p.cat, nt: notes[p.id], m: m?.id, at: m ? `${m.date} 12:00+04` : null }));
+  D.contacts.push(
+    clean({
+      k: p.id,
+      linked: !p.basic,
+      n: p.name,
+      ph: p.phone,
+      r: p.basic
+        ? p.role
+        : [p.role, p.biz?.[0]?.name]
+            .filter((x) => x && !/^(Фриланс|Частная практика|Частное производство)$/.test(x))
+            .join(", "),
+      c: p.cat === "mant" ? "mantashyants" : p.cat,
+      nt: notes[p.id],
+      m: m?.id,
+      at: m ? `${m.date} 12:00+04` : null,
+    }),
+  );
 }
 
 const J = (x) => `'${JSON.stringify(x).replace(/'/g, "''")}'::jsonb`;

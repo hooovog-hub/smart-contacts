@@ -12,13 +12,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadProfile = useCallback(async (s: Session | null) => {
-    if (!s) { setProfile(null); return; }
+    if (!s) {
+      setProfile(null);
+      return;
+    }
     const { data } = await supabase
       .from("profiles")
       .select("*, brands(*), memberships(*)")
       .eq("id", s.user.id)
       .maybeSingle();
-    if (data) data.brands = (data.brands ?? []).sort((a: { position: number }, b: { position: number }) => a.position - b.position);
+    if (data)
+      data.brands = (data.brands ?? []).sort(
+        (a: { position: number }, b: { position: number }) => a.position - b.position,
+      );
     setProfile((data as Profile) ?? null);
   }, []);
 

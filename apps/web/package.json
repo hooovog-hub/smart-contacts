@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Public profile pages, room join and Apple Wallet passes as Vercel Functions (no framework).",
-  "engines": { "node": "22.x" },
+  "engines": {
+    "node": "22.x"
+  },
   "dependencies": {
     "passkit-generator": "^3.1.11"
   }

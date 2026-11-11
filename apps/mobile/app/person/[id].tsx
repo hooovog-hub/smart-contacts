@@ -14,9 +14,29 @@ export default function PersonScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
-        <Pressable onPress={() => router.back()} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: c.surface, alignItems: "center", justifyContent: "center", marginBottom: 16 }}><Icon name="back" size={18} /></Pressable>
+        <Pressable
+          onPress={() => router.back()}
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 19,
+            backgroundColor: c.surface,
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 16,
+          }}
+        >
+          <Icon name="back" size={18} />
+        </Pressable>
         {id ? <ProfileView id={id} /> : null}
-        {p?.phone ? <Button kind="grad" title={`Позвонить ${p.phone}`} onPress={() => Linking.openURL(`tel:${p.phone!.replace(/\s/g, "")}`)} style={{ marginTop: 18 }} /> : null}
+        {p?.phone ? (
+          <Button
+            kind="grad"
+            title={`Позвонить ${p.phone}`}
+            onPress={() => Linking.openURL(`tel:${p.phone!.replace(/\s/g, "")}`)}
+            style={{ marginTop: 18 }}
+          />
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
