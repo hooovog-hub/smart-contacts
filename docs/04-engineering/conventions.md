@@ -12,6 +12,8 @@
 - Ветки: `feat/SC-021-contacts-az`, `fix/SC-045-...`, `docs/...`.
 - Коммиты: Conventional Commits (`feat(contacts): add A–Z rail`).
 - PR: шаблон `.github/PULL_REQUEST_TEMPLATE.md`, ссылка на SC-ID, скриншоты для UI.
+- В `main` нельзя пушить напрямую: только через PR с зелёным CI (`typecheck · lint · test`).
+- Бизнес-логику пишем чистыми функциями без сети/БД (`*.logic.ts`, `supabase/functions/_shared/`) и покрываем тестами.
 
 ## База
 - Одна миграция — одно логическое изменение, имя `NNNN_описание.sql`.
