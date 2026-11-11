@@ -3,6 +3,8 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { sanitizeAnswer } from "../_shared/assistant.ts";
 import { parseModelJson } from "../_shared/classify.ts";
+import { consume, reportError } from "../_shared/guard.ts";
+import { validateMessage } from "../_shared/limits.ts";
 
 const MODEL = Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-5-5";
 const API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
@@ -31,11 +33,28 @@ Deno.serve(async (req) => {
   } = await sb.auth.getUser();
   if (!user) return new Response("Unauthorized", { status: 401 });
 
-  const { taskId, message } = (await req.json()) as { taskId?: string; message: string };
-  if (!message?.trim()) return new Response("Empty message", { status: 400 });
+  const { taskId, message } = ((await req.json().catch(() => ({}))) ?? {}) as { taskId?: string; message?: unknown };
+  const invalid = validateMessage(message);
+  if (invalid) return new Response(invalid, { status: 400 });
+  const text = message as string;
 
-  const { data: me } = await sb.from("profiles").select("full_name, plan").eq("id", user.id).single();
-  // TODO(ai-engineer): лимит 5 задач/мес для free
+  try {
+    return await answer(sb, user.id, text, taskId);
+  } catch (e) {
+    await reportError("ai-assistant", e, user.id);
+    return Response.json({ error: "internal" }, { status: 500 });
+  }
+});
+
+// deno-lint-ignore no-explicit-any
+async function answer(sb: any, userId: string, message: string, taskId?: string) {
+  const { data: me } = await sb.from("profiles").select("full_name, plan").eq("id", userId).single();
+
+  // Лимиты (migration 0006): частота запросов для всех, 5 новых задач в месяц на Free.
+  const blocked =
+    (await consume(userId, "assistant", me?.plan)) ??
+    (!taskId ? await consume(userId, "assistant_task", me?.plan) : null);
+  if (blocked) return blocked;
 
   // Каталог без телефонов (docs/03-architecture/security-privacy.md §5)
   const { data: contacts } = await sb
@@ -61,7 +80,7 @@ Deno.serve(async (req) => {
   if (!task) {
     const { data } = await sb
       .from("ai_tasks")
-      .insert({ owner_id: user.id, title: message.slice(0, 60) })
+      .insert({ owner_id: userId, title: message.slice(0, 60) })
       .select("id")
       .single();
     task = data!.id;
@@ -91,14 +110,17 @@ Deno.serve(async (req) => {
       messages: [...(history ?? []), { role: "user", content: message }],
     }),
   });
-  if (!res.ok) return new Response(JSON.stringify({ error: "upstream", status: res.status }), { status: 502 });
+  if (!res.ok) {
+    await reportError("ai-assistant:claude", `Claude ${res.status}: ${(await res.text()).slice(0, 200)}`, userId);
+    return Response.json({ error: "upstream", status: res.status }, { status: 502 });
+  }
   const out = await res.json();
-  const text: string = out.content?.find((b: any) => b.type === "text")?.text ?? "{}";
+  const raw: string = out.content?.find((b: any) => b.type === "text")?.text ?? "{}";
   // Защита: только реальные контакты пользователя, максимум 4, категория из списка
-  const { category, reply, people } = sanitizeAnswer(parseModelJson(text), text, new Set(catalog.map((c) => c.id)));
+  const { category, reply, people } = sanitizeAnswer(parseModelJson(raw), raw, new Set(catalog.map((c: any) => c.id)));
 
   await sb.from("ai_messages").insert({ task_id: task, role: "assistant", content: reply, people });
   if (!taskId) await sb.from("ai_tasks").update({ category }).eq("id", task);
 
   return Response.json({ taskId: task, category, reply, people });
-});
+}

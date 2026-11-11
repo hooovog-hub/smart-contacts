@@ -16,6 +16,7 @@ import {
   parseModelJson,
   sanitizeNewSections,
 } from "../_shared/classify.ts";
+import { consume, reportError } from "../_shared/guard.ts";
 
 const MODEL = Deno.env.get("ANTHROPIC_SORT_MODEL") ?? "claude-sonnet-5-5";
 const API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
@@ -49,13 +50,19 @@ Deno.serve(async (req) => {
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   const body = await req.json().catch(() => ({}));
-  const { data: me } = await sb.from("profiles").select("full_name, role, brands(name)").eq("id", user.id).single();
+  const { data: me } = await sb
+    .from("profiles")
+    .select("full_name, role, plan, brands(name)")
+    .eq("id", user.id)
+    .single();
   const owner = [me?.full_name, me?.role, ...(me?.brands ?? []).map((b: any) => b.name)].filter(Boolean).join(", ");
   const { data: cats0 } = await sb.from("categories").select("key, name, color, is_system, position").order("position");
   let cats = (cats0 ?? []) as Cat[];
 
   try {
     if (body.action === "plan") {
+      const blocked = await consume(user.id, "classify_plan", me?.plan);
+      if (blocked) return blocked;
       const all = await allContacts(sb, "display_name, role");
       const lines = all.map((c: any) => [c.display_name, c.role].filter(Boolean).join(" — ")).join("\n");
       const out = await claude(
@@ -92,6 +99,8 @@ ${RULES}
         .filter((x: unknown) => typeof x === "string")
         .slice(0, MAX_IDS_PER_CALL);
       if (!ids.length) return Response.json({ done: 0, sorted: 0 });
+      const blocked = await consume(user.id, "classify", me?.plan);
+      if (blocked) return blocked;
       const { data: rows } = await sb
         .from("contacts")
         .select("id, display_name, role, note, category_locked")
@@ -136,6 +145,7 @@ ${lessons ? `\nВладелец сам разложил эти контакты.
 
     return new Response("Unknown action", { status: 400 });
   } catch (e) {
+    await reportError(`classify-contacts:${body.action}`, e, user.id);
     return Response.json({ error: e instanceof Error ? e.message : String(e) }, { status: 502 });
   }
 });

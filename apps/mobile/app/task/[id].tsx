@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Dock } from "@/components/Dock";
 import { Icon } from "@/components/Icon";
 import { Avatar, Button, Pill, st } from "@/components/ui";
-import { askAssistant, catName } from "@/features/assistant";
+import { AiLimitError, askAssistant, catName } from "@/features/assistant";
 import { supabase } from "@/lib/supabase";
 import type { AiMessage, AiTask, Contact } from "@/lib/types";
 import { c, r } from "@/theme/tokens";
@@ -40,8 +40,9 @@ export default function TaskScreen() {
     setBusy(true);
     try {
       await askAssistant(t, id);
-    } catch {
-      Alert.alert("AI не ответил", "Попробуйте ещё раз.");
+    } catch (e) {
+      if (e instanceof AiLimitError) Alert.alert("Лимит AI", e.message);
+      else Alert.alert("AI не ответил", "Попробуйте ещё раз.");
     }
     setBusy(false);
     load();

@@ -10,5 +10,7 @@
     "skipLibCheck": true,
     "types": []
   },
-  "include": ["supabase/functions/_shared/**/*.ts"]
+  "include": ["supabase/functions/_shared/**/*.ts"],
+  // guard.ts uses Deno + jsr imports; it is checked by Deno at deploy time.
+  "exclude": ["supabase/functions/_shared/guard.ts"]
 }

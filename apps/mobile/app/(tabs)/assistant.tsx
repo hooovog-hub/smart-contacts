@@ -4,7 +4,7 @@ import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Dock } from "@/components/Dock";
 import { Chip, Pill, Section, Title, st } from "@/components/ui";
-import { TASK_CATS, askAssistant, catName } from "@/features/assistant";
+import { AiLimitError, askAssistant, catName, TASK_CATS } from "@/features/assistant";
 import { supabase } from "@/lib/supabase";
 import type { AiTask } from "@/lib/types";
 import { c, r } from "@/theme/tokens";
@@ -31,8 +31,9 @@ export default function Assistant() {
     try {
       const res = await askAssistant(t);
       router.push(`/task/${res.taskId}`);
-    } catch {
-      Alert.alert("AI не ответил", "Попробуйте ещё раз через минуту.");
+    } catch (e) {
+      if (e instanceof AiLimitError) Alert.alert("Лимит AI", e.message);
+      else Alert.alert("AI не ответил", "Попробуйте ещё раз через минуту.");
     } finally {
       setBusy(false);
       load();
