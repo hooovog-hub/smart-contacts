@@ -1,7 +1,7 @@
 # supabase/
 
 **Проект:** `nqaooorpdptdsucgmwkg` (регион Europe) · URL: `https://nqaooorpdptdsucgmwkg.supabase.co`
-Применённые миграции: 0001_init, 0002_private_helper_functions. Задеплоены функции: ai-assistant, health. Секрет ANTHROPIC_API_KEY задан. Советник безопасности: замечаний нет.
+Применённые миграции: 0001–0007 (последние три — 2026-11-12). Задеплоены функции: ai-assistant (v2), classify-contacts (v4), health. Секрет ANTHROPIC_API_KEY задан. Советник безопасности: осталось включить Leaked Password Protection (Auth).
 
 | Путь | Что |
 |---|---|
@@ -13,7 +13,6 @@
 | `functions/health/` | Проверка, что ключ Anthropic настроен и работает |
 | `tests/` | pgTAP-тесты RLS |
 
-Миграции 0005–0007 (индексы/RLS, лимиты AI, отчёты о сбоях) — применить после мержа PR: `npx supabase db push`, затем `npx supabase functions deploy ai-assistant classify-contacts`.
 Отчёты о сбоях: `select * from client_errors order by created_at desc limit 50;` в SQL editor.
 
 Секреты функций: `npx supabase secrets set ANTHROPIC_API_KEY=... ANTHROPIC_MODEL=...`
