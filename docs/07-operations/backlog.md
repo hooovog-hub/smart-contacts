@@ -27,7 +27,8 @@
 | SC-040 | Edge Function ai-assistant + evals | 4 | P0 | ai-engineer | review | Работает; evals не прогонялись автоматически |
 | SC-041 | Экран задач AI, архив, разделы | 4 | P0 | mobile-engineer | doing | Задачи, экран задачи, «решено» есть; нет выбора «кто помог» |
 | SC-042 | Голосовой ввод в доке | 4 | P0 | integrations-engineer | todo | Кнопка микрофона пока показывает подсказку про диктовку клавиатуры |
-| SC-050 | Wallet-карта | 5 | P1 | integrations-engineer | doing | Серверный код есть; нужны сертификаты Apple Developer и иконки |
+| SC-050 | Wallet-карта | 5 | P1 | integrations-engineer | review | Код и кнопка готовы, карта собирается; ждёт сертификат Apple Developer (docs/04-engineering/wallet-setup.md) |
+| SC-051 | Автообновление Wallet-карты при изменении профиля | 5 | P2 | integrations-engineer | todo | Wallet web service + APNs |
 | SC-060 | IAP Pro | 5 | P0 | integrations-engineer | todo | |
 | SC-061 | Business: команды, оплата через сайт | 5 | P1 | backend-engineer | todo | Таблицы teams есть, экранов нет |
 | SC-070 | Политика конфиденциальности и условия | 6 | P0 | legal-privacy-advisor | todo | |
