@@ -13,6 +13,9 @@
 | `functions/health/` | Проверка, что ключ Anthropic настроен и работает |
 | `tests/` | pgTAP-тесты RLS |
 
+Миграции 0005–0007 (индексы/RLS, лимиты AI, отчёты о сбоях) — применить после мержа PR: `npx supabase db push`, затем `npx supabase functions deploy ai-assistant classify-contacts`.
+Отчёты о сбоях: `select * from client_errors order by created_at desc limit 50;` в SQL editor.
+
 Секреты функций: `npx supabase secrets set ANTHROPIC_API_KEY=... ANTHROPIC_MODEL=...`
 
 Ответственный агент: `backend-engineer` (схема, RLS), `ai-engineer` (функции AI).

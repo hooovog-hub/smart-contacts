@@ -17,6 +17,10 @@
 6. Удаление аккаунта — полное каскадное удаление + удаление файлов из Storage.
 7. Логи не содержат персональных данных.
 
+## Отчёты о сбоях
+Ошибки приложения и Edge Functions пишутся в таблицу `public.client_errors` (миграция 0007) в нашем Supabase — без сторонних сервисов.
+Клиенты могут только добавлять записи (ограниченного размера); читать — только в панели Supabase. В отчёты не кладём имена, телефоны и заметки контактов; номероподобные последовательности маскируются (`apps/mobile/src/lib/errorReport.logic.ts`).
+
 ## Apple
 - `NSContactsUsageDescription`, `NSCameraUsageDescription`, `NSSpeechRecognitionUsageDescription`, `NSMicrophoneUsageDescription` — понятные тексты на RU/EN/HY.
 - Privacy Nutrition Label в App Store Connect: Contacts, User Content — «не используются для трекинга».
