@@ -15,7 +15,7 @@
 | SC-014 | Мой QR | 1 | P0 | mobile-engineer | done | |
 | SC-015 | Индексы и RLS по советам Supabase advisors (миграция 0005) | 1 | P0 | backend-engineer | done | Применено, 63 замечания закрыты |
 | SC-016 | Отчёты о сбоях: client_errors, ErrorBoundary, глобальный обработчик | 1 | P0 | mobile-engineer | done | Таблица создана; приложению нужно обновление (EAS update), чтобы начало слать отчёты |
-| SC-017 | Лимиты и rate limit для AI (ai_usage, 5 задач/мес на Free) | 1 | P0 | ai-engineer | doing | Код в main; миграция 0006 и деплой функций ждут разрешения основателя |
+| SC-017 | Лимиты и rate limit для AI (ai_usage, 5 задач/мес на Free) | 1 | P0 | ai-engineer | done | Миграция 0006 применена, ai-assistant v2 и classify-contacts v4 задеплоены 2026-11-12; проверить живым запросом с iPhone |
 | SC-018 | Нагрузочный тест k6 | 1 | P1 | test-engineer | review | Скрипт готов, не запускался |
 | SC-019 | CI, ESLint/Prettier, pre-commit, юнит-тесты, защита main | 1 | P0 | release-manager | done | |
 | SC-020 | Импорт контактов + classify-contacts | 2 | P0 | mobile-engineer, ai-engineer | done | Импорт с телефона и AI-раскладка работают |
