@@ -11,3 +11,5 @@ dist/
 *.pkpass
 .DS_Store
 supabase/.temp/
+coverage/
+.vercel/

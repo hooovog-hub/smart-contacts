@@ -1,0 +1,14 @@
+{
+  // Typecheck for code that lives outside apps/mobile: pure Edge Function logic and its tests.
+  "compilerOptions": {
+    "strict": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": []
+  },
+  "include": ["supabase/functions/_shared/**/*.ts"]
+}
