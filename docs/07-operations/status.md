@@ -20,7 +20,7 @@
 8. **Аудит backlog:** статус каждой задачи сверен с кодом.
 
 ## Ждёт основателя
-- [ ] Supabase → Authentication → включить **Leaked Password Protection** (последнее замечание безопасности).
+- [ ] ~~Supabase → Authentication → включить **Leaked Password Protection**~~ — **отложено до перехода на Pro.** 2026-11-12 попытка: на тарифе Free не сохраняется (функция только для Pro+). Включить одним переключателем (Authentication → Sign In / Providers → Email → «Prevent use of leaked passwords») при переходе на Pro перед запуском. После входа через Apple ID (SC-011) риск ниже — паролей там нет.
 - [ ] Сохранить копию папки `wallet-secrets/` (секретный ключ Apple) в менеджер паролей. В git её нет и быть не должно.
 - [ ] Решить следующий шаг по продукту (рекомендация ниже).
 
