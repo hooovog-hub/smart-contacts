@@ -9,7 +9,7 @@
 import http from "k6/http";
 import { check, group, sleep } from "k6";
 
-const SITE = __ENV.SITE_URL || "https://smart-contacts-how-iq.vercel.app";
+const SITE = __ENV.SITE_URL || "https://smart-contacts.vercel.app";
 const SUPABASE = __ENV.SUPABASE_URL || "https://nqaooorpdptdsucgmwkg.supabase.co";
 const ANON = __ENV.SUPABASE_ANON_KEY || "sb_publishable_GfWvjvyRAIdtg95QRTjdUg_UjFysWxI"; // publishable key
 const HANDLES = (__ENV.HANDLES || "ani.mkrtchyan").split(",");

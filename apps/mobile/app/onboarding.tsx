@@ -3,6 +3,7 @@ import { ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Field, Title } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
+import { SITE_URL } from "@/lib/config";
 import { supabase } from "@/lib/supabase";
 import { c } from "@/theme/tokens";
 
@@ -98,7 +99,7 @@ export default function Onboarding() {
           placeholder="hovhannes"
         />
         <Text style={{ color: c.muted, marginTop: -6, marginBottom: 14, fontSize: 12.5 }}>
-          smart-contacts-how-iq.vercel.app/{handle || toHandle(name) || "…"}
+          {SITE_URL.replace(/^https?:\/\//, "")}/{handle || toHandle(name) || "…"}
         </Text>
         <Field label="Чем занимаетесь" value={role} onChangeText={setRole} placeholder="Основатель, Factory DF" />
         <Field label="Телефон" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholder="+374 …" />
