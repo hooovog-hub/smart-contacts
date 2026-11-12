@@ -27,8 +27,10 @@
 | SC-040 | Edge Function ai-assistant + evals | 4 | P0 | ai-engineer | review | Работает; evals не прогонялись автоматически |
 | SC-041 | Экран задач AI, архив, разделы | 4 | P0 | mobile-engineer | doing | Задачи, экран задачи, «решено» есть; нет выбора «кто помог» |
 | SC-042 | Голосовой ввод в доке | 4 | P0 | integrations-engineer | todo | Кнопка микрофона пока показывает подсказку про диктовку клавиатуры |
-| SC-050 | Wallet-карта | 5 | P1 | integrations-engineer | review | Код и кнопка готовы, карта собирается; ждёт сертификат Apple Developer (docs/04-engineering/wallet-setup.md) |
+| SC-050 | Wallet-карта | 5 | P1 | integrations-engineer | done | Сертификат Apple настроен, карта проверена на iPhone 2026-11-12. У пользователей появится после EAS update (SC-052) |
 | SC-051 | Автообновление Wallet-карты при изменении профиля | 5 | P2 | integrations-engineer | todo | Wallet web service + APNs |
+| SC-052 | EAS update: публичный адрес для QR + кнопка Wallet у пользователей | 5 | P0 | release-manager | todo | Без него у установленных приложений QR ведёт на закрытый адрес Vercel |
+| SC-053 | Пересохранить WALLET_SIGNER_KEY_B64 и WALLET_LINK_SECRET в Vercel как Secret | 5 | P2 | release-manager | todo | Сейчас тип Config (видно в панели Vercel) |
 | SC-060 | IAP Pro | 5 | P0 | integrations-engineer | todo | |
 | SC-061 | Business: команды, оплата через сайт | 5 | P1 | backend-engineer | todo | Таблицы teams есть, экранов нет |
 | SC-070 | Политика конфиденциальности и условия | 6 | P0 | legal-privacy-advisor | todo | |
