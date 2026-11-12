@@ -6,7 +6,7 @@
 Подпись `.pkpass` требует Node-библиотеку и сертификаты.
 
 ## Решение
-`passkit-generator` в `apps/web/app/api/wallet`, сертификаты в переменных окружения (base64), тип пропуска generic, QR на профиль, обновления через Wallet web service + APNs.
+`passkit-generator` в `apps/web/api/wallet.js`, сертификаты в переменных окружения (base64), тип пропуска generic, QR на профиль, обновления через Wallet web service + APNs.
 
 ## Последствия
 Работает без отдельного сервера. NFC не используем (требует отдельного разрешения Apple и не подходит для обмена между телефонами).
