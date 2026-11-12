@@ -32,7 +32,7 @@
     "extra": {
       "supabaseUrl": "https://nqaooorpdptdsucgmwkg.supabase.co",
       "supabaseKey": "sb_publishable_GfWvjvyRAIdtg95QRTjdUg_UjFysWxI",
-      "siteUrl": "https://smart-contacts-how-iq.vercel.app",
+      "siteUrl": "https://smart-contacts.vercel.app",
       "eas": {
         "projectId": "b26bb91d-0dc7-4261-889e-5146dba47348"
       }
