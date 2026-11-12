@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, Linking, Pressable, Share, Text, View } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import { Alert, Pressable, Share, Text, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
@@ -11,7 +12,10 @@ import { reportError } from "@/lib/errorReport";
 import { supabase } from "@/lib/supabase";
 import { c } from "@/theme/tokens";
 
-/** Apple Wallet card (SC-050): the server returns a 5-minute link; Safari opens it and shows "Add to Apple Wallet". */
+/**
+ * Apple Wallet card (SC-050): the server returns a 5-minute link, opened in an in-app Safari sheet that shows
+ * "Add to Apple Wallet" and closes back into the app (no leftover Safari tab).
+ */
 async function addToWallet(isPaid: boolean) {
   if (!isPaid) {
     Alert.alert("Карта в Apple Wallet", "Доступна на тарифе Pro: визитка с QR всегда под рукой в Wallet.");
@@ -27,7 +31,10 @@ async function addToWallet(isPaid: boolean) {
     });
     const body = (await res.json().catch(() => ({}))) as { url?: string; message?: string };
     if (res.ok && body.url) {
-      await Linking.openURL(body.url);
+      await WebBrowser.openBrowserAsync(body.url, {
+        presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+        dismissButtonStyle: "close",
+      });
       return;
     }
     if (res.status >= 500 && res.status !== 503)

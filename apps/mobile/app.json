@@ -24,7 +24,8 @@
         {
           "contactsPermission": "Чтобы разложить ваши контакты по разделам и помочь найти нужного человека. Контакты видите только вы."
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": false
