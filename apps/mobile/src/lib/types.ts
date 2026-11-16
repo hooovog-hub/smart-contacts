@@ -31,6 +31,8 @@ export interface Profile {
   links: Links;
   plan: Plan;
   avatar_url?: string | null;
+  helps?: string[] | null;
+  invite_code?: string | null;
   brands?: Brand[];
   memberships?: Membership[];
 }
@@ -38,6 +40,7 @@ export interface Contact {
   id: string;
   display_name: string;
   phone?: string | null;
+  birthday?: string | null;
   role?: string | null;
   category_key: string;
   note?: string | null;

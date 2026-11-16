@@ -3,35 +3,44 @@ import { useCallback, useState } from "react";
 import { Alert, Linking, Pressable, ScrollView, Share, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon, type IconName } from "@/components/Icon";
-import { ProfileView } from "@/components/ProfileView";
-import { QuickAddSheet } from "@/components/QuickAddSheet";
+import { ProfileSheet, type SheetTarget } from "@/components/ProfileSheets";
+import { type FullProfile, ProfileView } from "@/components/ProfileView";
 import { Button, Section } from "@/components/ui";
 import { deleteAccount } from "@/lib/account";
 import { useAuth } from "@/lib/auth";
-import { type AddKind, completeness, type Item } from "@/lib/completeness.logic";
+import { changeAvatar, removeAvatar } from "@/lib/avatar";
+import { completeness } from "@/lib/completeness.logic";
 import { SITE_URL } from "@/lib/config";
 import { reportError } from "@/lib/errorReport";
 import { supabase } from "@/lib/supabase";
+import { addToWallet } from "@/lib/wallet";
 import { c, grad } from "@/theme/tokens";
+import { hasSmartContactsPass } from "../../modules/wallet-pass";
 
-type SheetTarget = Extract<AddKind, { kind: "field" } | { kind: "link" }>;
-
-// Spec: docs/01-product/features/profile.md — "Мой профиль" shows exactly what others see,
-// plus owner-only controls: actions, and a completeness card while the profile is not complete.
+// Spec: docs/01-product/features/profile.md — "Мой профиль" is edited in place: every section is visible with
+// "+ Добавить"; "Как видят другие" hides the owner controls and shows exactly the public view.
 export default function MyProfile() {
   const { profile, reloadProfile } = useAuth();
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [sheet, setSheet] = useState<SheetTarget | null>(null);
   const [version, setVersion] = useState(0);
+  const [preview, setPreview] = useState(false);
+  const [full, setFull] = useState<FullProfile | null>(null);
+  const [inWallet, setInWallet] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
 
-  // Coming back from "Изменить": reload both the owner data and the public view.
+  const refresh = useCallback(() => {
+    reloadProfile();
+    setVersion((v) => v + 1);
+  }, [reloadProfile]);
+
+  // Coming back to the tab (e.g. from Wallet): reload data and re-check whether the card is in Wallet.
   useFocusEffect(
     useCallback(() => {
-      reloadProfile();
-      setVersion((v) => v + 1);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []),
+      refresh();
+      if (profile?.id) setInWallet(hasSmartContactsPass(profile.id));
+    }, [refresh, profile?.id]),
   );
 
   if (!profile) return null;
@@ -62,13 +71,42 @@ export default function MyProfile() {
       ],
     );
 
-  const url = `${SITE_URL}/${profile.handle}`;
-  const comp = completeness(profile);
-
-  const openItem = (it: Item) => {
-    if (it.add.kind === "edit") router.push("/profile/edit");
-    else setSheet(it.add);
+  const photo = async (source: "library" | "camera") => {
+    setPhotoBusy(true);
+    try {
+      const url = await changeAvatar(profile.id, source);
+      if (url) refresh();
+    } catch (e) {
+      const denied = e instanceof Error && e.message === "permission_denied";
+      if (!denied) reportError(e, { context: { kind: "avatar" } });
+      Alert.alert(
+        "Фото не загрузилось",
+        denied ? "Разрешите доступ к фото в Настройках iPhone." : "Проверьте интернет и попробуйте ещё раз.",
+      );
+    } finally {
+      setPhotoBusy(false);
+    }
   };
+  const askPhoto = () =>
+    Alert.alert("Фото профиля", "Лучше всего — портрет по плечи на нейтральном фоне.", [
+      { text: "Выбрать из галереи", onPress: () => photo("library") },
+      { text: "Сфотографироваться", onPress: () => photo("camera") },
+      ...(profile.avatar_url
+        ? [
+            {
+              text: "Удалить фото",
+              style: "destructive" as const,
+              onPress: () => removeAvatar(profile.id).then(refresh),
+            },
+          ]
+        : []),
+      { text: "Отмена", style: "cancel" as const },
+    ]);
+
+  const url = `${SITE_URL}/${profile.handle}`;
+  const openSeeks = full?.profile_seeks?.length ?? 0;
+  const comp = completeness(profile, openSeeks);
+  const isPaid = profile.plan === "pro" || profile.plan === "business";
 
   const action = (icon: IconName, label: string, onPress: () => void) => (
     <Pressable
@@ -87,81 +125,129 @@ export default function MyProfile() {
     </Pressable>
   );
 
-  const ownerControls = (
+  const walletButton =
+    !preview && isPaid && !inWallet ? (
+      <Pressable
+        onPress={() => addToWallet(isPaid)}
+        accessibilityRole="button"
+        accessibilityLabel="Add to Apple Wallet"
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 6,
+          backgroundColor: "#000",
+          borderWidth: 1,
+          borderColor: "#3A3A3F",
+          borderRadius: 9,
+          paddingHorizontal: 10,
+          paddingVertical: 7,
+          marginBottom: 4,
+        }}
+      >
+        <Text style={{ color: "#fff", fontSize: 15 }}></Text>
+        <Text style={{ color: "#fff", fontSize: 12, fontWeight: "600" }}>Add to Apple Wallet</Text>
+      </Pressable>
+    ) : null;
+
+  const ownerControls = preview ? null : (
     <View>
-      <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-        {action("qr", "Мой QR", () => router.push("/profile/qr"))}
-        {action("edit", "Изменить", () => router.push("/profile/edit"))}
-        {action("share", "Поделиться", () => Share.share({ message: `${profile.full_name} — ${url}` }))}
-      </View>
       {comp.todo.length ? (
-        <View style={{ backgroundColor: c.surface, borderRadius: 18, padding: 14, marginTop: 10, gap: 10 }}>
+        <View style={{ backgroundColor: c.surface, borderRadius: 18, padding: 14, marginTop: 10, gap: 8 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
-            <Text style={{ color: c.ink, fontSize: 15.5, fontWeight: "700" }}>Профиль заполнен на {comp.pct}%</Text>
+            <Text style={{ color: c.ink, fontSize: 15, fontWeight: "700" }}>Профиль заполнен на {comp.pct}%</Text>
             <Text style={{ color: c.muted, fontSize: 12.5 }}>
               {comp.done} из {comp.total}
             </Text>
           </View>
-          <View style={{ height: 8, borderRadius: 4, backgroundColor: c.surface2, overflow: "hidden" }}>
+          <View
+            accessibilityRole="progressbar"
+            accessibilityValue={{ min: 0, max: 100, now: comp.pct }}
+            style={{ height: 7, borderRadius: 4, backgroundColor: c.surface2, overflow: "hidden" }}
+          >
             <View style={{ width: `${comp.pct}%`, height: "100%", borderRadius: 4, backgroundColor: grad[1] }} />
           </View>
           <Text style={{ color: c.muted, fontSize: 12.5 }}>
-            Это видят люди, когда сканируют ваш QR. Полный профиль вызывает больше доверия.
+            Это видят люди, когда сканируют ваш QR. Нажмите на любой раздел ниже, чтобы заполнить.
           </Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-            {comp.todo.map((it) => (
-              <Pressable
-                key={it.id}
-                onPress={() => openItem(it)}
-                accessibilityRole="button"
-                accessibilityLabel={`Добавить: ${it.label}`}
-                style={{ paddingHorizontal: 11, paddingVertical: 6, borderRadius: 999, backgroundColor: c.surface2 }}
-              >
-                <Text style={{ color: c.ink, fontSize: 13 }}>
-                  <Text style={{ color: c.accentInk }}>+ </Text>
-                  {it.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
         </View>
       ) : null}
+      <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+        {action("qr", "Мой QR", () => router.push("/profile/qr"))}
+        {action("share", "Поделиться", () => Share.share({ message: `${profile.full_name} — ${url}` }))}
+        {action("people", "Пригласить", () => router.push("/invite"))}
+      </View>
     </View>
   );
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={["top"]}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
-        <ProfileView id={profile.id} version={version} afterHeader={ownerControls} />
-        <Section>Ссылка на профиль</Section>
-        <Pressable onPress={() => Linking.openURL(url)}>
-          <Text style={{ color: c.accentInk }}>{url.replace("https://", "")}</Text>
-        </Pressable>
-        <Button
-          kind="ghost"
-          small
-          title="Выйти"
-          onPress={() => supabase.auth.signOut()}
-          disabled={deleting}
-          style={{ marginTop: 28 }}
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }} keyboardDismissMode="on-drag">
+        <View style={{ flexDirection: "row", justifyContent: "flex-end", marginBottom: 10 }}>
+          <View style={{ flexDirection: "row", backgroundColor: c.surface, borderRadius: 999, padding: 3 }}>
+            {[
+              { v: false, label: "Мой профиль" },
+              { v: true, label: "Как видят другие" },
+            ].map((o) => (
+              <Pressable
+                key={o.label}
+                onPress={() => setPreview(o.v)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: preview === o.v }}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 999,
+                  backgroundColor: preview === o.v ? c.surface2 : "transparent",
+                }}
+              >
+                <Text style={{ color: preview === o.v ? c.ink : c.muted, fontSize: 12.5 }}>{o.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+        <ProfileView
+          id={profile.id}
+          version={version}
+          owner={!preview}
+          onEdit={setSheet}
+          onPhoto={photoBusy ? undefined : askPhoto}
+          onLoaded={setFull}
+          headerRight={walletButton}
+          afterHeader={ownerControls}
         />
-        <Pressable
-          onPress={confirmDelete}
-          disabled={deleting}
-          accessibilityRole="button"
-          style={{ marginTop: 16, alignItems: "center", paddingVertical: 8 }}
-        >
-          <Text style={{ color: c.danger, fontSize: 14 }}>{deleting ? "Удаляем…" : "Удалить аккаунт"}</Text>
-        </Pressable>
+        {preview ? null : (
+          <>
+            <Section>Ссылка на профиль</Section>
+            <Pressable onPress={() => Linking.openURL(url)}>
+              <Text style={{ color: c.accentInk }}>{url.replace("https://", "")}</Text>
+            </Pressable>
+            <Button
+              kind="ghost"
+              small
+              title="Выйти"
+              onPress={() => supabase.auth.signOut()}
+              disabled={deleting}
+              style={{ marginTop: 28 }}
+            />
+            <Pressable
+              onPress={confirmDelete}
+              disabled={deleting}
+              accessibilityRole="button"
+              style={{ marginTop: 16, alignItems: "center", paddingVertical: 8 }}
+            >
+              <Text style={{ color: c.danger, fontSize: 14 }}>{deleting ? "Удаляем…" : "Удалить аккаунт"}</Text>
+            </Pressable>
+          </>
+        )}
       </ScrollView>
-      <QuickAddSheet
+      <ProfileSheet
         profile={profile}
+        helps={full?.helps ?? []}
         target={sheet}
         onClose={() => setSheet(null)}
         onSaved={() => {
           setSheet(null);
-          reloadProfile();
-          setVersion((v) => v + 1);
+          refresh();
         }}
       />
     </SafeAreaView>

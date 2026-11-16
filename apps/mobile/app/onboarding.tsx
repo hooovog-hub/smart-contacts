@@ -5,6 +5,7 @@ import { PhoneField } from "@/components/PhoneField";
 import { Button, Field, Title } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 import { SITE_URL } from "@/lib/config";
+import { applyInvite, pendingInvite } from "@/lib/invite";
 import { isPlausible } from "@/lib/phone.logic";
 import { supabase } from "@/lib/supabase";
 import { c } from "@/theme/tokens";
@@ -67,6 +68,11 @@ export default function Onboarding() {
   const [handleErr, setHandleErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // Invite code from a link (smartcontacts://i/<code>) — prefilled, can also be typed by hand.
+  const [invite, setInvite] = useState("");
+  useEffect(() => {
+    pendingInvite().then((code) => code && setInvite((cur) => cur || code));
+  }, []);
 
   async function save() {
     if (!session) return;
@@ -88,12 +94,17 @@ export default function Onboarding() {
       if (error.code === "23505") return setHandleErr("Этот адрес уже занят — придумайте другой.");
       return setErr(error.message);
     }
+    await applyInvite(session.user.id, invite);
     await reloadProfile();
   }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
-      <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={{ padding: 20 }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
         <Title sub="Это увидят люди, когда отсканируют ваш QR">Ваш профиль</Title>
         <Field
           label="Имя и фамилия"
@@ -126,6 +137,15 @@ export default function Onboarding() {
             setPhone(v);
             setErr(null);
           }}
+        />
+        <Field
+          label="Код пригласившего (если есть)"
+          value={invite}
+          onChangeText={(v) => setInvite(v.trim())}
+          autoCapitalize="none"
+          autoCorrect={false}
+          placeholder="например, a1b2c3d4"
+          maxLength={32}
         />
         {err ? <Text style={{ color: c.danger, marginBottom: 12 }}>{err}</Text> : null}
         <Button kind="grad" title="Готово" onPress={save} loading={busy} disabled={name.trim().length < 2} />

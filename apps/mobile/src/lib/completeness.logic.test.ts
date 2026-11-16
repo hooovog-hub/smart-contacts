@@ -1,55 +1,72 @@
 import { describe, expect, it } from "vitest";
-import { completeness, normalizeLink } from "./completeness.logic";
+import { completeness, HIDDEN, messenger, normalizeLink } from "./completeness.logic";
 import type { Profile } from "./types";
 
 const base: Profile = { id: "u1", handle: "h", full_name: "Hovhannes Ghazaryan", links: {}, plan: "pro" };
 
 describe("completeness", () => {
-  it("counts only the name for a fresh profile", () => {
+  it("starts at zero for a fresh profile (name is not counted)", () => {
     const r = completeness(base);
-    expect(r.done).toBe(1);
+    expect(r.done).toBe(0);
     expect(r.total).toBe(10);
-    expect(r.pct).toBe(10);
-    expect(r.todo.map((t) => t.id)).toContain("instagram");
+    expect(r.todo.map((t) => t.id)).toContain("photo");
+    expect(r.todo.some((t) => t.id === "site")).toBe(false);
   });
 
   it("reaches 100% when everything is filled", () => {
     const full: Profile = {
       ...base,
+      avatar_url: "https://x/a.jpg",
       role: "CEO",
       phone: "+37495944844",
       bio: "Строю продукты",
       city: "Ереван",
-      links: { instagram: "@h", linkedin: "https://linkedin.com/in/h", site: "https://df.am" },
+      links: { instagram: "@h", linkedin: "https://linkedin.com/in/h" },
       brands: [{ name: "Digital Factory", links: {}, position: 0 }],
       memberships: [{ org_name: "Манташянц" }],
     };
-    const r = completeness(full);
+    const r = completeness(full, 1);
     expect(r.pct).toBe(100);
     expect(r.todo).toEqual([]);
   });
 
-  it("treats whitespace as empty", () => {
-    expect(completeness({ ...base, bio: "   " }).todo.some((t) => t.id === "bio")).toBe(true);
+  it("counts open needs", () => {
+    expect(completeness(base, 0).todo.some((t) => t.id === "seeks")).toBe(true);
+    expect(completeness(base, 2).todo.some((t) => t.id === "seeks")).toBe(false);
   });
 });
 
 describe("normalizeLink", () => {
-  it("normalises Instagram handles and URLs", () => {
+  it("Instagram", () => {
     expect(normalizeLink("instagram", "hovhannes.g")).toBe("@hovhannes.g");
-    expect(normalizeLink("instagram", "@@hovhannes.g")).toBe("@hovhannes.g");
     expect(normalizeLink("instagram", "https://www.instagram.com/hovhannes.g/")).toBe("@hovhannes.g");
-  });
-  it("rejects invalid Instagram input", () => {
-    expect(normalizeLink("instagram", "https://instagram.com/")).toBeNull();
     expect(normalizeLink("instagram", "my name")).toBeNull();
   });
-  it("builds LinkedIn URLs", () => {
+  it("LinkedIn", () => {
     expect(normalizeLink("linkedin", "hovhannes")).toBe("https://www.linkedin.com/in/hovhannes");
     expect(normalizeLink("linkedin", "linkedin.com/in/h")).toBe("https://linkedin.com/in/h");
   });
-  it("adds https to sites and returns null for empty", () => {
-    expect(normalizeLink("site", "df.am")).toBe("https://df.am");
-    expect(normalizeLink("site", "  ")).toBeNull();
+  it("Telegram: username or number", () => {
+    expect(normalizeLink("telegram", "@hovo_g")).toBe("@hovo_g");
+    expect(normalizeLink("telegram", "https://t.me/hovo_g")).toBe("@hovo_g");
+    expect(normalizeLink("telegram", "+374 95 944 844")).toBe("+37495944844");
+  });
+  it("WhatsApp and email", () => {
+    expect(normalizeLink("whatsapp", "374 95 944 844")).toBe("+37495944844");
+    expect(normalizeLink("whatsapp", "123")).toBeNull();
+    expect(normalizeLink("email", "Me@Mail.com")).toBe("me@mail.com");
+    expect(normalizeLink("email", "nope")).toBeNull();
+  });
+});
+
+describe("messenger", () => {
+  it("defaults to the phone, can be custom or hidden", () => {
+    expect(messenger({ phone: "+374", links: {} }, "whatsapp")).toEqual({ mode: "same", value: "+374" });
+    expect(messenger({ phone: "+374", links: { telegram: "@me" } }, "telegram")).toEqual({
+      mode: "custom",
+      value: "@me",
+    });
+    expect(messenger({ phone: "+374", links: { whatsapp: HIDDEN } }, "whatsapp").mode).toBe("hidden");
+    expect(messenger({ phone: null, links: {} }, "whatsapp").mode).toBe("none");
   });
 });

@@ -1,9 +1,9 @@
 // Phone input with a country picker: the user picks a country (🇦🇲 +374 by default) and types only the
 // national number. The parent keeps the full stored value ("+37495944844"). Logic: src/lib/phone.logic.ts
-import { useState } from "react";
+import { useId, useState } from "react";
 import { FlatList, Modal, Pressable, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { st } from "@/components/ui";
+import { DoneBar, st } from "@/components/ui";
 import { COUNTRIES, type Country, fromE164, toE164 } from "@/lib/phone.logic";
 import { c } from "@/theme/tokens";
 
@@ -21,6 +21,7 @@ export function PhoneField({
   const [country, setCountry] = useState<Country>(initial.country);
   const [national, setNational] = useState(initial.national);
   const [open, setOpen] = useState(false);
+  const barId = useId();
 
   const update = (cty: Country, text: string) => {
     setCountry(cty);
@@ -46,6 +47,7 @@ export function PhoneField({
           value={national}
           onChangeText={(t) => update(country, t)}
           keyboardType="phone-pad"
+          inputAccessoryViewID={barId}
           textContentType="telephoneNumber"
           accessibilityLabel={`Номер телефона без кода страны +${country.dial}`}
           placeholder="95 123 456"
@@ -54,6 +56,7 @@ export function PhoneField({
         />
       </View>
 
+      <DoneBar id={barId} />
       <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
         <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={["top", "bottom"]}>
           <View style={{ flexDirection: "row", alignItems: "center", padding: 16 }}>

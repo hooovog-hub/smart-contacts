@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>Пакет v2: профиль, сегодня, AI, приглашения</title>
+<style>
+  :root {
+    --bg:#000; --s:#161618; --s2:#222225; --ink:#f5f5f7; --mu:#8e8e93; --line:#2a2a2e;
+    --ac:#ff8a3d; --aci:#ffb57a; --ok:#5bd08a; --okb:#1c2a22;
+    --grad:linear-gradient(90deg,#ffb547,#ff7a59,#e85bc4);
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:#0b0b0c;font:15px/1.35 -apple-system,"SF Pro Text",system-ui,sans-serif;color:var(--ink);padding:28px}
+  .row{display:flex;gap:28px;justify-content:center;align-items:flex-start}
+  .cap{text-align:center;color:var(--mu);font-size:13px;margin-top:10px;max-width:360px}
+  .phone{width:360px;height:780px;background:var(--bg);border-radius:46px;border:10px solid #1d1d1f;overflow:hidden;position:relative}
+  .scr{padding:50px 14px 110px}
+  .dock{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);width:280px;height:58px;background:#1c1c1e;border-radius:29px;display:flex;justify-content:space-around;align-items:center;color:var(--mu);font-size:18px}
+  .dock b{width:64px;height:44px;border-radius:22px;background:#f5f5f7;color:#000;display:grid;place-items:center;font-weight:400}
+  h1{font-size:28px;letter-spacing:-.6px}
+  .sub{color:var(--mu);font-size:13.5px}
+  .card{background:var(--s);border-radius:18px;padding:13px}
+  .h4{color:var(--mu);font-size:12.5px;font-weight:600;margin:16px 2px 7px;display:flex;justify-content:space-between}
+  .h4 a{color:var(--aci);font-weight:500}
+  .pill{display:inline-block;font-size:12.5px;padding:5px 10px;border-radius:999px;background:var(--s2)}
+  .empty{border:1.5px dashed #3a3a3f;border-radius:16px;padding:11px 12px;display:flex;align-items:center;gap:10px;font-size:13.5px}
+  .empty small{display:block;color:var(--mu);font-size:12px}
+  .empty .add{margin-left:auto;color:var(--aci);font-size:13px;white-space:nowrap}
+  .btn{height:42px;border-radius:999px;display:grid;place-items:center;font-weight:600;font-size:14px}
+  .g{background:var(--grad);color:#1a0d00}
+  .w{background:#f5f5f7;color:#000}
+  .d{background:var(--s2);color:var(--ink)}
+  .rowi{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .rowi:last-child{border:0}
+  .av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+  .meta{color:var(--mu);font-size:12px}
+  .mini{margin-left:auto;font-size:12.5px;color:var(--aci);white-space:nowrap}
+  .toggle{display:flex;background:var(--s);border-radius:999px;padding:3px;font-size:12px}
+  .toggle span{padding:5px 10px;border-radius:999px;color:var(--mu)}
+  .toggle .on{background:var(--s2);color:var(--ink)}
+  .wallet{display:inline-flex;align-items:center;gap:6px;background:#000;border:1px solid #3a3a3f;border-radius:9px;padding:6px 10px;font-size:11.5px;font-weight:600}
+  .wallet i{font-style:normal;font-size:15px}
+  .bar{height:7px;border-radius:4px;background:var(--s2);overflow:hidden;margin-top:7px}
+  .bar i{display:block;height:100%;background:var(--grad)}
+  .chip{font-size:12.5px;padding:6px 11px;border-radius:999px;background:var(--s2);display:inline-block;margin:0 5px 6px 0}
+  .chip em{font-style:normal;color:var(--aci)}
+  .links{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .lk{background:var(--s);border-radius:12px;padding:9px 10px;font-size:12.5px;display:flex;justify-content:space-between}
+  .lk small{color:var(--mu);font-size:10.5px;display:block}
+  .lk.off{border:1.5px dashed #3a3a3f;background:transparent;color:var(--mu)}
+  .lk.off i{font-style:normal;color:var(--aci)}
+</style>
+</head>
+<body>
+<div class="row">
+
+<!-- 1. My profile (owner mode) -->
+<div>
+<div class="phone"><div class="scr">
+  <div style="display:flex;justify-content:flex-end;margin-bottom:8px"><div class="toggle"><span class="on">Мой профиль</span><span>Как видят другие</span></div></div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="height:74px;background:linear-gradient(135deg,#6e7bff,#e85bc4,#ff8a3d)"></div>
+    <div style="padding:0 13px 13px;margin-top:-34px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between">
+        <div style="position:relative;width:72px;height:72px;border-radius:50%;border:4px solid var(--s);background:#3a3a3f url('') center/cover;display:grid;place-items:center;font-weight:700;font-size:24px;background:#e85bc4">HG
+          <span style="position:absolute;right:-4px;bottom:-2px;width:26px;height:26px;border-radius:50%;background:#f5f5f7;color:#000;display:grid;place-items:center;font-size:13px;border:3px solid var(--s)">📷</span></div>
+        <span class="wallet"><i></i>Add to Apple Wallet</span>
+      </div>
+      <div style="font-size:21px;font-weight:700;margin-top:6px">Hovhannes Ghazaryan <span style="color:var(--ac);font-size:12px">PRO</span></div>
+      <div class="meta" style="font-size:13px">CEO · Digital Factory · Ереван</div>
+      <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:12.5px"><b>Профиль заполнен на 60%</b><span class="meta">6 из 10</span></div>
+      <div class="bar"><i style="width:60%"></i></div>
+    </div>
+  </div>
+  <div class="h4">Сейчас ищу <a>+ Добавить</a></div>
+  <div><span class="chip">Дистрибьютор в Грузии</span><span class="chip">Инвестор, $200–300k</span></div>
+  <div class="h4">Чем могу помочь</div>
+  <div class="empty">🤝<div>Чем вы полезны людям<small>Например: «Маркетинг для ресторанов»</small></div><span class="add">+ Добавить</span></div>
+  <div class="h4">Контакты и соцсети</div>
+  <div class="links">
+    <div class="lk"><span>WhatsApp<small>тот же номер</small></span>✓</div>
+    <div class="lk"><span>Telegram<small>тот же номер</small></span>✓</div>
+    <div class="lk"><span>Instagram<small>@howhannes.g</small></span>✓</div>
+    <div class="lk off"><span>LinkedIn</span><i>+</i></div>
+  </div>
+  <div class="h4">Бренды и компании · 1</div>
+  <div class="card"><b>Digital Factory</b><div class="meta">Маркетинг</div></div>
+  <div style="color:var(--aci);font-size:13px;margin:8px 2px">+ Добавить бренд</div>
+</div><div class="dock"><span>☀︎</span><span>👥</span><span>✦</span><b>👤</b></div></div>
+<div class="cap">1. «Мой профиль»: фото (тап — сменить), кнопка Apple Wallet рядом (исчезает, когда карта уже в Wallet), все разделы видны с «+ Добавить», тап по блоку — редактировать на месте. «Как видят другие» — прячет пустое и плюсы. Экрана «Изменить» больше нет.</div>
+</div>
+
+<!-- 2. Today -->
+<div>
+<div class="phone"><div class="scr">
+  <h1>Сегодня</h1>
+  <div class="sub">Понедельник, 17 ноября</div>
+  <div class="btn g" style="height:52px;margin-top:14px;font-size:16px">▦ Познакомиться</div>
+  <div class="sub" style="text-align:center;margin-top:6px;font-size:12px">Показать мой QR или отсканировать визитку собеседника</div>
+
+  <div class="h4">🎂 Дни рождения</div>
+  <div class="card">
+    <div class="rowi"><div class="av" style="background:#6e7bff">АП</div><div>Арман Петросян<div class="meta">Сегодня · 41 год</div></div><span class="mini">Поздравить</span></div>
+    <div class="rowi"><div class="av" style="background:#3cc9a0">ЛМ</div><div>Лусине Мартиросян<div class="meta">Завтра</div></div><span class="mini" style="color:var(--mu)">Напомнить</span></div>
+  </div>
+
+  <div class="h4">✉️ Стоит написать сегодня <span style="font-weight:400">3</span></div>
+  <div class="card">
+    <div class="rowi"><div class="av" style="background:#ff8a3d">КА</div><div style="flex:1">Карен Аветисян<div class="meta">Ищет дистрибьютора — вы знаете Гора из логистики</div></div><span class="mini">Написать</span></div>
+    <div class="rowi"><div class="av" style="background:#a57cff">ДС</div><div style="flex:1">Давид Саргсян<div class="meta">Познакомились 2 недели назад и не общались</div></div><span class="mini">Написать</span></div>
+    <div class="rowi"><div class="av" style="background:#4ab4f0">АГ</div><div style="flex:1">Ани Григорян<div class="meta">Давно не созванивались · раздел Бизнес</div></div><span class="mini">Написать</span></div>
+  </div>
+
+  <div class="h4">🤝 Новые знакомства</div>
+  <div class="card">
+    <div class="rowi"><div class="av" style="background:#e85bc4">ТМ</div><div>Тигран Мкртчян<div class="meta">Добавлен вчера</div></div><span class="mini">Где познакомились?</span></div>
+  </div>
+</div><div class="dock"><b>☀︎</b><span>👥</span><span>✦</span><span>👤</span></div></div>
+<div class="cap">2. Вкладка «Сегодня» вместо комнат: большая кнопка «Познакомиться», дни рождения с готовым поздравлением в WhatsApp, 3 человека «Стоит написать» с причиной и готовым сообщением, новые знакомства с быстрой заметкой.</div>
+</div>
+
+<!-- 3. AI empty -->
+<div>
+<div class="phone"><div class="scr">
+  <h1>AI-помощник</h1>
+  <div style="font-size:19px;font-weight:600;line-height:1.3;margin-top:14px">В вашей книжке <span style="color:var(--ac)">1 421 человек</span>.<br>Скажите, что нужно — найду, кто поможет.</div>
+
+  <div class="h4">Так выглядит ответ</div>
+  <div class="card">
+    <div style="font-size:13px;color:var(--mu)">«Нужен юрист по недвижимости»</div>
+    <div class="rowi"><div class="av" style="background:#6e7bff">АО</div><div style="flex:1">Арам Оганесян<div class="meta"><span style="color:var(--ok)">Напрямую</span> · юрист, сделки с жильём</div></div><span class="mini">Написать</span></div>
+    <div class="rowi"><div class="av" style="background:#ff8a3d">СМ</div><div style="flex:1">Сона Манукян<div class="meta"><span style="color:var(--aci)">Может знать</span> · риелтор, работает с юристами</div></div><span class="mini">Написать</span></div>
+  </div>
+
+  <div class="h4">Попробуйте</div>
+  <div>
+    <span class="chip">⚖️ Нужен хороший юрист</span><span class="chip">🛠 Ремонт в офисе</span>
+    <span class="chip">💰 Ищу инвестора</span><span class="chip">🩺 Нужен кардиолог</span>
+    <span class="chip">✈️ Помощь с визой в США</span>
+  </div>
+  <div class="meta" style="text-align:center;margin-top:16px">10 запросов в сутки · телефоны в AI не отправляются</div>
+
+  <div style="position:absolute;left:14px;right:14px;bottom:92px;height:52px;border-radius:26px;background:var(--s);border:1px solid var(--line);display:flex;align-items:center;padding:0 6px 0 18px;color:var(--mu);font-size:14px">Напишите или скажите голосом<span style="margin-left:auto;width:42px;height:42px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#1a0d00">🎙</span></div>
+</div><div class="dock"><span>☀︎</span><span>👥</span><b>✦</b><span>👤</span></div></div>
+<div class="cap">3. Пустой AI-экран продаёт: обещание с числом ваших контактов, образец ответа («Напрямую / Может знать»), готовые задачи — тап сразу отправляет, внизу честно про лимит и приватность.</div>
+</div>
+
+<!-- 4. Invite -->
+<div>
+<div class="phone"><div class="scr">
+  <h1>Пригласить друзей</h1>
+  <div class="sub">10 друзей с заполненным профилем = +1 месяц Pro</div>
+  <div class="card" style="margin-top:14px">
+    <div style="display:flex;justify-content:space-between;font-size:13px"><b>3 из 10</b><span class="meta">до +1 месяца Pro</span></div>
+    <div class="bar"><i style="width:30%"></i></div>
+    <div class="meta" style="margin-top:8px">Пригласили: 7 · зарегистрировались: 3</div>
+  </div>
+  <div class="h4">Ваша ссылка</div>
+  <div class="card" style="display:flex;justify-content:space-between;font-size:13.5px"><span>smart-contacts.vercel.app/i/hovhannes</span><span class="mini">Копировать</span></div>
+  <div class="btn g" style="margin-top:10px">Поделиться ссылкой</div>
+  <div class="h4">Пригласить из контактов</div>
+  <div class="card">
+    <div class="rowi"><span style="color:var(--ac)">☑</span><div class="av" style="background:#3cc9a0">ГА</div><div>Гор Арутюнян<div class="meta">Бизнес</div></div></div>
+    <div class="rowi"><span style="color:var(--ac)">☑</span><div class="av" style="background:#6e7bff">МК</div><div>Мариам Карапетян<div class="meta">Друзья</div></div></div>
+    <div class="rowi"><span class="meta">☐</span><div class="av" style="background:#a57cff">РБ</div><div>Рубен Бабаян<div class="meta">Бизнес</div></div></div>
+  </div>
+  <div class="btn w" style="margin-top:10px">Отправить SMS выбранным (2)</div>
+</div><div class="dock"><span>☀︎</span><span>👥</span><span>✦</span><b>👤</b></div></div>
+<div class="cap">4. Приглашения: прогресс до бонуса, личная ссылка, «Поделиться» (WhatsApp, Telegram, почта…), выбор контактов галочками → одно готовое SMS всем выбранным. Этот же экран открывается сразу после импорта контактов.</div>
+</div>
+
+</div>
+</body>
+</html>

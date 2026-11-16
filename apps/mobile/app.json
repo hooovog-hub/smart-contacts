@@ -3,7 +3,7 @@
     "name": "Smart Contacts",
     "slug": "smart-contacts",
     "scheme": "smartcontacts",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#000000",
@@ -13,7 +13,12 @@
       "usesAppleSignIn": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSContactsUsageDescription": "Чтобы разложить ваши контакты по разделам и помочь найти нужного человека. Контакты видите только вы."
+        "NSContactsUsageDescription": "Чтобы разложить ваши контакты по разделам и помочь найти нужного человека. Контакты видите только вы.",
+        "NSPhotoLibraryUsageDescription": "Чтобы поставить фото в ваш профиль. Другие фото приложение не видит.",
+        "NSCameraUsageDescription": "Чтобы сфотографироваться для профиля и сканировать QR-визитки."
+      },
+      "entitlements": {
+        "com.apple.developer.pass-type-identifiers": ["$(TeamIdentifierPrefix)pass.am.smartcontacts.card"]
       }
     },
     "android": {
@@ -27,7 +32,22 @@
           "contactsPermission": "Чтобы разложить ваши контакты по разделам и помочь найти нужного человека. Контакты видите только вы."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Чтобы поставить фото в ваш профиль. Другие фото приложение не видит.",
+          "cameraPermission": "Чтобы сфотографироваться для профиля и сканировать QR-визитки."
+        }
+      ],
+      "expo-image",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Чтобы сфотографироваться для профиля и сканировать QR-визитки.",
+          "barcodeScannerEnabled": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false
@@ -44,7 +64,7 @@
       "url": "https://u.expo.dev/b26bb91d-0dc7-4261-889e-5146dba47348"
     },
     "runtimeVersion": {
-      "policy": "sdkVersion"
+      "policy": "appVersion"
     },
     "owner": "hooovos-team"
   }

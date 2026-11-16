@@ -3,8 +3,21 @@
   "framework": null,
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/r/:code", "destination": "/api/room?code=:code" },
-    { "source": "/:handle/vcard", "destination": "/api/vcard?handle=:handle" },
-    { "source": "/:handle((?!api|favicon\\.ico|index).+)", "destination": "/api/profile?handle=:handle" }
+    {
+      "source": "/i/:code",
+      "destination": "/api/invite?code=:code"
+    },
+    {
+      "source": "/r/:code",
+      "destination": "/api/room?code=:code"
+    },
+    {
+      "source": "/:handle/vcard",
+      "destination": "/api/vcard?handle=:handle"
+    },
+    {
+      "source": "/:handle((?!api|favicon\\.ico|index).+)",
+      "destination": "/api/profile?handle=:handle"
+    }
   ]
 }

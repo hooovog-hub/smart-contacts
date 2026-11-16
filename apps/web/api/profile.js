@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   let p;
   try {
     const rows = await rest(
-      `profiles?handle=eq.${encodeURIComponent(handle)}&select=id,full_name,role,bio,city,languages,plan,avatar_url,phone,links,brands(name,sphere,description,links,position),memberships(org_name,status_title,since_year,verified)`,
+      `profiles?handle=eq.${encodeURIComponent(handle)}&select=id,full_name,role,bio,city,languages,plan,avatar_url,phone,links,helps,brands(name,sphere,description,links,position),memberships(org_name,status_title,since_year,verified),profile_seeks(text,resolved_at)`,
     );
     p = rows[0];
   } catch {
@@ -29,6 +29,12 @@ export default async function handler(req, res) {
   const paid = p.plan !== "free";
   const brands = paid ? (p.brands || []).sort((a, b) => a.position - b.position) : [];
   const orgs = paid ? p.memberships || [] : [];
+  const seeks = paid ? (p.profile_seeks || []).filter((x) => !x.resolved_at).map((x) => x.text) : [];
+  const helps = paid ? p.helps || [] : [];
+  const chips = (title, list) =>
+    list.length
+      ? `<div class="sect">${title}</div><div class="chips">${list.map((t) => `<span class="chip">${esc(t)}</span>`).join("")}</div>`
+      : "";
   const avatar = p.avatar_url
     ? `<div class="av" style="background-image:url('${esc(p.avatar_url)}')"></div>`
     : `<div class="av">${esc(ini(p.full_name))}</div>`;
@@ -40,6 +46,8 @@ export default async function handler(req, res) {
   </div></div>
   <a class="btn save" href="/${esc(handle)}/vcard">Сохранить контакт</a>
   ${paid && p.bio ? `<p class="bio">${esc(p.bio)}</p>` : ""}
+  ${chips("Сейчас ищу", seeks)}
+  ${chips("Чем могу помочь", helps)}
   ${brands.length ? `<div class="sect">Бренды и компании · ${brands.length}</div>` + brands.map((b) => `<div class="card"><b>${esc(b.name)}</b><span class="muted">${esc(b.sphere || "")}</span>${b.description ? `<div style="margin-top:4px">${esc(b.description)}</div>` : ""}</div>`).join("") : ""}
   ${orgs.length ? `<div class="sect">Членство в организациях</div>` + orgs.map((o) => `<div class="card org"><div><b>${esc(o.org_name)}</b><span class="muted">${esc(o.status_title || "")}${o.since_year ? " · с " + o.since_year : ""}</span></div>${o.verified ? '<span class="ok">✓ Подтверждено</span>' : ""}</div>`).join("") : ""}
   ${!paid ? `<div class="lock">Бизнесы, бренды и членство показываются в Pro-профиле.</div>` : ""}
