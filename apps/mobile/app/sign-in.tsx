@@ -1,7 +1,10 @@
-import { useState } from "react";
+import * as AppleAuthentication from "expo-apple-authentication";
+import { useEffect, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Field, st } from "@/components/ui";
+import { isAppleSignInAvailable, signInWithApple } from "@/lib/appleAuth";
+import { reportError } from "@/lib/errorReport";
 import { supabase } from "@/lib/supabase";
 import { c } from "@/theme/tokens";
 
@@ -11,6 +14,25 @@ export default function SignIn() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [appleAvailable, setAppleAvailable] = useState(false);
+
+  useEffect(() => {
+    isAppleSignInAvailable().then(setAppleAvailable, () => setAppleAvailable(false));
+  }, []);
+
+  async function apple() {
+    if (busy) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      await signInWithApple(); // on success the auth gate in app/_layout.tsx navigates on
+    } catch (e) {
+      reportError(e, { context: { kind: "apple-sign-in" } });
+      setMsg("Не получилось войти через Apple. Попробуйте ещё раз или войдите по почте.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function submit() {
     setBusy(true);
@@ -35,6 +57,18 @@ export default function SignIn() {
           Smart <Text style={{ color: c.accent }}>Contacts</Text>
         </Text>
         <Text style={[st.sub, { fontSize: 15, marginBottom: 28 }]}>Познакомились — не потеряете.</Text>
+        {appleAvailable ? (
+          <>
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+              cornerRadius={24}
+              style={{ height: 48, width: "100%", opacity: busy ? 0.5 : 1 }}
+              onPress={apple}
+            />
+            <Text style={{ color: c.muted, textAlign: "center", marginVertical: 18 }}>или по почте</Text>
+          </>
+        ) : null}
         <Field
           label="Почта"
           value={email}

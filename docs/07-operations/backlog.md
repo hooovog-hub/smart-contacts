@@ -9,7 +9,7 @@
 | SC-003 | Тест Meta $50–100 | 0 | P0 | ads-manager | todo | Уточнить у основателя |
 | SC-004 | Варианты названия и проверка доступности | 0 | P1 | brand-designer | todo | Название — открытый вопрос в decisions-log |
 | SC-010 | Миграция 0001 + RLS + seed | 1 | P0 | backend-engineer | done | |
-| SC-011 | Вход (телефон / Apple ID) | 1 | P0 | mobile-engineer | doing | Работает вход по email и паролю; нет входа по телефону и Apple ID |
+| SC-011 | Вход (телефон / Apple ID) | 1 | P0 | mobile-engineer | review | 2026-11-16: «Продолжить с Apple» сделан (`features/sign-in.md`). Нужно: включить Apple в Supabase, проверить на iPhone. Вход по телефону не начат — решение основателя (SMS платные) |
 | SC-012 | Экран «Мой профиль» + редактирование | 1 | P0 | mobile-engineer | done | Бренды и членство редактируются |
 | SC-013 | Веб-профиль `/<handle>` + vCard | 1 | P0 | web-engineer | done | Работает на Vercel |
 | SC-014 | Мой QR | 1 | P0 | mobile-engineer | done | |
@@ -21,21 +21,35 @@
 | SC-020 | Импорт контактов + classify-contacts | 2 | P0 | mobile-engineer, ai-engineer | done | Импорт с телефона и AI-раскладка работают |
 | SC-021 | Книжка: чипы, «Ещё», разделы, А–Я | 2 | P0 | mobile-engineer | doing | Есть разделы, А–Я и поиск; не нашёл кнопку «Ещё» с сеткой всех разделов |
 | SC-022 | Профиль человека (чужой) | 2 | P0 | mobile-engineer | done | |
-| SC-030 | Комнаты: создание, QR, вход гостя | 3 | P0 | backend-engineer, web-engineer | doing | Комнаты видно (демо-данные), но создать комнату в приложении нельзя; веб-страница входа гостя — заглушка |
-| SC-031 | «Вспомнить всех» | 3 | P0 | mobile-engineer | doing | Экран комнаты с отметкой «говорили» есть; нужна проверка на реальной встрече |
-| SC-032 | «Стоит написать сегодня» на главной | 3 | P0 | mobile-engineer | todo | Не найдено в коде |
+| SC-030 | Комнаты: создание, QR, вход гостя | 3 | P2 | backend-engineer, web-engineer | backlog | Комнаты видно (демо-данные), но создать комнату в приложении нельзя; веб-страница входа гостя — заглушка |
+| SC-031 | «Вспомнить всех» | 3 | P2 | mobile-engineer | backlog | Экран комнаты с отметкой «говорили» есть; нужна проверка на реальной встрече |
+| SC-032 | «Стоит написать сегодня» на главной | 3 | P0 | mobile-engineer, ai-engineer | review | 0.2.0: функция `daily-picks`, вкладка «Сегодня» |
 | SC-040 | Edge Function ai-assistant + evals | 4 | P0 | ai-engineer | review | Работает; evals не прогонялись автоматически |
 | SC-041 | Экран задач AI, архив, разделы | 4 | P0 | mobile-engineer | doing | Задачи, экран задачи, «решено» есть; нет выбора «кто помог» |
 | SC-042 | Голосовой ввод в доке | 4 | P0 | integrations-engineer | todo | Кнопка микрофона пока показывает подсказку про диктовку клавиатуры |
 | SC-050 | Wallet-карта | 5 | P1 | integrations-engineer | done | Сертификат Apple настроен, карта проверена на iPhone 2026-11-12. У пользователей появится после EAS update (SC-052) |
 | SC-051 | Автообновление Wallet-карты при изменении профиля | 5 | P2 | integrations-engineer | todo | Wallet web service + APNs |
-| SC-052 | EAS update: публичный адрес для QR + кнопка Wallet у пользователей | 5 | P0 | release-manager | todo | Без него у установленных приложений QR ведёт на закрытый адрес Vercel |
+| SC-052 | EAS update: публичный адрес для QR + кнопка Wallet у пользователей | 5 | P2 | release-manager | done | 2026-11-16: не понадобился — первая сборка (build 1) уже содержит исправления; канал `production` настроен для будущих обновлений |
 | SC-053 | Пересохранить WALLET_SIGNER_KEY_B64 и WALLET_LINK_SECRET в Vercel как Secret | 5 | P2 | release-manager | todo | Сейчас тип Config (видно в панели Vercel) |
 | SC-060 | IAP Pro | 5 | P0 | integrations-engineer | todo | |
 | SC-061 | Business: команды, оплата через сайт | 5 | P1 | backend-engineer | todo | Таблицы teams есть, экранов нет |
 | SC-070 | Политика конфиденциальности и условия | 6 | P0 | legal-privacy-advisor | todo | |
 | SC-071 | Страница App Store | 6 | P0 | aso-seo-specialist | todo | |
-| SC-072 | Удаление аккаунта в приложении (требование Apple) | 6 | P0 | mobile-engineer | todo | Не найдено в коде; без него App Store отклонит |
+| SC-072 | Удаление аккаунта в приложении (требование Apple) | 6 | P0 | mobile-engineer, backend-engineer | review | 2026-11-16: кнопка в профиле + Edge Function `delete-account` с отзывом токенов Apple (`features/account-deletion.md`). Нужно: задеплоить функцию, ключ Apple .p8 в секреты, проверить на iPhone |
+| SC-073 | Не отдавать handle удалённого аккаунта новому человеку (старые QR и Wallet-карты) | 6 | P1 | backend-engineer | todo | Ревью безопасности 2026-11-16. Срок блокировки — решение основателя |
+| SC-074 | Лимит AI не должен сбрасываться удалением аккаунта | 5 | P2 | ai-engineer | todo | Ревью безопасности 2026-11-16; счётчик по хэшу Apple sub / email |
+| SC-090 | «Вас ищут»: согласие «видно знакомым знакомых» + Настройки → Приватность | 7 | P1 | mobile-engineer, backend-engineer | todo | Спецификация `features/needs-matching.md` (2026-11-16). Зависит от `profile_seeks` (параллельный пакет) |
+| SC-091 | Связи между пользователями: совпадение номеров (взаимно), QR, комнаты; таблица `connections` | 7 | P1 | backend-engineer | todo | Сначала проверка юристом сравнения телефонных книг (SC-070, App Store 5.1.1) |
+| SC-092 | Подбор «Ищу ↔ Помогу»: SQL-отбор + ранжирование Claude, `seek_matches` | 7 | P1 | ai-engineer, backend-engineer | todo | В AI — без имён/телефонов; свой серверный лимит |
+| SC-093 | Лента «Вас ищут» на главной + оффер (одно сообщение) с «Принять / Нет» | 7 | P1 | mobile-engineer, backend-engineer | todo | Офферы только Pro/Business (5 / 15 в неделю) |
+| SC-094 | Жалобы, двусторонний блок, лимиты офферов, заморозка после 3 жалоб | 7 | P1 | backend-engineer, mobile-engineer | todo | Требование App Store 1.2 — без этого фичу не выпускаем |
+| SC-095 | Push-уведомления: «Новое предложение», «Принято», сводка «Вас ищут» 1 раз в сутки | 7 | P2 | integrations-engineer | todo | Push-инфраструктуры в приложении пока нет |
+| SC-096 | Макеты: экран согласия, блок и список «Вас ищут», оффер, приватность | 7 | P1 | ui-designer | todo | По прототипу; варианты на выбор основателю |
+| SC-080 | Вкладка «Сегодня»: Познакомиться (QR/сканер), дни рождения, новые знакомства | 3 | P0 | mobile-engineer | review | 0.2.0, `features/today.md` |
+| SC-081 | Приглашения: ссылка/код, SMS выбранным, бонус 10 = +1 месяц | 5 | P0 | mobile-engineer, backend-engineer | review | 0.2.0, `features/invites.md`; нужен `INVITE_INSTALL_URL` в Vercel |
+| SC-082 | Профиль на месте: фото, «Сейчас ищу», «Чем могу помочь», Wallet рядом с фото | 2 | P0 | mobile-engineer | review | 0.2.0, `features/profile.md` |
+| SC-083 | Фото профиля на Wallet-карте (нужен PNG-thumbnail) | 5 | P2 | integrations-engineer | todo | Сейчас фото на карте нет |
+| SC-084 | «Повод написать»: новости по сферам → кому переслать | 3 | P2 | product-lead | backlog | Решение 2026-11-16: пока не делаем |
 
 ## Где мы сейчас
 См. `docs/07-operations/status.md` — сводка и следующие шаги.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sanitizeAnswer } from "./assistant.ts";
+import { sanitizeAnswer, sanitizeSeek } from "./assistant.ts";
 
 const mine = new Set(["karen", "ashot", "gor", "lilit", "aram"]);
 
@@ -38,6 +38,24 @@ describe("sanitizeAnswer", () => {
       category: "biz",
       reply: "Не понял задачу",
       people: [],
+      seek: null,
     });
+  });
+});
+
+describe("sanitizeSeek", () => {
+  it("keeps a short one-line need", () => {
+    expect(sanitizeSeek("  Бухгалтер   на аутсорс. ")).toBe("Бухгалтер на аутсорс");
+  });
+  it("rejects empty, too long and non-strings", () => {
+    expect(sanitizeSeek("")).toBeNull();
+    expect(sanitizeSeek("x".repeat(61))).toBeNull();
+    expect(sanitizeSeek(null)).toBeNull();
+    expect(sanitizeSeek(42)).toBeNull();
+  });
+  it("is part of the sanitized answer", () => {
+    expect(sanitizeAnswer({ reply: "ok", seek: "Юрист по недвижимости" }, "", new Set()).seek).toBe(
+      "Юрист по недвижимости",
+    );
   });
 });

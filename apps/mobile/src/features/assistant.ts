@@ -22,6 +22,8 @@ export async function askAssistant(message: string, taskId?: string) {
     category: string;
     reply: string;
     people: AiPerson[];
+    /** A need the user could add to "Сейчас ищу" (offered, never saved automatically). */
+    seek?: string | null;
   }>("ai-assistant", { body: { message, taskId } });
   if (error) {
     // 429 = AI limit (rate limit or Free monthly quota): show the server's message to the user.
@@ -35,4 +37,12 @@ export async function askAssistant(message: string, taskId?: string) {
   }
   if (!data) throw new Error("Пустой ответ");
   return data;
+}
+
+/** Adds an AI-suggested need to the profile's "Сейчас ищу" after the user confirmed it. */
+export async function addSeekFromAi(profileId: string, text: string) {
+  const { error } = await supabase
+    .from("profile_seeks")
+    .insert({ profile_id: profileId, text: text.trim().slice(0, 80), source: "ai" });
+  if (error) throw error;
 }

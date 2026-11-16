@@ -6,14 +6,18 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Dock } from "@/components/Dock";
 import { Icon } from "@/components/Icon";
 import { Avatar, Button, Pill, st } from "@/components/ui";
-import { AiLimitError, askAssistant, catName } from "@/features/assistant";
+import { addSeekFromAi, AiLimitError, askAssistant, catName } from "@/features/assistant";
+import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import type { AiMessage, AiTask, Contact } from "@/lib/types";
 import { c, r } from "@/theme/tokens";
 
 export default function TaskScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, seek: seekParam } = useLocalSearchParams<{ id: string; seek?: string }>();
   const router = useRouter();
+  const { profile } = useAuth();
+  // "Сейчас ищу" offer from the AI (spec: docs/01-product/features/ai-assistant.md). Nothing is saved without "Добавить".
+  const [seek, setSeek] = useState<string | null>(seekParam ?? null);
   const [task, setTask] = useState<AiTask | null>(null);
   const [msgs, setMsgs] = useState<AiMessage[]>([]);
   const [people, setPeople] = useState<Record<string, Contact>>({});
@@ -39,13 +43,28 @@ export default function TaskScreen() {
   async function send(t: string) {
     setBusy(true);
     try {
-      await askAssistant(t, id);
+      const res = await askAssistant(t, id);
+      if (res.seek) setSeek(res.seek);
     } catch (e) {
       if (e instanceof AiLimitError) Alert.alert("Лимит AI", e.message);
       else Alert.alert("AI не ответил", "Попробуйте ещё раз.");
     }
     setBusy(false);
     load();
+  }
+  async function acceptSeek() {
+    if (!profile || !seek) return;
+    try {
+      await addSeekFromAi(profile.id, seek);
+      setSeek(null);
+      Alert.alert("Добавлено в профиль", `«${seek}» теперь в разделе «Сейчас ищу».`);
+    } catch (e) {
+      const limit = e instanceof Error && e.message.includes("seeks_limit");
+      Alert.alert(
+        "Не добавилось",
+        limit ? "В «Сейчас ищу» уже 5 пунктов — отметьте найденное." : "Попробуйте ещё раз.",
+      );
+    }
   }
   async function done() {
     await supabase
@@ -163,6 +182,29 @@ export default function TaskScreen() {
           {busy ? <Text style={{ color: c.muted }}>Смотрю ваши контакты…</Text> : null}
         </View>
       </ScrollView>
+      {seek ? (
+        <View
+          style={{
+            position: "absolute",
+            left: 16,
+            right: 16,
+            bottom: 104,
+            backgroundColor: c.surface2,
+            borderRadius: r.card,
+            padding: 14,
+            gap: 10,
+          }}
+        >
+          <Text style={{ color: c.ink, fontSize: 14.5 }}>
+            Добавить в профиль «Сейчас ищу: <Text style={{ fontWeight: "700" }}>{seek}</Text>»? Так вас быстрее найдут
+            те, кто может помочь.
+          </Text>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <Button kind="grad" small title="Добавить" onPress={acceptSeek} style={{ flex: 1 }} />
+            <Button kind="ghost" small title="Нет" onPress={() => setSeek(null)} style={{ flex: 1 }} />
+          </View>
+        </View>
+      ) : null}
       <Dock placeholder="Уточнить задачу…" onSend={send} busy={busy} />
     </SafeAreaView>
   );

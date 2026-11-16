@@ -74,3 +74,9 @@ describe("validateMessage", () => {
     expect(validateMessage("Нужны двери в офис")).toBeNull();
   });
 });
+
+describe("launch promo limits", () => {
+  it("allows 10 assistant messages per day on every plan", () => {
+    for (const plan of ["free", "pro", "business"]) expect(limitsFor("assistant", plan).perDay).toBe(10);
+  });
+});

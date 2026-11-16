@@ -1,137 +1,273 @@
+// "Сегодня" (replaces the meetings home; rooms moved to the backlog). A daily reason to open the app:
+// meet someone (QR), birthdays, people worth writing to today, recent acquaintances.
+// Spec: docs/01-product/features/today.md · Mockup: docs/02-design/mockups/package-v2.png
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { useCallback, useRef, useState } from "react";
+import { ActivityIndicator, Alert, Linking, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
-import { Button, Section, Title, st } from "@/components/ui";
-import { useAuth } from "@/lib/auth";
+import { Avatar, Section, st } from "@/components/ui";
+import { reportError } from "@/lib/errorReport";
 import { supabase } from "@/lib/supabase";
+import {
+  type BirthdayContact,
+  birthdayMessage,
+  localDay,
+  type UpcomingBirthday,
+  upcomingBirthdays,
+  whatsappUrl,
+  whenLabel,
+} from "@/lib/today.logic";
 import { c, r } from "@/theme/tokens";
 
-type Room = {
-  id: string;
-  title: string;
-  kind: string | null;
-  place: string | null;
-  starts_at: string;
-  room_members: { count: number }[];
+type Pick = {
+  contact_id: string;
+  reason: string;
+  message: string;
+  contacts: { display_name: string; role: string | null; phone: string | null } | null;
 };
-const MON = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+type Recent = { id: string; display_name: string; role: string | null; note: string | null; created_at: string };
 
-// Spec: docs/01-product/features/meetings-rooms.md
-export default function Meetings() {
+const WEEKDAYS = ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"];
+const MONTHS = [
+  "января",
+  "февраля",
+  "марта",
+  "апреля",
+  "мая",
+  "июня",
+  "июля",
+  "августа",
+  "сентября",
+  "октября",
+  "ноября",
+  "декабря",
+];
+
+async function openMessage(phone: string | null | undefined, text: string) {
+  const wa = whatsappUrl(phone, text);
+  // LSApplicationQueriesSchemes has "whatsapp" (app.json); wa.me opens WhatsApp when it is installed.
+  if (wa && (await Linking.canOpenURL("whatsapp://send").catch(() => false))) return Linking.openURL(wa);
+  const digits = (phone ?? "").replace(/[^\d+]/g, "");
+  if (digits)
+    return Linking.openURL(`sms:${digits}${Platform.OS === "ios" ? "&" : "?"}body=${encodeURIComponent(text)}`);
+  Alert.alert("Нет номера", "У этого контакта нет телефона.");
+}
+
+export default function Today() {
   const router = useRouter();
-  const { profile } = useAuth();
-  const [rooms, setRooms] = useState<Room[]>([]);
+  const [birthdays, setBirthdays] = useState<UpcomingBirthday[]>([]);
+  const [picks, setPicks] = useState<Pick[] | null>(null);
+  const [recent, setRecent] = useState<Recent[]>([]);
+  const picksDay = useRef<string | null>(null);
+
+  const load = useCallback(async () => {
+    const day = localDay();
+    const [{ data: bd }, { data: rc }] = await Promise.all([
+      supabase
+        .from("contacts")
+        .select("id, display_name, phone, birthday")
+        .not("birthday", "is", null)
+        .eq("archived", false)
+        .eq("is_demo", false),
+      supabase
+        .from("contacts")
+        .select("id, display_name, role, note, created_at")
+        .neq("source", "phonebook")
+        .eq("archived", false)
+        .eq("is_demo", false)
+        .gte("created_at", new Date(Date.now() - 14 * 86_400_000).toISOString())
+        .order("created_at", { ascending: false })
+        .limit(5),
+    ]);
+    setBirthdays(upcomingBirthdays((bd as BirthdayContact[]) ?? [], day));
+    setRecent((rc as Recent[]) ?? []);
+    // Daily picks: at most one request per day per app session (the server caches them, AI costs a quota).
+    if (picksDay.current === day) return;
+    picksDay.current = day;
+    const { data, error } = await supabase.functions.invoke<{ picks: Pick[] }>("daily-picks", { body: { day } });
+    if (error) {
+      const status = (error as { context?: Response }).context?.status;
+      if (status !== 429) reportError(error, { context: { kind: "daily-picks", status } });
+      setPicks([]);
+    } else setPicks(data?.picks ?? []);
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
-      supabase
-        .from("rooms")
-        .select("id, title, kind, place, starts_at, room_members(count)")
-        .order("starts_at", { ascending: false })
-        .then(({ data }) => setRooms((data as Room[]) ?? []));
-    }, []),
+      load();
+    }, [load]),
   );
-  const now = Date.now();
-  const upcoming = rooms.filter((x) => new Date(x.starts_at).getTime() > now).reverse();
-  const past = rooms.filter((x) => new Date(x.starts_at).getTime() <= now);
 
-  const RoomRow = ({ x }: { x: Room }) => {
-    const d = new Date(x.starts_at);
-    const others = Math.max(0, (x.room_members?.[0]?.count ?? 1) - 1);
-    return (
-      <Pressable onPress={() => router.push(`/room/${x.id}`)} style={st.row}>
-        <View
-          style={{
-            width: 48,
-            height: 52,
-            borderRadius: 14,
-            backgroundColor: c.surface2,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Text style={{ color: c.ink, fontSize: 19, fontWeight: "700" }}>{d.getDate()}</Text>
-          <Text style={{ color: c.muted, fontSize: 11.5 }}>{MON[d.getMonth()]}</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={st.name} numberOfLines={1}>
-            {x.title}
-          </Text>
-          <Text style={st.meta} numberOfLines={1}>
-            {[x.place, `${others} чел.`].filter(Boolean).join(" · ")}
-          </Text>
-        </View>
-        <Text style={{ color: c.muted, fontSize: 18 }}>›</Text>
-      </Pressable>
+  const now = new Date();
+  const addNote = (x: Recent) =>
+    Alert.prompt?.(
+      "Где познакомились?",
+      `Пара слов о ${x.display_name}: где встретились, о чём говорили.`,
+      async (text) => {
+        if (!text?.trim()) return;
+        const note = [x.note, text.trim()].filter(Boolean).join("\n");
+        await supabase.from("contacts").update({ note, met_at: new Date().toISOString() }).eq("id", x.id);
+        load();
+      },
+      "plain-text",
     );
-  };
+
+  const Row = ({
+    id,
+    name,
+    meta,
+    action,
+    onPress,
+    onAction,
+  }: {
+    id: string;
+    name: string;
+    meta: string;
+    action: string;
+    onPress?: () => void;
+    onAction: () => void;
+  }) => (
+    <Pressable onPress={onPress} style={[st.row, { gap: 10 }]}>
+      <Avatar name={name} seed={id} size={40} />
+      <View style={{ flex: 1 }}>
+        <Text style={st.name} numberOfLines={1}>
+          {name}
+        </Text>
+        <Text style={st.meta} numberOfLines={2}>
+          {meta}
+        </Text>
+      </View>
+      <Pressable onPress={onAction} hitSlop={8} accessibilityRole="button">
+        <Text style={{ color: c.accentInk, fontSize: 13.5 }}>{action}</Text>
+      </Pressable>
+    </Pressable>
+  );
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={["top"]}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
-        <Title sub={`Привет, ${profile?.full_name.split(" ")[0] ?? ""}`}>Знакомства</Title>
-        <LinearGradient
-          colors={["#3A4BD8", "#E85BC4", "#FF8A3D"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ borderRadius: 24, padding: 18, gap: 8 }}
-        >
-          <Text style={{ color: "#fff", opacity: 0.85, fontSize: 12, fontWeight: "600", letterSpacing: 0.6 }}>
-            ВАША ВИЗИТКА
-          </Text>
-          <Text style={{ color: "#fff", fontSize: 24, fontWeight: "700", letterSpacing: -0.5 }}>
-            Покажите QR — и вас сохранят
-          </Text>
-          <Text style={{ color: "#fff", opacity: 0.85 }}>Собеседник откроет ваш профиль без приложения.</Text>
-          <Button
-            title="Мой QR"
-            onPress={() => router.push("/profile/qr")}
-            style={{ marginTop: 6, alignSelf: "flex-start" }}
-            small
-          />
-        </LinearGradient>
-        <Pressable
-          onPress={() => router.push("/assistant")}
-          style={{
-            marginTop: 12,
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 10,
-            height: 50,
-            paddingHorizontal: 16,
-            borderRadius: 25,
-            backgroundColor: c.surface,
-          }}
-        >
-          <Icon name="spark" size={18} color={c.accent} />
-          <Text style={{ color: c.muted }}>Спросите AI: «Нужно решить вопрос с дверями»</Text>
-        </Pressable>
+        <Text style={st.title}>Сегодня</Text>
+        <Text style={st.sub}>
+          {WEEKDAYS[now.getDay()]}, {now.getDate()} {MONTHS[now.getMonth()]}
+        </Text>
 
-        {upcoming.length ? <Section>Скоро</Section> : null}
-        {upcoming.length ? (
-          <View style={{ backgroundColor: c.surface, borderRadius: r.card, overflow: "hidden" }}>
-            {upcoming.map((x) => (
-              <RoomRow key={x.id} x={x} />
-            ))}
-          </View>
+        <Pressable
+          onPress={() =>
+            Alert.alert("Познакомиться", undefined, [
+              { text: "Показать мой QR", onPress: () => router.push("/profile/qr") },
+              { text: "Сканировать визитку собеседника", onPress: () => router.push("/scan") },
+              { text: "Отмена", style: "cancel" },
+            ])
+          }
+          accessibilityRole="button"
+          style={{ marginTop: 14 }}
+        >
+          <LinearGradient
+            colors={["#FFB547", "#FF7A59", "#E85BC4"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{
+              height: 54,
+              borderRadius: 27,
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "row",
+              gap: 8,
+            }}
+          >
+            <Icon name="qr" size={20} color={c.onGrad} />
+            <Text style={{ color: c.onGrad, fontSize: 16, fontWeight: "700" }}>Познакомиться</Text>
+          </LinearGradient>
+        </Pressable>
+        <Text style={[st.meta, { textAlign: "center", marginTop: 6 }]}>
+          Показать мой QR или отсканировать визитку собеседника
+        </Text>
+
+        {birthdays.length ? (
+          <>
+            <Section>🎂 Дни рождения</Section>
+            <View style={{ backgroundColor: c.surface, borderRadius: r.card, overflow: "hidden" }}>
+              {birthdays.map((b) => (
+                <Row
+                  key={b.contact.id}
+                  id={b.contact.id}
+                  name={b.contact.display_name}
+                  meta={[whenLabel(b.inDays), b.age ? `${b.age} лет` : null].filter(Boolean).join(" · ")}
+                  action={b.inDays === 0 ? "Поздравить" : "Написать"}
+                  onPress={() => router.push(`/contact/${b.contact.id}`)}
+                  onAction={() => openMessage(b.contact.phone, birthdayMessage(b.contact.display_name))}
+                />
+              ))}
+            </View>
+          </>
         ) : null}
-        <Section>Встречи · {past.length}</Section>
-        {past.length ? (
+
+        <Section right={picks?.length ? <Text style={st.meta}>{picks.length}</Text> : null}>
+          ✉️ Стоит написать сегодня
+        </Section>
+        {picks === null ? (
+          <ActivityIndicator color={c.muted} style={{ marginVertical: 16 }} />
+        ) : picks.length ? (
           <View style={{ backgroundColor: c.surface, borderRadius: r.card, overflow: "hidden" }}>
-            {past.map((x) => (
-              <RoomRow key={x.id} x={x} />
+            {picks.map((p) => (
+              <Row
+                key={p.contact_id}
+                id={p.contact_id}
+                name={p.contacts?.display_name ?? "Контакт"}
+                meta={p.reason}
+                action="Написать"
+                onPress={() => router.push(`/contact/${p.contact_id}`)}
+                onAction={() => openMessage(p.contacts?.phone, p.message)}
+              />
             ))}
           </View>
         ) : (
-          <View style={{ backgroundColor: c.surface, borderRadius: r.card, padding: 14 }}>
-            <Text style={st.name}>Пока нет встреч</Text>
-            <Text style={[st.meta, { marginTop: 4 }]}>
-              Покажите QR на встрече — все участники сохранятся с профилями.
-            </Text>
-          </View>
+          <Text style={st.meta}>
+            Когда книжка разложена по разделам и появятся новые знакомства, здесь каждый день будут 3 человека, которым
+            стоит написать.
+          </Text>
         )}
+
+        {recent.length ? (
+          <>
+            <Section>🤝 Новые знакомства</Section>
+            <View style={{ backgroundColor: c.surface, borderRadius: r.card, overflow: "hidden" }}>
+              {recent.map((x) => (
+                <Row
+                  key={x.id}
+                  id={x.id}
+                  name={x.display_name}
+                  meta={x.note ? x.note.split("\n").pop()! : x.role || "Добавлен недавно"}
+                  action={x.note ? "Открыть" : "Где познакомились?"}
+                  onPress={() => router.push(`/contact/${x.id}`)}
+                  onAction={() => (x.note ? router.push(`/contact/${x.id}`) : addNote(x))}
+                />
+              ))}
+            </View>
+          </>
+        ) : null}
+
+        <Pressable
+          onPress={() => router.push("/invite")}
+          style={{
+            marginTop: 22,
+            backgroundColor: c.surface,
+            borderRadius: r.card,
+            padding: 14,
+            flexDirection: "row",
+            gap: 10,
+            alignItems: "center",
+          }}
+        >
+          <Text style={{ fontSize: 20 }}>🎁</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={st.name}>Пригласите 10 друзей</Text>
+            <Text style={st.meta}>и получите месяц Pro бесплатно</Text>
+          </View>
+          <Text style={{ color: c.muted, fontSize: 18 }}>›</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );

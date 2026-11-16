@@ -1,9 +1,11 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import * as Linking from "expo-linking";
 import { useEffect } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { installGlobalErrorHandler, reportError } from "@/lib/errorReport";
+import { rememberInvite } from "@/lib/invite";
 import { c } from "@/theme/tokens";
 
 installGlobalErrorHandler();
@@ -35,9 +37,16 @@ function Gate() {
   const segments = useSegments();
   const router = useRouter();
 
+  // Invite links (smartcontacts://i/<code>): remember the code until onboarding (src/lib/invite.ts).
+  const url = Linking.useURL();
+  useEffect(() => {
+    if (!loading && !profile) rememberInvite(url); // only a new user can be "invited"
+  }, [url, loading, profile]);
+
   useEffect(() => {
     if (loading) return;
     const top = segments[0] as string | undefined;
+    if (top === "i") return router.replace(session ? "/" : "/sign-in"); // invite deep link: code already saved
     if (!session && top !== "sign-in") router.replace("/sign-in");
     else if (session && !profile && top !== "onboarding") router.replace("/onboarding");
     else if (session && profile && (top === "sign-in" || top === "onboarding")) router.replace("/");

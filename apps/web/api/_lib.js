@@ -40,6 +40,8 @@ h1{font-size:24px;letter-spacing:-.02em;margin:10px 0 2px}.muted{color:var(--mut
 .btn{display:block;text-align:center;padding:15px;border-radius:999px;font-weight:600;text-decoration:none;margin-top:12px}
 .save{background:var(--grad);color:#1a0d00}.ghost{background:var(--surface2);color:var(--ink)}
 .lock{border:1px dashed #333;border-radius:16px;padding:12px;color:var(--muted);font-size:14px;margin-top:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--surface2);border-radius:999px;padding:6px 11px;font-size:13px}
+.code{font:600 28px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.12em;text-align:center;background:var(--surface);border-radius:18px;padding:16px;margin-top:14px}
 .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:28px}
 </style></head><body><main>${body}</main></body></html>`;
 }

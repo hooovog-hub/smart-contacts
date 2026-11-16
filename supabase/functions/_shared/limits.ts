@@ -2,7 +2,7 @@
 // Plans: docs/01-product/features/plans-billing.md — Free has 5 AI tasks per month.
 
 export type Plan = "free" | "pro" | "business";
-export type AiFn = "assistant" | "assistant_task" | "classify" | "classify_plan";
+export type AiFn = "assistant" | "assistant_task" | "classify" | "classify_plan" | "daily_picks";
 export type Limits = { perMinute: number | null; perDay: number | null; perMonth: number | null };
 export type ConsumeResult = { ok: boolean; reason?: string; retry_after?: number };
 
@@ -12,13 +12,16 @@ export const FREE_AI_TASKS_PER_MONTH = 5;
 
 const BASE: Record<AiFn, Limits> = {
   // Every assistant message (new task or follow-up).
-  assistant: { perMinute: 10, perDay: 200, perMonth: null },
+  // 10/day for everyone during the launch promo (founder decision 2026-11-16).
+  assistant: { perMinute: 10, perDay: 10, perMonth: null },
   // New assistant tasks: monthly quota for Free only (set in limitsFor).
   assistant_task: { perMinute: null, perDay: null, perMonth: null },
   // One batch of up to 150 contacts; 400/day ≈ 60 000 contacts.
   classify: { perMinute: 30, perDay: 400, perMonth: null },
   // Planning sections reads the whole book — rare by design.
   classify_plan: { perMinute: 2, perDay: 10, perMonth: null },
+  // "Стоит написать сегодня": computed once a day and cached in daily_picks; a little slack for retries.
+  daily_picks: { perMinute: 2, perDay: 3, perMonth: null },
 };
 
 /** Limits for a function and plan. Unknown plan is treated as Free. */
@@ -35,7 +38,7 @@ export function limitMessage(reason: string | undefined): string {
     case "rate_minute":
       return "Слишком много запросов. Подождите минуту и попробуйте снова.";
     case "rate_day":
-      return "Дневной лимит AI исчерпан. Попробуйте завтра.";
+      return "Лимит — 10 сообщений AI в сутки. Попробуйте позже.";
     case "quota_month":
       return `На тарифе Free доступно ${FREE_AI_TASKS_PER_MONTH} задач AI в месяц. Перейдите на Pro, чтобы снять лимит.`;
     default:

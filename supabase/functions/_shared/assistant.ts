@@ -5,7 +5,17 @@ export type TaskCategory = (typeof TASK_CATEGORIES)[number];
 export const MAX_PEOPLE = 4;
 
 export type SuggestedPerson = { contactId: string; kind: "direct" | "indirect"; why: string; ask: string };
-export type SafeAnswer = { category: TaskCategory; reply: string; people: SuggestedPerson[] };
+export type SafeAnswer = { category: TaskCategory; reply: string; people: SuggestedPerson[]; seek: string | null };
+
+/** A need worth offering for the profile's "Сейчас ищу": 2–60 chars, one line, else null. */
+export function sanitizeSeek(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const s = raw
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[.!]+$/, "");
+  return s.length >= 2 && s.length <= 60 ? s : null;
+}
 
 /**
  * Guard the model's answer: only the owner's real contacts, at most 4 people,
@@ -16,6 +26,7 @@ export function sanitizeAnswer(parsed: unknown, fallbackText: string, contactIds
     category?: unknown;
     reply?: unknown;
     people?: unknown;
+    seek?: unknown;
   };
   const category = (TASK_CATEGORIES as readonly unknown[]).includes(p.category) ? (p.category as TaskCategory) : "biz";
   const reply = typeof p.reply === "string" ? p.reply : parsed ? "" : fallbackText;
@@ -34,5 +45,5 @@ export function sanitizeAnswer(parsed: unknown, fallbackText: string, contactIds
     });
     if (people.length >= MAX_PEOPLE) break;
   }
-  return { category, reply, people };
+  return { category, reply, people, seek: sanitizeSeek(p.seek) };
 }

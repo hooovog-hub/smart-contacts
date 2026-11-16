@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Заполненность профиля</title>
+<style>
+  :root {
+    --bg: #000; --surface: #161618; --surface2: #222225; --ink: #f5f5f7; --muted: #8e8e93; --line: #2a2a2e;
+    --accent: #ff8a3d; --accentInk: #ffb57a; --ok: #5bd08a; --okBg: #1c2a22; --danger: #ff6b81;
+    --grad: linear-gradient(90deg, #ffb547, #ff7a59, #e85bc4);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #0b0b0c; font: 15px/1.35 -apple-system, "SF Pro Text", system-ui, sans-serif; color: var(--ink); padding: 32px; }
+  .row { display: flex; gap: 36px; justify-content: center; align-items: flex-start; }
+  .cap { text-align: center; color: var(--muted); font-size: 13px; margin-top: 12px; max-width: 390px; }
+  .phone { width: 390px; height: 844px; background: var(--bg); border-radius: 48px; border: 10px solid #1d1d1f; overflow: hidden; position: relative; }
+  .scr { padding: 56px 16px 120px; height: 100%; overflow: hidden; }
+  .card { background: var(--surface); border-radius: 20px; overflow: hidden; }
+  .cover { height: 96px; background: linear-gradient(135deg, #6e7bff, #e85bc4, #ff8a3d); }
+  .head { padding: 0 16px 16px; margin-top: -40px; }
+  .ava { width: 80px; height: 80px; border-radius: 50%; background: #e85bc4; border: 4px solid var(--surface); display: grid; place-items: center; font-weight: 700; font-size: 28px; }
+  .name { font-size: 23px; font-weight: 700; letter-spacing: -.4px; margin-top: 8px; }
+  .pro { color: var(--accent); font-size: 13px; font-weight: 700; margin-left: 4px; vertical-align: middle; }
+  .meta { color: var(--muted); font-size: 14px; }
+  .pill { display: inline-block; margin-top: 8px; background: var(--okBg); color: var(--ok); font-size: 12.5px; padding: 4px 10px; border-radius: 999px; }
+  .acts { display: flex; gap: 8px; margin-top: 10px; }
+  .acts div { flex: 1; background: var(--surface); border-radius: 16px; padding: 12px 0; text-align: center; font-size: 12px; }
+  .acts div b { display: block; font-size: 18px; font-weight: 400; margin-bottom: 2px; }
+
+  .complete { background: var(--surface); border-radius: 18px; padding: 14px; margin-top: 10px; display: grid; gap: 10px; }
+  .ctop { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .ctop b { font-size: 15.5px; }
+  .ctop span { color: var(--muted); font-size: 12.5px; }
+  .bar { height: 8px; border-radius: 4px; background: var(--surface2); overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--grad); border-radius: 4px; }
+  .todo { display: flex; flex-wrap: wrap; gap: 6px; }
+  .todo span { font-size: 13px; padding: 6px 11px; border-radius: 999px; background: var(--surface2); }
+  .todo span em { font-style: normal; color: var(--accentInk); margin-right: 3px; }
+  .todo span small { color: var(--muted); margin-left: 4px; font-size: 11.5px; }
+  .why { color: var(--muted); font-size: 12.5px; }
+  .preview { color: var(--accentInk); font-size: 13.5px; }
+
+  h4 { color: var(--muted); font-size: 13px; font-weight: 600; margin: 18px 0 8px; text-transform: none; }
+  .empty { border: 1.5px dashed #3a3a3f; border-radius: 18px; padding: 14px; display: flex; gap: 12px; align-items: center; }
+  .empty .ic { width: 38px; height: 38px; border-radius: 12px; background: var(--surface2); display: grid; place-items: center; font-size: 18px; flex: none; }
+  .empty p { font-size: 14px; }
+  .empty small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .empty .add { margin-left: auto; color: var(--accentInk); font-size: 13.5px; white-space: nowrap; }
+  .links { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .lk { background: var(--surface); border-radius: 14px; padding: 11px 12px; font-size: 13.5px; display: flex; justify-content: space-between; }
+  .lk.on { color: var(--ink); }
+  .lk.off { color: var(--muted); border: 1.5px dashed #3a3a3f; background: transparent; }
+  .lk.off i { font-style: normal; color: var(--accentInk); }
+
+  .done { background: var(--okBg); color: var(--ok); border-radius: 18px; padding: 12px 14px; margin-top: 10px; font-size: 14px; display: flex; justify-content: space-between; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: #1c1c1e; border-radius: 24px 24px 0 0; padding: 10px 16px 34px; box-shadow: 0 -10px 40px #000a; }
+  .grab { width: 40px; height: 5px; border-radius: 3px; background: #3a3a3f; margin: 0 auto 14px; }
+  .sheet h3 { font-size: 18px; margin-bottom: 4px; }
+  .sheet p { color: var(--muted); font-size: 13.5px; margin-bottom: 14px; }
+  .inp { background: var(--surface2); border-radius: 14px; height: 46px; display: flex; align-items: center; padding: 0 14px; color: var(--muted); margin-bottom: 12px; }
+  .inp b { color: var(--ink); font-weight: 400; }
+  .btn { height: 48px; border-radius: 999px; background: var(--grad); color: #1a0d00; font-weight: 600; display: grid; place-items: center; }
+  .dock { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); width: 300px; height: 62px; background: #1c1c1e; border-radius: 31px; }
+  .dim { position: absolute; inset: 0; background: #0008; }
+</style>
+</head>
+<body>
+<div class="row">
+  <!-- A: top of "My profile" with the completeness card -->
+  <div>
+    <div class="phone"><div class="scr">
+      <div class="card">
+        <div class="cover"></div>
+        <div class="head">
+          <div class="ava">HG</div>
+          <div class="name">Hovhannes Ghazaryan <span class="pro">PRO</span></div>
+          <div class="meta">CEO · Digital Factory</div>
+          <span class="pill">✓ Профиль проверен</span>
+        </div>
+      </div>
+      <div class="acts"><div><b>▦</b>Мой QR</div><div><b>✎</b>Изменить</div><div><b>⇪</b>Поделиться</div></div>
+
+      <div class="complete">
+        <div class="ctop"><b>Профиль заполнен на 40%</b><span>4 из 10</span></div>
+        <div class="bar"><i style="width:40%"></i></div>
+        <div class="why">Это видят люди, когда сканируют ваш QR. Полный профиль вызывает больше доверия.</div>
+        <div class="todo">
+          <span><em>+</em>Бренд</span>
+          <span><em>+</em>О себе</span>
+          <span><em>+</em>Instagram</span>
+          <span><em>+</em>LinkedIn</span>
+          <span><em>+</em>Сайт</span>
+          <span><em>+</em>Город</span>
+        </div>
+        <div class="preview">Как меня видят другие ›</div>
+      </div>
+
+      <h4>Бренды и компании</h4>
+      <div class="empty"><div class="ic">🏷</div><div><p>Добавьте свой бизнес</p><small>Название, сфера и ссылки бренда</small></div><div class="add">+ Добавить</div></div>
+    </div><div class="dock"></div></div>
+    <div class="cap">1. Наверху «Мой профиль» — шкала и кнопки недостающего. Тап по «+ Instagram» открывает короткое окно (экран 2), по «+ Бренд» — форму бренда.</div>
+  </div>
+
+  <!-- B: lower part, empty sections + quick add sheet -->
+  <div>
+    <div class="phone"><div class="scr">
+      <h4 style="margin-top:0">О себе</h4>
+      <div class="empty"><div class="ic">✍️</div><div><p>Пара предложений о себе</p><small>Чем занимаетесь и чем можете помочь</small></div><div class="add">+ Добавить</div></div>
+      <h4>Контакты и соцсети</h4>
+      <div class="links">
+        <div class="lk on">WhatsApp <span>✓</span></div>
+        <div class="lk off"><span>Instagram</span><i>+</i></div>
+        <div class="lk off"><span>LinkedIn</span><i>+</i></div>
+        <div class="lk off"><span>Telegram</span><i>+</i></div>
+        <div class="lk off"><span>Сайт</span><i>+</i></div>
+        <div class="lk off"><span>Email</span><i>+</i></div>
+      </div>
+      <h4>Членство в организациях</h4>
+      <div class="empty"><div class="ic">🏛</div><div><p>Клубы и ассоциации</p><small>Например, «Манташянц» или палата</small></div><div class="add">+ Добавить</div></div>
+    </div>
+    <div class="dim"></div>
+    <div class="sheet">
+      <div class="grab"></div>
+      <h3>Instagram</h3>
+      <p>Ссылка появится в вашем профиле и визитке.</p>
+      <div class="inp">@ <b>&nbsp;hovhannes.g</b></div>
+      <div class="btn">Сохранить</div>
+    </div></div>
+    <div class="cap">2. Пустые разделы видны только вам — пунктирные карточки с «+ Добавить». Ссылки добавляются в одно касание, без перехода на длинный экран «Изменить».</div>
+  </div>
+
+  <!-- C: 100% state -->
+  <div>
+    <div class="phone"><div class="scr">
+      <div class="card">
+        <div class="cover"></div>
+        <div class="head">
+          <div class="ava">HG</div>
+          <div class="name">Hovhannes Ghazaryan <span class="pro">PRO</span></div>
+          <div class="meta">CEO · Digital Factory · Ереван</div>
+          <span class="pill">✓ Профиль проверен</span>
+        </div>
+      </div>
+      <div class="acts"><div><b>▦</b>Мой QR</div><div><b>✎</b>Изменить</div><div><b>⇪</b>Поделиться</div></div>
+      <div class="done"><span>✓ Профиль заполнен полностью</span><span class="preview">Как видят ›</span></div>
+      <h4>Бренды и компании · 1</h4>
+      <div class="card" style="padding:14px"><b>Digital Factory</b><div class="meta">Цифровое агентство</div><div style="color:var(--accentInk);font-size:13px;margin-top:6px">Instagram ↗ &nbsp; Сайт ↗</div></div>
+      <h4>О себе</h4>
+      <div style="color:#d1d1d6">Строю цифровые продукты для бизнеса в Армении. Помогу с запуском приложения и маркетингом.</div>
+    </div><div class="dock"></div></div>
+    <div class="cap">3. Когда всё заполнено — шкала превращается в короткую зелёную строку, места больше не занимает.</div>
+  </div>
+</div>
+</body>
+</html>

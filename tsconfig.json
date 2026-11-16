@@ -11,6 +11,6 @@
     "types": []
   },
   "include": ["supabase/functions/_shared/**/*.ts"],
-  // guard.ts uses Deno + jsr imports; it is checked by Deno at deploy time.
-  "exclude": ["supabase/functions/_shared/guard.ts"]
+  // guard.ts and appleRevoke.ts use Deno + jsr/npm imports; they are checked by Deno at deploy time.
+  "exclude": ["supabase/functions/_shared/guard.ts", "supabase/functions/_shared/appleRevoke.ts"]
 }

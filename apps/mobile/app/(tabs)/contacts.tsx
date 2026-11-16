@@ -11,6 +11,14 @@ import { supabase } from "@/lib/supabase";
 import type { Contact } from "@/lib/types";
 import { c, r } from "@/theme/tokens";
 
+/** iOS birthday → "YYYY-MM-DD" (month is 0-based in expo-contacts; unknown year stored as 1604). */
+function birthdayOf(b?: { day?: number; month?: number; year?: number } | null): string | null {
+  if (!b || b.day == null || b.month == null) return null;
+  const mm = String(b.month + 1).padStart(2, "0");
+  const dd = String(b.day).padStart(2, "0");
+  return `${b.year && b.year > 1604 ? b.year : 1604}-${mm}-${dd}`;
+}
+
 type PhoneContact = Awaited<ReturnType<typeof Contacts.getContactsAsync>>["data"][number];
 // Spec: docs/01-product/features/contacts-book.md
 export default function ContactsScreen() {
@@ -90,7 +98,12 @@ export default function ContactsScreen() {
       for (;;) {
         setProgress(`Читаю контакты… ${people.length}`);
         const page = await Contacts.getContactsAsync({
-          fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Company, Contacts.Fields.JobTitle],
+          fields: [
+            Contacts.Fields.PhoneNumbers,
+            Contacts.Fields.Company,
+            Contacts.Fields.JobTitle,
+            Contacts.Fields.Birthday,
+          ],
           pageSize: 500,
           pageOffset,
         });
@@ -120,6 +133,7 @@ export default function ContactsScreen() {
             category_key: "unsorted",
             source: "phonebook",
             is_temporary: TEMP_RE.test(text),
+            birthday: birthdayOf(p.birthday),
           };
         })
         .filter((x) => {
@@ -138,9 +152,21 @@ export default function ContactsScreen() {
         if (error) throw new Error(error.message);
         newIds.push(...(data ?? []).map((d) => d.id as string));
       }
+      // Birthdays for people already in the book (first imports did not read them).
+      const byDigits = new Map(rows.map((x) => [x.phone.replace(/\D/g, ""), x.birthday] as const));
+      for (const p of people) {
+        const d = (p.phoneNumbers?.find((n) => n.number)?.number ?? "").replace(/\D/g, "");
+        const b = birthdayOf(p.birthday);
+        if (b && d && existing.has(d) && !byDigits.has(d)) {
+          const old = list.find((x) => (x.phone ?? "").replace(/\D/g, "") === d);
+          if (old && !old.birthday) await supabase.from("contacts").update({ birthday: b }).eq("id", old.id);
+        }
+      }
       await load();
-      if (newIds.length) await runAiSort(newIds);
-      else Alert.alert("Готово", "Новых контактов нет — все уже в книжке.");
+      if (newIds.length) {
+        await runAiSort(newIds);
+        router.push("/invite?from=import"); // spec: invite acquaintances right after the import
+      } else Alert.alert("Готово", "Новых контактов нет — все уже в книжке.");
     } catch (e) {
       Alert.alert("Ошибка импорта", e instanceof Error ? e.message : String(e));
     } finally {

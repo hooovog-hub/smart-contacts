@@ -1,7 +1,11 @@
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import type { ReactNode } from "react";
+import { type ComponentRef, forwardRef, type ReactNode, useId } from "react";
 import {
   ActivityIndicator,
+  InputAccessoryView,
+  Keyboard,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -77,20 +81,65 @@ export function Button({
   );
 }
 
-export function Field({ label, ...props }: TextInputProps & { label: string }) {
+const NUMERIC = new Set(["phone-pad", "number-pad", "numeric", "decimal-pad"]);
+
+/** iOS numeric keyboards have no return key: a "Готово" bar above them closes the keyboard. */
+export function DoneBar({ id }: { id: string }) {
+  if (Platform.OS !== "ios") return null;
   return (
-    <View style={{ marginBottom: 12 }}>
-      <Text style={st.label}>{label}</Text>
-      <TextInput
-        placeholderTextColor={c.muted}
-        {...props}
-        style={[st.input, props.multiline && { height: 90, paddingTop: 12, textAlignVertical: "top" }, props.style]}
-      />
-    </View>
+    <InputAccessoryView nativeID={id}>
+      <View style={st.doneBar}>
+        <Pressable onPress={Keyboard.dismiss} hitSlop={10} accessibilityRole="button">
+          <Text style={{ color: c.accentInk, fontSize: 16, fontWeight: "600" }}>Готово</Text>
+        </Pressable>
+      </View>
+    </InputAccessoryView>
   );
 }
 
-export function Avatar({ name, size = 44, seed }: { name: string; size?: number; seed?: string }) {
+/** Text input with a label. Multi-line and numeric fields get a way to close the keyboard. */
+export const Field = forwardRef<ComponentRef<typeof TextInput>, TextInputProps & { label?: string | null }>(
+  function Field({ label, ...props }, ref) {
+    const id = useId();
+    const needsBar = Platform.OS === "ios" && (props.multiline || NUMERIC.has(String(props.keyboardType)));
+    return (
+      <View style={{ marginBottom: 12 }}>
+        {label ? <Text style={st.label}>{label}</Text> : null}
+        <TextInput
+          ref={ref}
+          placeholderTextColor={c.muted}
+          returnKeyType={props.multiline ? "default" : "done"}
+          inputAccessoryViewID={needsBar ? id : undefined}
+          {...props}
+          style={[st.input, props.multiline && { height: 90, paddingTop: 12, textAlignVertical: "top" }, props.style]}
+        />
+        {needsBar ? <DoneBar id={id} /> : null}
+      </View>
+    );
+  },
+);
+
+export function Avatar({
+  name,
+  size = 44,
+  seed,
+  uri,
+}: {
+  name: string;
+  size?: number;
+  seed?: string;
+  uri?: string | null;
+}) {
+  if (uri)
+    return (
+      <Image
+        source={{ uri }}
+        style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.surface2 }}
+        contentFit="cover"
+        transition={150}
+        accessibilityLabel={name}
+      />
+    );
   const ini = name
     .split(/\s+/)
     .slice(0, 2)
@@ -182,6 +231,14 @@ export const st = StyleSheet.create({
   btn: { alignItems: "center", justifyContent: "center", paddingHorizontal: 18 },
   btnText: { fontWeight: "600" },
   label: { color: c.muted, fontSize: 13, fontWeight: "500", marginBottom: 6 },
+  doneBar: {
+    backgroundColor: "#1C1C1E",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: "#3A3A3F",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    alignItems: "flex-end",
+  },
   input: {
     backgroundColor: c.surface2,
     color: c.ink,
