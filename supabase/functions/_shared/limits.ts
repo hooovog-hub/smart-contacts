@@ -2,7 +2,7 @@
 // Plans: docs/01-product/features/plans-billing.md — Free has 5 AI tasks per month.
 
 export type Plan = "free" | "pro" | "business";
-export type AiFn = "assistant" | "assistant_task" | "classify" | "classify_plan";
+export type AiFn = "assistant" | "assistant_task" | "classify" | "classify_plan" | "daily_picks";
 export type Limits = { perMinute: number | null; perDay: number | null; perMonth: number | null };
 export type ConsumeResult = { ok: boolean; reason?: string; retry_after?: number };
 
@@ -20,6 +20,8 @@ const BASE: Record<AiFn, Limits> = {
   classify: { perMinute: 30, perDay: 400, perMonth: null },
   // Planning sections reads the whole book — rare by design.
   classify_plan: { perMinute: 2, perDay: 10, perMonth: null },
+  // "Стоит написать сегодня": computed once a day and cached in daily_picks; a little slack for retries.
+  daily_picks: { perMinute: 2, perDay: 3, perMonth: null },
 };
 
 /** Limits for a function and plan. Unknown plan is treated as Free. */

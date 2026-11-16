@@ -16,8 +16,9 @@ const SYSTEM = (userName: string) => `Ты AI-помощник в записно
 Используй только id из каталога. Учитывай myNote и где познакомились. Не выдумывай факты.
 category — раздел задачи: biz, personal, friends, family, med, home.
 Отвечай на языке пользователя. Верни ТОЛЬКО JSON:
-{"category":"...","reply":"1-2 предложения","people":[{"id":"...","kind":"direct|indirect","why":"...","ask":"готовое короткое сообщение от имени пользователя"}]}
-От 0 до 4 человек.`;
+{"category":"...","reply":"1-2 предложения","people":[{"id":"...","kind":"direct|indirect","why":"...","ask":"готовое короткое сообщение от имени пользователя"}],"seek":"..."|null}
+От 0 до 4 человек.
+seek — если пользователь сам ищет человека или услугу для себя или своего бизнеса, коротко (до 60 символов, без глагола «ищу»), как это написать в разделе «Сейчас ищу» его профиля: «Бухгалтер на аутсорс», «Дистрибьютор в Грузии». Если задача бытовая разовая (такси, ремонт крана) или непонятно — null.`;
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
@@ -60,7 +61,7 @@ async function answer(sb: any, userId: string, message: string, taskId?: string)
   const { data: contacts } = await sb
     .from("contacts")
     .select(
-      "id, display_name, role, category_key, note, met_at, linked:linked_profile_id(helps, seeks, brands(name, sphere, description))",
+      "id, display_name, role, category_key, note, met_at, linked:linked_profile_id(helps, brands(name, sphere, description), profile_seeks(text, resolved_at))",
     )
     .eq("archived", false)
     .limit(1500);
@@ -71,7 +72,7 @@ async function answer(sb: any, userId: string, message: string, taskId?: string)
     section: c.category_key,
     businesses: c.linked?.brands?.map((b: any) => [b.name, b.sphere, b.description].filter(Boolean).join(" — ")),
     helps: c.linked?.helps,
-    seeks: c.linked?.seeks,
+    seeks: (c.linked?.profile_seeks ?? []).filter((x: any) => !x.resolved_at).map((x: any) => x.text),
     myNote: c.note ?? undefined,
   }));
 
@@ -117,10 +118,15 @@ async function answer(sb: any, userId: string, message: string, taskId?: string)
   const out = await res.json();
   const raw: string = out.content?.find((b: any) => b.type === "text")?.text ?? "{}";
   // Защита: только реальные контакты пользователя, максимум 4, категория из списка
-  const { category, reply, people } = sanitizeAnswer(parseModelJson(raw), raw, new Set(catalog.map((c: any) => c.id)));
+  const { category, reply, people, seek } = sanitizeAnswer(
+    parseModelJson(raw),
+    raw,
+    new Set(catalog.map((c: any) => c.id)),
+  );
 
   await sb.from("ai_messages").insert({ task_id: task, role: "assistant", content: reply, people });
   if (!taskId) await sb.from("ai_tasks").update({ category }).eq("id", task);
 
-  return Response.json({ taskId: task, category, reply, people });
+  // `seek` is only offered in the app ("Добавить в профиль?"); nothing is written to the profile here.
+  return Response.json({ taskId: task, category, reply, people, seek });
 }
