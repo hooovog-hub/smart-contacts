@@ -12,6 +12,7 @@
       "supportsTablet": false,
       "usesAppleSignIn": true,
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSContactsUsageDescription": "Чтобы разложить ваши контакты по разделам и помочь найти нужного человека. Контакты видите только вы."
       }
     },
