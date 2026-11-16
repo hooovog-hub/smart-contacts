@@ -1,32 +1,39 @@
-import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import { Alert, Linking, Pressable, ScrollView, Share, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon, type IconName } from "@/components/Icon";
-import { Avatar, Button, Pill, Section, st } from "@/components/ui";
+import { ProfileView } from "@/components/ProfileView";
+import { QuickAddSheet } from "@/components/QuickAddSheet";
+import { Button, Section } from "@/components/ui";
 import { deleteAccount } from "@/lib/account";
 import { useAuth } from "@/lib/auth";
-import { reportError } from "@/lib/errorReport";
+import { type AddKind, completeness, type Item } from "@/lib/completeness.logic";
 import { SITE_URL } from "@/lib/config";
+import { reportError } from "@/lib/errorReport";
 import { supabase } from "@/lib/supabase";
-import { c, r } from "@/theme/tokens";
+import { c, grad } from "@/theme/tokens";
 
-const LINK_NAMES: Record<string, string> = {
-  instagram: "Instagram",
-  site: "Сайт",
-  facebook: "Facebook",
-  linkedin: "LinkedIn",
-  telegram: "Telegram",
-  whatsapp: "WhatsApp",
-  email: "Email",
-};
+type SheetTarget = Extract<AddKind, { kind: "field" } | { kind: "link" }>;
 
-// Spec: docs/01-product/features/profile.md
+// Spec: docs/01-product/features/profile.md — "Мой профиль" shows exactly what others see,
+// plus owner-only controls: actions, and a completeness card while the profile is not complete.
 export default function MyProfile() {
-  const { profile } = useAuth();
+  const { profile, reloadProfile } = useAuth();
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
+  const [sheet, setSheet] = useState<SheetTarget | null>(null);
+  const [version, setVersion] = useState(0);
+
+  // Coming back from "Изменить": reload both the owner data and the public view.
+  useFocusEffect(
+    useCallback(() => {
+      reloadProfile();
+      setVersion((v) => v + 1);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  );
+
   if (!profile) return null;
 
   // SC-072 · docs/01-product/features/account-deletion.md
@@ -54,9 +61,15 @@ export default function MyProfile() {
         },
       ],
     );
+
   const url = `${SITE_URL}/${profile.handle}`;
-  const brands = profile.brands ?? [];
-  const orgs = profile.memberships ?? [];
+  const comp = completeness(profile);
+
+  const openItem = (it: Item) => {
+    if (it.add.kind === "edit") router.push("/profile/edit");
+    else setSheet(it.add);
+  };
+
   const action = (icon: IconName, label: string, onPress: () => void) => (
     <Pressable
       onPress={onPress}
@@ -74,96 +87,52 @@ export default function MyProfile() {
     </Pressable>
   );
 
+  const ownerControls = (
+    <View>
+      <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+        {action("qr", "Мой QR", () => router.push("/profile/qr"))}
+        {action("edit", "Изменить", () => router.push("/profile/edit"))}
+        {action("share", "Поделиться", () => Share.share({ message: `${profile.full_name} — ${url}` }))}
+      </View>
+      {comp.todo.length ? (
+        <View style={{ backgroundColor: c.surface, borderRadius: 18, padding: 14, marginTop: 10, gap: 10 }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
+            <Text style={{ color: c.ink, fontSize: 15.5, fontWeight: "700" }}>Профиль заполнен на {comp.pct}%</Text>
+            <Text style={{ color: c.muted, fontSize: 12.5 }}>
+              {comp.done} из {comp.total}
+            </Text>
+          </View>
+          <View style={{ height: 8, borderRadius: 4, backgroundColor: c.surface2, overflow: "hidden" }}>
+            <View style={{ width: `${comp.pct}%`, height: "100%", borderRadius: 4, backgroundColor: grad[1] }} />
+          </View>
+          <Text style={{ color: c.muted, fontSize: 12.5 }}>
+            Это видят люди, когда сканируют ваш QR. Полный профиль вызывает больше доверия.
+          </Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+            {comp.todo.map((it) => (
+              <Pressable
+                key={it.id}
+                onPress={() => openItem(it)}
+                accessibilityRole="button"
+                accessibilityLabel={`Добавить: ${it.label}`}
+                style={{ paddingHorizontal: 11, paddingVertical: 6, borderRadius: 999, backgroundColor: c.surface2 }}
+              >
+                <Text style={{ color: c.ink, fontSize: 13 }}>
+                  <Text style={{ color: c.accentInk }}>+ </Text>
+                  {it.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ) : null}
+    </View>
+  );
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }} edges={["top"]}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
-        <View style={{ backgroundColor: c.surface, borderRadius: 20, overflow: "hidden" }}>
-          <LinearGradient
-            colors={["#6E7BFF", "#E85BC4", "#FF8A3D"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{ height: 110 }}
-          />
-          <View style={{ padding: 16, paddingTop: 0, marginTop: -40, gap: 4 }}>
-            <View style={{ borderWidth: 4, borderColor: c.surface, borderRadius: 44, alignSelf: "flex-start" }}>
-              <Avatar name={profile.full_name} seed={profile.id} size={80} />
-            </View>
-            <Text style={{ color: c.ink, fontSize: 24, fontWeight: "700", letterSpacing: -0.5, marginTop: 6 }}>
-              {profile.full_name}{" "}
-              {profile.plan !== "free" ? <Text style={{ color: c.accent, fontSize: 14 }}>PRO</Text> : null}
-            </Text>
-            <Text style={{ color: c.muted, fontSize: 14 }}>
-              {[profile.role, ...brands.map((b) => b.name)].filter(Boolean).join(" · ")}
-            </Text>
-            <View style={{ flexDirection: "row", gap: 8, marginTop: 6, alignItems: "center" }}>
-              <Pill text="✓ Профиль проверен" />
-              {profile.city ? <Text style={st.meta}>{profile.city}</Text> : null}
-            </View>
-            {orgs.length ? (
-              <Text style={{ color: "#D1D1D6", fontSize: 13, marginTop: 6 }}>
-                🏛 {orgs[0].org_name}
-                {orgs.length > 1 ? ` и ещё ${orgs.length - 1}` : ""}
-              </Text>
-            ) : null}
-          </View>
-        </View>
-        <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-          {action("qr", "Мой QR", () => router.push("/profile/qr"))}
-          {action("edit", "Изменить", () => router.push("/profile/edit"))}
-          {action("share", "Поделиться", () => Share.share({ message: `${profile.full_name} — ${url}` }))}
-        </View>
-        {profile.plan === "free" ? (
-          <Text style={[st.meta, { marginTop: 10 }]}>
-            Бренды и членство видны другим только в Pro. Сейчас они видят имя, роль и телефон.
-          </Text>
-        ) : null}
-        {profile.bio ? (
-          <Text style={[st.text, { fontSize: 16, color: "#D1D1D6", marginTop: 16 }]}>{profile.bio}</Text>
-        ) : null}
-        {brands.length ? <Section>Бренды и компании · {brands.length}</Section> : null}
-        <View style={{ gap: 8 }}>
-          {brands.map((b, i) => (
-            <View key={b.id ?? i} style={{ backgroundColor: c.surface, borderRadius: r.card, padding: 14, gap: 4 }}>
-              <Text style={st.name}>{b.name}</Text>
-              {b.sphere ? <Text style={st.meta}>{b.sphere}</Text> : null}
-              {b.description ? <Text style={[st.text, { fontSize: 14 }]}>{b.description}</Text> : null}
-              <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
-                {Object.entries(b.links ?? {})
-                  .filter(([, v]) => v)
-                  .map(([k, v]) => (
-                    <Pressable
-                      key={k}
-                      onPress={() =>
-                        Linking.openURL(
-                          k === "instagram"
-                            ? `https://instagram.com/${String(v).replace("@", "")}`
-                            : String(v).startsWith("http")
-                              ? String(v)
-                              : `https://${v}`,
-                        )
-                      }
-                    >
-                      <Text style={{ color: c.accentInk, fontSize: 13 }}>{LINK_NAMES[k] ?? k} ↗</Text>
-                    </Pressable>
-                  ))}
-              </View>
-            </View>
-          ))}
-        </View>
-        {orgs.length ? <Section>Членство в организациях</Section> : null}
-        <View style={{ backgroundColor: c.surface, borderRadius: r.card, overflow: "hidden" }}>
-          {orgs.map((o, i) => (
-            <View key={o.id ?? i} style={st.row}>
-              <View style={{ flex: 1 }}>
-                <Text style={st.name}>{o.org_name}</Text>
-                <Text style={st.meta}>
-                  {[o.status_title, o.since_year ? `с ${o.since_year}` : null].filter(Boolean).join(" · ")}
-                </Text>
-              </View>
-              <Pill text={o.verified ? "✓ Подтверждено" : "Не подтверждено"} tone={o.verified ? "ok" : "mute"} />
-            </View>
-          ))}
-        </View>
+        <ProfileView id={profile.id} version={version} afterHeader={ownerControls} />
         <Section>Ссылка на профиль</Section>
         <Pressable onPress={() => Linking.openURL(url)}>
           <Text style={{ color: c.accentInk }}>{url.replace("https://", "")}</Text>
@@ -185,6 +154,16 @@ export default function MyProfile() {
           <Text style={{ color: c.danger, fontSize: 14 }}>{deleting ? "Удаляем…" : "Удалить аккаунт"}</Text>
         </Pressable>
       </ScrollView>
+      <QuickAddSheet
+        profile={profile}
+        target={sheet}
+        onClose={() => setSheet(null)}
+        onSaved={() => {
+          setSheet(null);
+          reloadProfile();
+          setVersion((v) => v + 1);
+        }}
+      />
     </SafeAreaView>
   );
 }

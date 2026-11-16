@@ -12,7 +12,8 @@ export function PhoneField({
   value,
   onChange,
 }: {
-  label?: string;
+  /** null hides the label (e.g. inside a sheet that already has a title). */
+  label?: string | null;
   value: string | null;
   onChange: (e164: string | null) => void;
 }) {
@@ -29,7 +30,7 @@ export function PhoneField({
 
   return (
     <View style={{ marginBottom: 12 }}>
-      <Text style={st.label}>{label}</Text>
+      {label ? <Text style={st.label}>{label}</Text> : null}
       <View style={{ flexDirection: "row", gap: 8 }}>
         <Pressable
           onPress={() => setOpen(true)}
@@ -46,6 +47,7 @@ export function PhoneField({
           onChangeText={(t) => update(country, t)}
           keyboardType="phone-pad"
           textContentType="telephoneNumber"
+          accessibilityLabel={`Номер телефона без кода страны +${country.dial}`}
           placeholder="95 123 456"
           placeholderTextColor={c.muted}
           style={[st.input, { flex: 1 }]}

@@ -1,7 +1,7 @@
 // Read-only view of someone's Smart Contacts profile: header, bio, brands, memberships, awards.
 // Brands, memberships and awards are visible only for Pro profiles (RLS in supabase/migrations/0001_init.sql).
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Linking, Pressable, Text, View } from "react-native";
 import { Avatar, Pill, Section, st } from "@/components/ui";
 import { supabase } from "@/lib/supabase";
@@ -31,28 +31,45 @@ function linkUrl(k: string, v: string) {
   return v.startsWith("http") ? v : `https://${v}`;
 }
 
-export function useProfile(id?: string | null) {
+/** Loads a profile as other users see it. Bump `version` to reload (e.g. after the owner edits it). */
+export function useProfile(id?: string | null, version = 0) {
   const [p, setP] = useState<Full | null>(null);
   useEffect(() => {
     if (!id) return;
+    let alive = true; // ignore a slower, older response arriving after a newer one
     supabase
       .from("profiles")
       .select("*, brands(*), memberships(*), awards(*)")
       .eq("id", id)
       .single()
       .then(({ data }) => {
-        if (!data) return;
+        if (!data || !alive) return;
         const d = data as Full;
         d.brands = [...(d.brands ?? [])].sort((a, b) => a.position - b.position);
         setP(d);
       });
-  }, [id]);
+    return () => {
+      alive = false;
+    };
+  }, [id, version]);
   return p;
 }
 
-export function ProfileView({ id, header = true }: { id: string; header?: boolean }) {
-  const p = useProfile(id);
-  if (!p) return null;
+export function ProfileView({
+  id,
+  header = true,
+  afterHeader,
+  version = 0,
+}: {
+  id: string;
+  header?: boolean;
+  /** Owner-only controls rendered right under the header (actions, completeness card). */
+  afterHeader?: ReactNode;
+  version?: number;
+}) {
+  const p = useProfile(id, version);
+  // Still loading or offline: keep the owner's controls usable.
+  if (!p) return afterHeader ? <View>{afterHeader}</View> : null;
   const links = Object.entries(p.links ?? {}).filter(([, v]) => v) as [string, string][];
   return (
     <View>
@@ -78,6 +95,7 @@ export function ProfileView({ id, header = true }: { id: string; header?: boolea
           </View>
         </View>
       ) : null}
+      {afterHeader}
       {p.bio ? <Text style={[st.text, { fontSize: 16, color: "#D1D1D6", marginTop: 16 }]}>{p.bio}</Text> : null}
       {p.helps?.length ? (
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
