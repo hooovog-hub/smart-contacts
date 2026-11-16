@@ -15,7 +15,8 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSContactsUsageDescription": "Чтобы разложить ваши контакты по разделам и помочь найти нужного человека. Контакты видите только вы.",
         "NSPhotoLibraryUsageDescription": "Чтобы поставить фото в ваш профиль. Другие фото приложение не видит.",
-        "NSCameraUsageDescription": "Чтобы сфотографироваться для профиля и сканировать QR-визитки."
+        "NSCameraUsageDescription": "Чтобы сфотографироваться для профиля и сканировать QR-визитки.",
+        "LSApplicationQueriesSchemes": ["whatsapp"]
       },
       "entitlements": {
         "com.apple.developer.pass-type-identifiers": ["$(TeamIdentifierPrefix)pass.am.smartcontacts.card"]

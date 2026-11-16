@@ -41,13 +41,17 @@ export default function Scan() {
         .maybeSingle();
       if (!p) throw new Error("not_found");
       if (p.id === session.user.id) {
-        Alert.alert("Это ваш QR 🙂");
-        handled.current = false;
+        Alert.alert("Это ваш QR 🙂", undefined, [{ text: "OK", onPress: () => (handled.current = false) }]);
         return;
       }
-      const { data: existing } = await supabase.from("contacts").select("id").eq("linked_profile_id", p.id).limit(1);
-      if (!existing?.length)
-        await supabase.from("contacts").insert({
+      const { data: existing } = await supabase
+        .from("contacts")
+        .select("id")
+        .eq("linked_profile_id", p.id)
+        .eq("archived", false)
+        .limit(1);
+      if (!existing?.length) {
+        const { error: insErr } = await supabase.from("contacts").insert({
           owner_id: session.user.id,
           linked_profile_id: p.id,
           display_name: p.full_name,
@@ -56,11 +60,17 @@ export default function Scan() {
           source: "qr",
           met_at: new Date().toISOString(),
         });
+        if (insErr) throw insErr;
+      }
       router.replace(`/person/${p.id}`);
     } catch (e) {
       if (!(e instanceof Error && e.message === "not_found")) reportError(e, { context: { kind: "scan" } });
-      Alert.alert("Профиль не найден", "Этот QR не ведёт на профиль Smart Contacts.");
-      handled.current = false;
+      const notFound = e instanceof Error && e.message === "not_found";
+      Alert.alert(
+        notFound ? "Профиль не найден" : "Не сохранилось",
+        notFound ? "Этот QR не ведёт на профиль Smart Contacts." : "Проверьте интернет и попробуйте ещё раз.",
+        [{ text: "OK", onPress: () => (handled.current = false) }],
+      );
     } finally {
       setBusy(false);
     }

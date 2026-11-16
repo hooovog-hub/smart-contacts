@@ -3,7 +3,7 @@
 // Spec: docs/01-product/features/today.md · Mockup: docs/02-design/mockups/package-v2.png
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Linking, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
@@ -47,6 +47,7 @@ const MONTHS = [
 
 async function openMessage(phone: string | null | undefined, text: string) {
   const wa = whatsappUrl(phone, text);
+  // LSApplicationQueriesSchemes has "whatsapp" (app.json); wa.me opens WhatsApp when it is installed.
   if (wa && (await Linking.canOpenURL("whatsapp://send").catch(() => false))) return Linking.openURL(wa);
   const digits = (phone ?? "").replace(/[^\d+]/g, "");
   if (digits)
@@ -59,6 +60,7 @@ export default function Today() {
   const [birthdays, setBirthdays] = useState<UpcomingBirthday[]>([]);
   const [picks, setPicks] = useState<Pick[] | null>(null);
   const [recent, setRecent] = useState<Recent[]>([]);
+  const picksDay = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     const day = localDay();
@@ -81,9 +83,13 @@ export default function Today() {
     ]);
     setBirthdays(upcomingBirthdays((bd as BirthdayContact[]) ?? [], day));
     setRecent((rc as Recent[]) ?? []);
+    // Daily picks: at most one request per day per app session (the server caches them, AI costs a quota).
+    if (picksDay.current === day) return;
+    picksDay.current = day;
     const { data, error } = await supabase.functions.invoke<{ picks: Pick[] }>("daily-picks", { body: { day } });
     if (error) {
-      reportError(error, { context: { kind: "daily-picks" } });
+      const status = (error as { context?: Response }).context?.status;
+      if (status !== 429) reportError(error, { context: { kind: "daily-picks", status } });
       setPicks([]);
     } else setPicks(data?.picks ?? []);
   }, []);

@@ -222,6 +222,13 @@ export function ProfileView({
                 <Text style={{ color: c.accentInk, fontSize: 12.5 }}>+ Город</Text>
               ) : null}
             </Pressable>
+            {owner && edit ? (
+              <Pressable onPress={() => edit({ kind: "field", column: "phone" })} accessibilityRole="button">
+                <Text style={{ color: p.phone ? c.muted : c.accentInk, fontSize: 12.5 }}>
+                  {p.phone ? `📞 ${p.phone}` : "+ Телефон"}
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
         </View>
       ) : null}

@@ -41,6 +41,8 @@ export async function askAssistant(message: string, taskId?: string) {
 
 /** Adds an AI-suggested need to the profile's "Сейчас ищу" after the user confirmed it. */
 export async function addSeekFromAi(profileId: string, text: string) {
-  const { error } = await supabase.from("profile_seeks").insert({ profile_id: profileId, text, source: "ai" });
+  const { error } = await supabase
+    .from("profile_seeks")
+    .insert({ profile_id: profileId, text: text.trim().slice(0, 80), source: "ai" });
   if (error) throw error;
 }

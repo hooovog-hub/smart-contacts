@@ -123,6 +123,7 @@ export default function Invite() {
       <Button
         kind="grad"
         title="Поделиться ссылкой"
+        disabled={!code}
         onPress={() => Share.share({ message: inviteMessage(profile.full_name, code) })}
         style={{ marginTop: 10 }}
       />
@@ -169,7 +170,7 @@ export default function Invite() {
       />
       {picked.size ? (
         <View style={{ position: "absolute", left: 16, right: 16, bottom: 30 }}>
-          <Button kind="white" title={`Отправить SMS выбранным (${picked.size})`} onPress={sendSms} />
+          <Button kind="white" title={`Отправить SMS выбранным (${picked.size})`} onPress={sendSms} disabled={!code} />
         </View>
       ) : null}
     </SafeAreaView>

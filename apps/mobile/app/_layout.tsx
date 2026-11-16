@@ -40,8 +40,8 @@ function Gate() {
   // Invite links (smartcontacts://i/<code>): remember the code until onboarding (src/lib/invite.ts).
   const url = Linking.useURL();
   useEffect(() => {
-    rememberInvite(url);
-  }, [url]);
+    if (!loading && !profile) rememberInvite(url); // only a new user can be "invited"
+  }, [url, loading, profile]);
 
   useEffect(() => {
     if (loading) return;

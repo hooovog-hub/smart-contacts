@@ -42,10 +42,10 @@ Deno.serve(async (req) => {
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   const body = (await req.json().catch(() => ({}))) as { day?: unknown };
-  const day =
-    typeof body.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.day)
-      ? body.day
-      : new Date().toISOString().slice(0, 10);
+  // The user's local date, accepted only within ±1 day of the server's UTC date.
+  const utc = new Date().toISOString().slice(0, 10);
+  const asked = typeof body.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.day) ? body.day : utc;
+  const day = Math.abs(Date.parse(asked) - Date.parse(utc)) <= 86_400_000 ? asked : utc;
 
   try {
     const cached = await load(sb, day);

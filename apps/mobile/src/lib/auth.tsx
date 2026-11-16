@@ -1,5 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "./supabase";
 import type { Profile } from "./types";
 
@@ -41,11 +41,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, [loadProfile]);
 
-  return (
-    <AuthCtx.Provider value={{ session, profile, loading, reloadProfile: () => loadProfile(session) }}>
-      {children}
-    </AuthCtx.Provider>
+  // Stable function and value: screens put reloadProfile in effect deps (a new one each render looped forever).
+  const reloadProfile = useCallback(() => loadProfile(session), [loadProfile, session]);
+  const value = useMemo(
+    () => ({ session, profile, loading, reloadProfile }),
+    [session, profile, loading, reloadProfile],
   );
+  return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
 
 export const useAuth = () => useContext(AuthCtx);

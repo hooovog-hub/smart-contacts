@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
-import { Alert, Linking, Pressable, ScrollView, Share, Text, View } from "react-native";
+import { useCallback, useRef, useState } from "react";
+import { Alert, Linking, Platform, Pressable, ScrollView, Share, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon, type IconName } from "@/components/Icon";
 import { ProfileSheet, type SheetTarget } from "@/components/ProfileSheets";
@@ -35,12 +35,16 @@ export default function MyProfile() {
     setVersion((v) => v + 1);
   }, [reloadProfile]);
 
-  // Coming back to the tab (e.g. from Wallet): reload data and re-check whether the card is in Wallet.
+  // Coming back to the tab: reload data and re-check whether the card is in Wallet. Runs once per focus
+  // (the latest refresh is read from a ref so a profile reload does not re-trigger the effect).
+  const refreshRef = useRef(refresh);
+  refreshRef.current = refresh;
+  const uid = profile?.id;
   useFocusEffect(
     useCallback(() => {
-      refresh();
-      if (profile?.id) setInWallet(hasSmartContactsPass(profile.id));
-    }, [refresh, profile?.id]),
+      refreshRef.current();
+      if (uid) setInWallet(hasSmartContactsPass(uid));
+    }, [uid]),
   );
 
   if (!profile) return null;
@@ -126,9 +130,12 @@ export default function MyProfile() {
   );
 
   const walletButton =
-    !preview && isPaid && !inWallet ? (
+    Platform.OS === "ios" && !preview && isPaid && !inWallet ? (
       <Pressable
-        onPress={() => addToWallet(isPaid)}
+        onPress={async () => {
+          await addToWallet(isPaid);
+          setInWallet(hasSmartContactsPass(profile.id)); // the Safari sheet does not blur the tab
+        }}
         accessibilityRole="button"
         accessibilityLabel="Add to Apple Wallet"
         style={{
@@ -242,7 +249,7 @@ export default function MyProfile() {
       </ScrollView>
       <ProfileSheet
         profile={profile}
-        helps={full?.helps ?? []}
+        helps={profile.helps ?? []}
         target={sheet}
         onClose={() => setSheet(null)}
         onSaved={() => {

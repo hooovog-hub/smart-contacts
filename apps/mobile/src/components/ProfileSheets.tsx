@@ -336,8 +336,19 @@ function HelpSheet({ profile, helps, index, onClose, onSaved }: Base & { helps: 
   const [err, setErr] = useState<string | null>(null);
   const copy = FIELD_COPY.help;
 
-  async function write(next: string[]) {
+  /** Applies the change to the freshest list from the server (never to a stale copy in memory). */
+  async function write(change: (cur: string[]) => string[] | string) {
     setBusy(true);
+    const { data, error: readErr } = await supabase.from("profiles").select("helps").eq("id", profile.id).single();
+    if (readErr) {
+      setBusy(false);
+      return setErr(saveErr);
+    }
+    const next = change([...((data?.helps as string[]) ?? [])]);
+    if (typeof next === "string") {
+      setBusy(false);
+      return setErr(next);
+    }
     const { error } = await supabase
       .from("profiles")
       .update({ helps: next, updated_at: new Date().toISOString() })
@@ -346,15 +357,19 @@ function HelpSheet({ profile, helps, index, onClose, onSaved }: Base & { helps: 
     if (error) return setErr(saveErr);
     onSaved();
   }
+  const original = index !== undefined ? helps[index] : undefined;
   const save = () => {
     const t = text.trim().slice(0, 80);
     if (t.length < 2) return setErr("Напишите, чем можете помочь.");
-    if (index === undefined && helps.length >= 5) return setErr("Можно не больше 5 пунктов.");
-    const next = [...helps];
-    if (index === undefined) next.push(t);
-    else next[index] = t;
-    write(next);
+    write((cur) => {
+      if (original === undefined) return cur.length >= 5 ? "Можно не больше 5 пунктов." : [...cur, t];
+      const i = cur.indexOf(original);
+      if (i >= 0) cur[i] = t;
+      else cur.push(t);
+      return cur;
+    });
   };
+  const removeHelp = () => write((cur) => cur.filter((x) => x !== original));
 
   return (
     <Sheet title={copy.title} onClose={onClose}>
@@ -374,13 +389,7 @@ function HelpSheet({ profile, helps, index, onClose, onSaved }: Base & { helps: 
       <Err text={err} />
       <Button kind="grad" title={index === undefined ? "Добавить" : "Сохранить"} onPress={save} loading={busy} />
       {index !== undefined ? (
-        <Button
-          kind="ghost"
-          small
-          title="Удалить"
-          onPress={() => write(helps.filter((_, i) => i !== index))}
-          style={{ marginTop: 10 }}
-        />
+        <Button kind="ghost" small title="Удалить" onPress={removeHelp} style={{ marginTop: 10 }} />
       ) : null}
     </Sheet>
   );
@@ -404,7 +413,16 @@ function BrandSheet({ profile, brand, onClose, onSaved }: Base & { brand?: Brand
       name: name.trim(),
       sphere: sphere.trim() || null,
       description: description.trim() || null,
-      links: { ...(ig ? { instagram: ig } : {}), ...(site.trim() ? { site: normalizeLink("site", site) } : {}) },
+      // Keep other brand links (facebook, linkedin…) saved earlier; only instagram/site are edited here.
+      links: (() => {
+        const l: Record<string, string> = { ...((brand?.links as Record<string, string>) ?? {}) };
+        delete l.instagram;
+        delete l.site;
+        if (ig) l.instagram = ig;
+        const st = site.trim() ? normalizeLink("site", site) : null;
+        if (st) l.site = st;
+        return l;
+      })(),
     };
     setBusy(true);
     const { error } = brand?.id
