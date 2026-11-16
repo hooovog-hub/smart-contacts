@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+### Добавлено
+- Удаление аккаунта в приложении: «Профиль» → «Удалить аккаунт», Edge Function `delete-account` (каскад, Storage, отзыв токенов Apple) (SC-072).
+- Вход «Продолжить с Apple» с nonce; имя из Apple подставляется в создание профиля (SC-011).
+
 ## [0.1.0] — 2026-11-12
 ### Добавлено
 - CI (GitHub Actions): typecheck, lint, format check, тесты на каждый PR; защита `main`.

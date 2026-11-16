@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Field, Title } from "@/components/ui";
@@ -52,7 +52,13 @@ const toHandle = (s: string) =>
 
 export default function Onboarding() {
   const { session, reloadProfile } = useAuth();
-  const [name, setName] = useState("");
+  // Sign in with Apple stores the user's name in metadata on first sign-in (src/lib/appleAuth.ts).
+  const metaName = String(session?.user.user_metadata?.full_name ?? "");
+  const [name, setName] = useState(metaName);
+  // The name may arrive a moment after this screen opens (updateUser races the auth gate): fill it if still empty.
+  useEffect(() => {
+    if (metaName) setName((cur) => cur || metaName);
+  }, [metaName]);
   const [handle, setHandle] = useState("");
   const [role, setRole] = useState("");
   const [phone, setPhone] = useState("");

@@ -1,10 +1,13 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { Linking, Pressable, ScrollView, Share, Text, View } from "react-native";
+import { useState } from "react";
+import { Alert, Linking, Pressable, ScrollView, Share, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon, type IconName } from "@/components/Icon";
 import { Avatar, Button, Pill, Section, st } from "@/components/ui";
+import { deleteAccount } from "@/lib/account";
 import { useAuth } from "@/lib/auth";
+import { reportError } from "@/lib/errorReport";
 import { SITE_URL } from "@/lib/config";
 import { supabase } from "@/lib/supabase";
 import { c, r } from "@/theme/tokens";
@@ -23,7 +26,34 @@ const LINK_NAMES: Record<string, string> = {
 export default function MyProfile() {
   const { profile } = useAuth();
   const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
   if (!profile) return null;
+
+  // SC-072 · docs/01-product/features/account-deletion.md
+  const confirmDelete = () =>
+    Alert.alert(
+      "Удалить аккаунт?",
+      "Профиль, книжка контактов, заметки, комнаты и задачи AI будут удалены навсегда. Ссылка и QR перестанут работать. Отменить это нельзя.",
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: "Удалить навсегда",
+          style: "destructive",
+          onPress: async () => {
+            setDeleting(true);
+            try {
+              const done = await deleteAccount();
+              if (!done) setDeleting(false); // cancelled the Apple confirmation
+            } catch (e) {
+              setDeleting(false);
+              const status = (e as { context?: { status?: number } }).context?.status;
+              reportError(e, { context: { kind: "delete-account", status } });
+              Alert.alert("Не получилось удалить", "Проверьте интернет и попробуйте ещё раз.");
+            }
+          },
+        },
+      ],
+    );
   const url = `${SITE_URL}/${profile.handle}`;
   const brands = profile.brands ?? [];
   const orgs = profile.memberships ?? [];
@@ -138,7 +168,22 @@ export default function MyProfile() {
         <Pressable onPress={() => Linking.openURL(url)}>
           <Text style={{ color: c.accentInk }}>{url.replace("https://", "")}</Text>
         </Pressable>
-        <Button kind="ghost" small title="Выйти" onPress={() => supabase.auth.signOut()} style={{ marginTop: 28 }} />
+        <Button
+          kind="ghost"
+          small
+          title="Выйти"
+          onPress={() => supabase.auth.signOut()}
+          disabled={deleting}
+          style={{ marginTop: 28 }}
+        />
+        <Pressable
+          onPress={confirmDelete}
+          disabled={deleting}
+          accessibilityRole="button"
+          style={{ marginTop: 16, alignItems: "center", paddingVertical: 8 }}
+        >
+          <Text style={{ color: c.danger, fontSize: 14 }}>{deleting ? "Удаляем…" : "Удалить аккаунт"}</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );

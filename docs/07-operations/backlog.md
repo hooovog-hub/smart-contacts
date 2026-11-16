@@ -9,7 +9,7 @@
 | SC-003 | Тест Meta $50–100 | 0 | P0 | ads-manager | todo | Уточнить у основателя |
 | SC-004 | Варианты названия и проверка доступности | 0 | P1 | brand-designer | todo | Название — открытый вопрос в decisions-log |
 | SC-010 | Миграция 0001 + RLS + seed | 1 | P0 | backend-engineer | done | |
-| SC-011 | Вход (телефон / Apple ID) | 1 | P0 | mobile-engineer | doing | Работает вход по email и паролю; нет входа по телефону и Apple ID |
+| SC-011 | Вход (телефон / Apple ID) | 1 | P0 | mobile-engineer | review | 2026-11-16: «Продолжить с Apple» сделан (`features/sign-in.md`). Нужно: включить Apple в Supabase, проверить на iPhone. Вход по телефону не начат — решение основателя (SMS платные) |
 | SC-012 | Экран «Мой профиль» + редактирование | 1 | P0 | mobile-engineer | done | Бренды и членство редактируются |
 | SC-013 | Веб-профиль `/<handle>` + vCard | 1 | P0 | web-engineer | done | Работает на Vercel |
 | SC-014 | Мой QR | 1 | P0 | mobile-engineer | done | |
@@ -29,13 +29,15 @@
 | SC-042 | Голосовой ввод в доке | 4 | P0 | integrations-engineer | todo | Кнопка микрофона пока показывает подсказку про диктовку клавиатуры |
 | SC-050 | Wallet-карта | 5 | P1 | integrations-engineer | done | Сертификат Apple настроен, карта проверена на iPhone 2026-11-12. У пользователей появится после EAS update (SC-052) |
 | SC-051 | Автообновление Wallet-карты при изменении профиля | 5 | P2 | integrations-engineer | todo | Wallet web service + APNs |
-| SC-052 | EAS update: публичный адрес для QR + кнопка Wallet у пользователей | 5 | P0 | release-manager | todo | Без него у установленных приложений QR ведёт на закрытый адрес Vercel |
+| SC-052 | EAS update: публичный адрес для QR + кнопка Wallet у пользователей | 5 | P2 | release-manager | todo | 2026-11-16: отложено до первой сборки — установленных сборок нет (только Expo Go у основателя), обновлять некого |
 | SC-053 | Пересохранить WALLET_SIGNER_KEY_B64 и WALLET_LINK_SECRET в Vercel как Secret | 5 | P2 | release-manager | todo | Сейчас тип Config (видно в панели Vercel) |
 | SC-060 | IAP Pro | 5 | P0 | integrations-engineer | todo | |
 | SC-061 | Business: команды, оплата через сайт | 5 | P1 | backend-engineer | todo | Таблицы teams есть, экранов нет |
 | SC-070 | Политика конфиденциальности и условия | 6 | P0 | legal-privacy-advisor | todo | |
 | SC-071 | Страница App Store | 6 | P0 | aso-seo-specialist | todo | |
-| SC-072 | Удаление аккаунта в приложении (требование Apple) | 6 | P0 | mobile-engineer | todo | Не найдено в коде; без него App Store отклонит |
+| SC-072 | Удаление аккаунта в приложении (требование Apple) | 6 | P0 | mobile-engineer, backend-engineer | review | 2026-11-16: кнопка в профиле + Edge Function `delete-account` с отзывом токенов Apple (`features/account-deletion.md`). Нужно: задеплоить функцию, ключ Apple .p8 в секреты, проверить на iPhone |
+| SC-073 | Не отдавать handle удалённого аккаунта новому человеку (старые QR и Wallet-карты) | 6 | P1 | backend-engineer | todo | Ревью безопасности 2026-11-16. Срок блокировки — решение основателя |
+| SC-074 | Лимит AI не должен сбрасываться удалением аккаунта | 5 | P2 | ai-engineer | todo | Ревью безопасности 2026-11-16; счётчик по хэшу Apple sub / email |
 
 ## Где мы сейчас
 См. `docs/07-operations/status.md` — сводка и следующие шаги.
