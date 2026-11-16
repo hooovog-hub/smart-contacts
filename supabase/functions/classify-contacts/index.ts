@@ -73,7 +73,7 @@ ${RULES}
 Предлагай раздел, только если в него попадёт хотя бы 8 человек и он не дублирует существующие. Максимум 6.
 Верни ТОЛЬКО JSON: {"add":[{"key":"латиница_snake","name":"Название по-русски"}]}`,
         `Книжка (${all.length} записей):\n${lines}`,
-        1500,
+        8000, // includes adaptive thinking; the JSON itself is short
       );
       const add = sanitizeNewSections(out?.add, cats);
       if (add.length) {
@@ -125,10 +125,11 @@ ${RULES}
 ${RULES}
 ${lessons ? `\nВладелец сам разложил эти контакты. Это его личный словарь — для похожих записей следуй ЕГО логике, она важнее общих правил:\n${lessons}\n` : ""}
 Подумай над каждой записью: кто это скорее всего такой для владельца книжки.
-Верни ответ через инструмент save: для КАЖДОЙ строки объект {i: номер строки, k: "key"}.`,
+Верни JSON {"r": [...]}: для КАЖДОЙ строки объект {"i": номер строки, "k": "key"}.`,
         list,
-        6000,
-        SAVE_TOOL,
+        // Room for adaptive thinking plus ~150 short JSON objects.
+        16000,
+        SAVE_SCHEMA,
       );
       // Unknown keys and rows the model skipped are marked as processed too, as "unsorted".
       const byKey = groupAssignments(out?.r, todo, keys);
@@ -163,22 +164,26 @@ async function allContacts(sb: any, cols: string) {
   }
 }
 
-const SAVE_TOOL = {
-  name: "save",
-  description: "Save the section for every contact line.",
-  input_schema: {
-    type: "object",
-    properties: {
-      r: {
-        type: "array",
-        items: { type: "object", properties: { i: { type: "integer" }, k: { type: "string" } }, required: ["i", "k"] },
+// Structured outputs: the answer is guaranteed to match this schema.
+// (Forced tool_choice is rejected by Claude Sonnet 5.5 — "tool_choice: type tool/any not supported".)
+const SAVE_SCHEMA = {
+  type: "object",
+  properties: {
+    r: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: { i: { type: "integer" }, k: { type: "string" } },
+        required: ["i", "k"],
+        additionalProperties: false,
       },
     },
-    required: ["r"],
   },
+  required: ["r"],
+  additionalProperties: false,
 };
 
-async function claude(system: string, user: string, maxTokens: number, tool?: typeof SAVE_TOOL) {
+async function claude(system: string, user: string, maxTokens: number, schema?: typeof SAVE_SCHEMA) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
@@ -187,12 +192,13 @@ async function claude(system: string, user: string, maxTokens: number, tool?: ty
       max_tokens: maxTokens,
       system,
       messages: [{ role: "user", content: user }],
-      ...(tool ? { tools: [tool], tool_choice: { type: "tool", name: tool.name } } : {}),
+      ...(schema ? { output_config: { format: { type: "json_schema", schema } } } : {}),
     }),
   });
   if (!res.ok) throw new Error(`Claude ${res.status}: ${(await res.text()).slice(0, 200)}`);
   const j = await res.json();
-  if (tool) return j.content?.find((b: any) => b.type === "tool_use")?.input ?? null;
+  if (j.stop_reason === "refusal") throw new Error(`Claude refusal: ${j.stop_details?.category ?? "unknown"}`);
+  if (j.stop_reason === "max_tokens") throw new Error("Claude max_tokens: answer cut off");
   const text: string = j.content?.find((b: any) => b.type === "text")?.text ?? "";
   return parseModelJson<any>(text);
 }
