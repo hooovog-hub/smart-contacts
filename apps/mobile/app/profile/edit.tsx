@@ -3,8 +3,10 @@ import { useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
+import { PhoneField } from "@/components/PhoneField";
 import { Button, Field, Section } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
+import { isPlausible } from "@/lib/phone.logic";
 import { supabase } from "@/lib/supabase";
 import type { Brand, Links, Membership } from "@/lib/types";
 import { c, r } from "@/theme/tokens";
@@ -17,7 +19,7 @@ export default function EditProfile() {
     role: profile?.role ?? "",
     bio: profile?.bio ?? "",
     city: profile?.city ?? "",
-    phone: profile?.phone ?? "",
+    phone: (profile?.phone ?? null) as string | null,
   }));
   const [links, setLinks] = useState<Links>(profile?.links ?? {});
   const [brands, setBrands] = useState<Brand[]>(profile?.brands ?? []);
@@ -26,6 +28,7 @@ export default function EditProfile() {
   if (!profile) return null;
 
   async function save() {
+    if (!isPlausible(p.phone)) return Alert.alert("Проверьте телефон", "Похоже, в номере не хватает или лишние цифры.");
     setBusy(true);
     const uid = profile!.id;
     const { error } = await supabase
@@ -96,12 +99,7 @@ export default function EditProfile() {
           multiline
         />
         <Field label="Город" value={p.city} onChangeText={(v) => setP({ ...p, city: v })} placeholder="Ереван" />
-        <Field
-          label="Телефон"
-          value={p.phone}
-          onChangeText={(v) => setP({ ...p, phone: v })}
-          keyboardType="phone-pad"
-        />
+        <PhoneField value={p.phone} onChange={(v) => setP((cur) => ({ ...cur, phone: v }))} />
         <Section>Контакты и соцсети</Section>
         {(["whatsapp", "telegram", "instagram", "linkedin", "site", "email"] as const).map((k) => (
           <Field
