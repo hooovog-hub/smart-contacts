@@ -99,7 +99,7 @@ async function answer(sb: any, userId: string, message: string, taskId?: string)
     headers: { "x-api-key": API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 1200,
+      max_tokens: 4000, // includes adaptive thinking on Sonnet 5.5
       system: [
         { type: "text", text: SYSTEM(me?.full_name ?? "") },
         {
