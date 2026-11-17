@@ -1,0 +1,679 @@
+<title>Карта Smart Contacts</title>
+<!--
+  КАРТА ПРОЕКТА ДЛЯ ОСНОВАТЕЛЯ. Обновляется в конце КАЖДОЙ рабочей сессии (см. CLAUDE.md, раздел 6).
+  Опубликована: https://claude.ai/artifact/Bq2F4CMDBWusVmHiQg2kRf — переопубликовать с url этой ссылки, чтобы адрес не менялся.
+  Как обновить:
+   1. UPDATED — дата обновления.
+   2. Статусы блоков (s: done / check / doing / todo / later) и тексты done / left / you — по backlog.md и status.md.
+   3. Список TODOS («Ждёт тебя») — по разделу «Ждёт основателя» в status.md.
+   4. В начало массива HISTORY добавить запись сессии: дата, заголовок, пункты простым языком, связанные блоки (nodes), pct — процент на конец сессии.
+   5. Блок «Что происходит прямо сейчас» в шапке.
+  Язык — простой русский, без технических слов (основатель не программист).
+-->
+
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600;700&display=swap">
+<style>
+/* Layout: шапка со сводкой → вкладки (путь человека / этапы / как устроено / твои решения) → карточки-блоки; клик открывает панель с объяснением */
+:root{
+  --bg:#f2f4f7; --surface:#ffffff; --surface-2:#e9edf2; --ink:#141c27; --muted:#586577; --line:#d6dce4;
+  --done:#1c8a4d; --check:#6a4ed6; --doing:#c27408; --todo:#8794a5; --later:#a3acb8;
+  --display:"Unbounded","Onest",system-ui,sans-serif; --body:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --shadow:0 1px 2px rgba(20,28,39,.06),0 6px 20px rgba(20,28,39,.06);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e131a; --surface:#161d26; --surface-2:#1e2732; --ink:#e7ecf3; --muted:#94a1b3; --line:#2a3542;
+  --done:#3dbd76; --check:#9f89ff; --doing:#f0a63a; --todo:#6e7b8c; --later:#55606e;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e131a; --surface:#161d26; --surface-2:#1e2732; --ink:#e7ecf3; --muted:#94a1b3; --line:#2a3542;
+  --done:#3dbd76; --check:#9f89ff; --doing:#f0a63a; --todo:#6e7b8c; --later:#55606e;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(24px,4vw,34px);font-weight:700}
+h2{font-size:18px;font-weight:600}
+.lead{color:var(--muted);max-width:68ch;margin:8px 0 0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--check);outline-offset:2px}
+
+/* summary */
+.summary{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-top:22px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+.now h3{font-size:13px;font-family:var(--body);font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.now ul{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.now li{display:flex;gap:10px;align-items:flex-start}
+.now li b{font-weight:600}
+.tag{flex:none;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;margin-top:2px;white-space:nowrap}
+.bar{display:flex;height:14px;border-radius:999px;overflow:hidden;background:var(--surface-2);margin:12px 0 10px}
+.bar span{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.bignum{font-family:var(--display);font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* status colors */
+.s-done{--c:var(--done)} .s-check{--c:var(--check)} .s-doing{--c:var(--doing)} .s-todo{--c:var(--todo)} .s-later{--c:var(--later)}
+.tag{background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c)}
+.s-todo .tag,.tag.s-todo,.tag.s-later{color:var(--muted)}
+
+/* tabs */
+.tabs{display:flex;gap:6px;margin:26px 0 18px;overflow-x:auto;padding-bottom:2px}
+.tab{border:1px solid var(--line);background:var(--surface);padding:9px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;font-weight:500}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab .cnt{display:inline-block;margin-left:6px;font-size:12px;background:var(--doing);color:#fff;border-radius:999px;padding:0 7px}
+.hint{font-size:13px;color:var(--muted);margin:-6px 0 16px}
+
+/* cards */
+.card{position:relative;text-align:left;background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:10px;padding:10px 12px 11px;cursor:pointer;transition:transform .12s,box-shadow .12s,opacity .15s;display:flex;flex-direction:column;gap:6px;min-width:0}
+.card:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.card.s-todo{border-left-style:dashed}
+.card.s-later{border-left-style:dotted;opacity:.75}
+.card .t{font-weight:600;line-height:1.3}
+.card .st{font-size:12px;color:var(--c);font-weight:600}
+.card.s-todo .st,.card.s-later .st{color:var(--muted)}
+.card.sel{box-shadow:0 0 0 2px var(--ink)}
+.dimmed .card:not(.rel):not(.sel){opacity:.28}
+.card.rel{box-shadow:0 0 0 2px color-mix(in srgb,var(--check) 70%,transparent)}
+
+/* journey */
+.lane{margin-bottom:22px}
+.lane-h{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+.lane-h small{color:var(--muted)}
+.flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;row-gap:12px}
+.flow .card{width:200px}
+.flow .num{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.arrow{display:flex;align-items:center;justify-content:center;width:30px;color:var(--muted);font-size:18px;flex:none}
+.lane-link{display:flex;justify-content:center;color:var(--muted);margin:-8px 0 12px;font-size:18px}
+
+/* stages */
+.stage{display:grid;grid-template-columns:200px 1fr;gap:18px;position:relative;padding-bottom:22px}
+.stage:not(:last-child)::before{content:"";position:absolute;left:21px;top:46px;bottom:0;border-left:2px dashed var(--line)}
+.stage-h{display:flex;gap:12px;align-items:flex-start}
+.ring{flex:none;width:44px;height:44px}
+.stage-h h2{font-size:15px}
+.stage-h small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;align-content:start}
+.stage-note{grid-column:1/-1;font-size:13px;color:var(--muted);margin:0 0 2px}
+
+/* system */
+.sys{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px}
+.sys svg{display:block;min-width:820px;width:100%;height:auto}
+.node rect{fill:var(--surface);stroke:var(--c);stroke-width:2}
+.node.s-todo rect{stroke-dasharray:6 5}
+.node .nt{fill:var(--ink);font:600 15px var(--body)}
+.node .ns{fill:var(--c);font:600 12px var(--body)}
+.node.s-todo .ns{fill:var(--muted)}
+.node{cursor:pointer}
+.node:hover rect{fill:var(--surface-2)}
+.node.sel rect{stroke-width:4}
+.dimmed .node:not(.rel):not(.sel){opacity:.3}
+.edge{stroke:var(--muted);stroke-width:1.6;fill:none}
+.edge.off{stroke-dasharray:5 5;opacity:.7}
+.el{fill:var(--muted);font:500 12px var(--body)}
+.el-bg{fill:var(--surface)}
+.sys-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:10px}
+
+/* decisions */
+.todo-list{display:grid;gap:10px;max-width:820px}
+.todo{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.todo input{width:20px;height:20px;margin-top:2px;accent-color:var(--done)}
+.todo label{font-weight:600;cursor:pointer}
+.todo p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.todo.done label{text-decoration:line-through;color:var(--muted)}
+.todo .kind{display:inline-block;font-size:12px;font-weight:600;margin-left:8px;padding:1px 8px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.todo .more{background:none;border:0;padding:0;margin-top:6px;color:var(--check);cursor:pointer;font-size:14px;text-decoration:underline}
+
+/* history */
+.hist{display:grid;gap:0;max-width:860px}
+.entry{display:grid;grid-template-columns:120px 1fr;gap:18px;position:relative;padding-bottom:22px}
+.entry:not(:last-child)::before{content:"";position:absolute;left:5px;top:22px;bottom:0;border-left:2px solid var(--line)}
+.entry .when{font-weight:600;font-variant-numeric:tabular-nums;padding-left:20px;position:relative}
+.entry .when::before{content:"";position:absolute;left:0;top:6px;width:12px;height:12px;border-radius:50%;background:var(--done)}
+.entry:first-child .when::before{background:var(--check);box-shadow:0 0 0 4px color-mix(in srgb,var(--check) 25%,transparent)}
+.entry .when small{display:block;color:var(--muted);font-weight:500}
+.entry h3{font-size:16px;margin-bottom:6px}
+.entry ul{margin:0 0 10px;padding-left:18px;display:grid;gap:3px}
+.entry .chips{margin-top:4px}
+@media (max-width:820px){.entry{grid-template-columns:1fr;gap:6px}}
+
+/* drawer */
+.backdrop{position:fixed;inset:0;background:rgba(10,14,20,.35);z-index:20}
+@media (min-width:821px){.backdrop{display:none}}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:21;overflow-y:auto;
+  padding:calc(22px + env(safe-area-inset-top,0px)) calc(22px + env(safe-area-inset-right,0px)) calc(30px + env(safe-area-inset-bottom,0px)) 22px;box-shadow:-10px 0 40px rgba(0,0,0,.15)}
+.drawer .x{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:calc(14px + env(safe-area-inset-right,0px));width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:18px}
+.drawer h2{font-size:21px;margin:10px 44px 6px 0}
+.drawer .ids{font-size:12px;color:var(--muted)}
+.drawer h4{margin:20px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.drawer p{margin:0}
+.drawer ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);border-left:4px solid var(--c);background:var(--surface);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:13px;text-align:left}
+.chip:hover{background:var(--surface-2)}
+.left-box{background:color-mix(in srgb,var(--doing) 10%,var(--surface));border-radius:10px;padding:10px 12px}
+.you{background:color-mix(in srgb,var(--check) 12%,var(--surface));border-radius:10px;padding:10px 12px;margin-top:12px}
+.doc{font-size:13px;color:var(--muted);margin-top:18px}
+.doc code{font-size:12px}
+
+@media (max-width:820px){
+  .summary{grid-template-columns:1fr}
+  .stage{grid-template-columns:1fr;gap:10px}
+  .stage::before{display:none}
+  .flow{flex-direction:column}
+  .flow .card{width:100%}
+  .arrow{width:100%;height:22px}
+  .arrow span{transform:rotate(90deg)}
+  .drawer{top:auto;max-height:82vh;width:100%;border-left:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding-left:max(20px,env(safe-area-inset-left,0px))}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Smart Contacts: где мы сейчас</h1>
+    <p class="lead">Карта всего проекта простым языком. Цвет блока показывает, что с ним происходит. Нажми на любой блок, чтобы увидеть, что внутри, что осталось и с чем он связан. Обновлено <span id="updated"></span>, версия приложения 0.2.0. Что менялось от раза к разу, смотри на вкладке «Что сделали».</p>
+  </header>
+
+  <section class="summary">
+    <div class="panel now">
+      <h3>Что происходит прямо сейчас</h3>
+      <ul>
+        <li><span class="tag s-check">идёт</span><span><b>Версия 0.2.0 у тестеров в TestFlight.</b> Нужно проверить на iPhone: фото, «Сегодня», приглашения, Wallet, AI.</span></li>
+        <li><span class="tag s-done">работает</span><span><b>Основа и книжка готовы:</b> вход через Apple, профиль, QR, сайт-профиль, загрузка контактов с AI-раскладкой, Wallet-карта.</span></li>
+        <li><span class="tag s-doing">дальше</span><span><b>Следующее по плану:</b> комнаты для встреч, «Стоит написать сегодня», политика конфиденциальности.</span></li>
+        <li><span class="tag s-todo">не начато</span><span><b>Ещё не трогали:</b> оплата Pro, голосовой ввод, страница в App Store, «Вас ищут».</span></li>
+      </ul>
+    </div>
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+        <h3 style="font-family:var(--body);font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Сколько готово</h3>
+        <span class="bignum" id="pct">0%</span>
+      </div>
+      <div class="bar" id="bar"></div>
+      <div class="legend" id="legend"></div>
+      <p style="margin:12px 0 0;font-size:13px;color:var(--muted)">Считаем по всем блокам на вкладке «Этапы». «Сделано, проверить» значит: код написан и выпущен, но кто-то должен посмотреть на iPhone, что всё работает.</p>
+    </div>
+  </section>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button class="tab" role="tab" data-v="journey">Путь человека</button>
+    <button class="tab" role="tab" data-v="stages">Этапы проекта</button>
+    <button class="tab" role="tab" data-v="system">Как всё устроено</button>
+    <button class="tab" role="tab" data-v="you">Ждёт тебя <span class="cnt" id="youcnt"></span></button>
+    <button class="tab" role="tab" data-v="history">Что сделали</button>
+  </nav>
+
+  <section id="v-history" hidden>
+    <p class="hint">Дневник проекта: что сделали в каждую рабочую сессию. Новое сверху. Нажми на блок в записи, чтобы увидеть его на карте.</p>
+    <div class="hist" id="history"></div>
+  </section>
+
+  <section id="v-journey" hidden>
+    <p class="hint">Что человек делает в приложении, шаг за шагом. Так видно, какие части его пути уже работают, а какие пока пустые.</p>
+    <div id="journey"></div>
+  </section>
+
+  <section id="v-stages" hidden>
+    <p class="hint">План проекта сверху вниз: от проверки идеи до запуска в App Store. Каждый блок это отдельная задача.</p>
+    <div id="stages"></div>
+  </section>
+
+  <section id="v-system" hidden>
+    <p class="hint">Из каких частей состоит продукт и как они общаются. Сплошная линия: связь работает. Пунктир: этой части ещё нет.</p>
+    <div class="sys" id="sys"></div>
+    <div class="sys-legend"><span>▭ сплошная рамка: работает</span><span>┅ пунктирная рамка: ещё не сделано</span></div>
+  </section>
+
+  <section id="v-you" hidden>
+    <p class="hint">Вещи, которые может сделать или решить только ты. Отметки сохраняются в этом браузере.</p>
+    <div class="todo-list" id="todos"></div>
+  </section>
+</div>
+
+<div class="backdrop" id="backdrop" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-live="polite"></aside>
+
+<script>
+const S = {
+  done:{l:"Готово"}, check:{l:"Сделано, проверить"}, doing:{l:"В работе / частично"}, todo:{l:"Не начато"}, later:{l:"Отложено"}
+};
+
+/* ---------- Этапы ---------- */
+const STAGES = [
+ {n:0, t:"Проверка идеи", d:"Убедиться, что продукт нужен людям"},
+ {n:1, t:"Основа", d:"Вход, профиль, база, защита"},
+ {n:2, t:"Записная книжка", d:"Контакты и их раскладка"},
+ {n:3, t:"Встречи и каждый день", d:"Знакомства, «Сегодня», комнаты"},
+ {n:4, t:"AI-помощник", d:"Найти нужного человека"},
+ {n:5, t:"Деньги, Wallet, рост", d:"Оплата, карта, приглашения"},
+ {n:6, t:"Запуск", d:"TestFlight → App Store"},
+ {n:7, t:"Будущее: «Вас ищут»", d:"Спецификация готова", note:"Идея: приложение само подсказывает, кому из знакомых твоих знакомых ты можешь помочь, и наоборот. Описание готово. Перед разработкой юрист должен проверить, можно ли сравнивать телефонные книги."}
+];
+
+const N = {};
+function add(o){ N[o.id]=o; }
+
+/* Этап 0 */
+add({id:"SC-001",g:"stage",st:0,s:"todo",t:"Интервью с будущими пользователями",
+ what:"Поговорить с 15 бизнесменами: как они сейчас хранят контакты, что их раздражает, за что готовы платить.",
+ left:"В проекте нет следов интервью. Если они были, их стоит записать, чтобы команда знала выводы.",
+ you:"Подтверди, были ли интервью.", links:["SC-003","SC-002"], doc:"docs/06-business/validation-plan.md"});
+add({id:"SC-002",g:"stage",st:0,s:"doing",t:"Сайт-визитка с листом ожидания",
+ what:"Страница о продукте, где человек оставляет контакт и получает весть о запуске.",
+ done:["Простая страница о продукте есть на сайте"], left:"Нет формы «Сообщите мне о запуске».",
+ links:["SC-003","sys-site","J1"], doc:"apps/web/public/index.html"});
+add({id:"SC-003",g:"stage",st:0,s:"todo",t:"Пробная реклама ($50–100)",
+ what:"Небольшая реклама в Instagram/Facebook, чтобы понять, кликают ли люди и сколько стоит один заинтересованный.",
+ left:"Не запускалась. Имеет смысл, когда появится лист ожидания.", you:"Подтверди, был ли такой тест.",
+ links:["SC-002","SC-001"], doc:"docs/05-marketing/ads-playbook.md"});
+add({id:"SC-004",g:"stage",st:0,s:"todo",t:"Окончательное название",
+ what:"Имя приложения. «Smart Contacts» в App Store уже занято другим приложением.",
+ done:["Сейчас стоит временное имя «Smart Contacts (2e4f86)»"], left:"Нужно выбрать новое имя до публикации в App Store.",
+ you:"Решение за тобой. Без него нельзя сделать страницу в App Store.", links:["SC-071","APPSTORE"], doc:"docs/07-operations/decisions-log.md"});
+
+/* Этап 1 */
+add({id:"SC-010",ids:"SC-010 · SC-015",g:"stage",st:1,s:"done",t:"База данных и защита",
+ what:"Хранилище, где лежат профили, контакты, задачи и комнаты. Главное правило: каждый видит только свои данные.",
+ done:["Все таблицы созданы","Правило «каждый видит только своё» включено","Проверка безопасности Supabase: 63 замечания закрыты"],
+ links:["sys-server","SC-019","SC-016"], doc:"docs/03-architecture/data-model.md"});
+add({id:"SC-019",g:"stage",st:1,s:"done",t:"Порядок в разработке",
+ what:"Автоматика, которая проверяет каждое изменение кода до того, как оно попадёт в приложение. Защищает от случайных поломок.",
+ done:["Автопроверки на GitHub при каждом изменении","53 автотеста","Главную ветку кода нельзя менять напрямую, только через проверку"],
+ links:["SC-010","TF"], doc:"docs/04-engineering/testing-strategy.md"});
+add({id:"SC-011",g:"stage",st:1,s:"check",t:"Вход в приложение",
+ what:"Как человек попадает в приложение. Сейчас: кнопка «Продолжить с Apple» и вход по почте.",
+ done:["«Продолжить с Apple» работает в TestFlight (проверено 16 ноября)","Apple включён на сервере"],
+ left:"Вход по номеру телефона не сделан: SMS стоят денег. Ещё нужно создать ключ Sign in with Apple и положить его в секреты сервера.",
+ you:"Решить, нужен ли вход по телефону. Создать ключ Sign in with Apple (.p8).", links:["J3","SC-072","sys-app","sys-server"], doc:"docs/01-product/features/sign-in.md"});
+add({id:"SC-012",g:"stage",st:1,s:"done",t:"«Мой профиль»",
+ what:"Твоя карточка: имя, компания, бренды, клубы, контакты. Её видят люди, с которыми ты знакомишься.",
+ done:["Создание и редактирование профиля","Бренды и членство в клубах","Шкала заполненности и быстрые кнопки «+»"],
+ links:["SC-082","SC-013","SC-014","J4"], doc:"docs/01-product/features/profile.md"});
+add({id:"SC-013",g:"stage",st:1,s:"done",t:"Профиль на сайте по ссылке",
+ what:"Любой человек открывает smart-contacts.vercel.app/твоё-имя без приложения и сохраняет тебя в контакты телефона одной кнопкой.",
+ done:["Работает на сайте","Кнопка «Сохранить контакт» (vCard)"], links:["SC-014","SC-050","sys-site","J6"], doc:"docs/01-product/features/profile.md"});
+add({id:"SC-014",g:"stage",st:1,s:"done",t:"Мой QR-код",
+ what:"QR в приложении. Собеседник наводит камеру и сразу видит твой профиль на сайте.",
+ done:["QR работает","Исправлено: раньше вёл на закрытый адрес, теперь на публичный сайт"], links:["SC-013","SC-080","J6"]});
+add({id:"SC-016",g:"stage",st:1,s:"done",t:"Отчёты о сбоях",
+ what:"Если приложение у кого-то падает, оно само присылает отчёт. Пользователь видит понятный экран «Что-то пошло не так» вместо белого экрана.",
+ done:["Таблица отчётов на сервере","Экран ошибки в приложении"], links:["SC-010","sys-app"]});
+add({id:"SC-017",g:"stage",st:1,s:"done",t:"Лимиты на AI",
+ what:"Ограничения, чтобы AI не съел большой счёт. На бесплатном тарифе 5 задач в месяц, у всех до 10 сообщений помощнику в день.",
+ done:["Счётчик использования на сервере","Лимиты в минуту и в день"], left:"Проверить живым запросом с iPhone, что лимит срабатывает.",
+ links:["SC-040","SC-074","sys-ai"], doc:"docs/03-architecture/ai-assistant.md"});
+add({id:"SC-018",g:"stage",st:1,s:"check",t:"Проверка под нагрузкой",
+ what:"Тест: что будет, если приложением одновременно пользуются сотни людей. Например, на большой конференции.",
+ done:["Скрипт теста написан"], left:"Ни разу не запускали.", links:["SC-010","SC-030"], doc:"tests/load/"});
+
+/* Этап 2 */
+add({id:"SC-020",g:"stage",st:2,s:"done",t:"Загрузка контактов и AI-раскладка",
+ what:"Приложение берёт контакты из телефона, а AI раскладывает их по разделам: юристы, банки, медицина, клиенты и так далее.",
+ done:["Импорт из телефона","AI-раскладка по разделам (починена в 0.2.0)","Дни рождения подтягиваются при повторном импорте"],
+ links:["SC-021","sys-ai","J5"], doc:"docs/01-product/features/contacts-book.md"});
+add({id:"SC-021",g:"stage",st:2,s:"doing",t:"Книжка: разделы, А–Я, поиск",
+ what:"Главный экран со всеми контактами: фильтр-чипы по разделам, алфавит, поиск.",
+ done:["Разделы","Алфавит А–Я","Поиск"], left:"Нет кнопки «Ещё», которая показывает сетку всех разделов.",
+ links:["SC-020","SC-022","J5"], doc:"docs/01-product/features/contacts-book.md"});
+add({id:"SC-022",g:"stage",st:2,s:"done",t:"Карточка другого человека",
+ what:"Открываешь контакт и видишь всё о человеке: чем занимается, где встречались, заметки.",
+ links:["SC-021","SC-040"]});
+add({id:"SC-082",g:"stage",st:2,s:"check",t:"Профиль: фото, «Ищу», «Чем помогу»",
+ what:"Профиль стал богаче: фото, блок «Сейчас ищу» (например, «ищу инвестора») и «Чем могу помочь». Wallet-кнопка рядом с фото.",
+ done:["Выпущено в версии 0.2.0"], left:"Проверить на iPhone в TestFlight.",
+ links:["SC-012","SC-050","GROUP-match","J4"], doc:"docs/01-product/features/profile.md"});
+
+/* Этап 3 */
+add({id:"SC-080",g:"stage",st:3,s:"check",t:"Вкладка «Сегодня»",
+ what:"Экран на каждый день: быстро познакомиться по QR (показать свой или отсканировать чужой), дни рождения, новые знакомства.",
+ done:["Выпущено в версии 0.2.0"], left:"Проверить на iPhone.", links:["SC-032","SC-014","J7"], doc:"docs/01-product/features/today.md"});
+add({id:"SC-032",g:"stage",st:3,s:"check",t:"«Стоит написать сегодня»",
+ what:"Каждый день AI предлагает нескольких людей, которым стоит написать: давно не общались, день рождения, есть повод.",
+ done:["Серверная функция подбора работает","Блок на вкладке «Сегодня»"], left:"Проверить на iPhone, что подсказки разумные.",
+ links:["SC-080","sys-ai","J7"]});
+add({id:"SC-030",g:"stage",st:3,s:"todo",t:"Комнаты для встреч",
+ what:"На встрече клуба или конференции создаёшь «комнату». Гости входят по QR, даже без приложения, и все видят, кто пришёл.",
+ done:["Экран комнаты есть (на примерных данных)"], left:"Создать комнату в приложении пока нельзя. Страница входа для гостя на сайте пустая.",
+ links:["SC-031","sys-site","J8"], doc:"docs/01-product/features/meetings-rooms.md"});
+add({id:"SC-031",g:"stage",st:3,s:"doing",t:"«Вспомнить всех»",
+ what:"После встречи список всех, кто был в комнате. Отмечаешь, с кем говорил, чтобы не забыть.",
+ done:["Экран с отметкой «говорили» есть"], left:"Заработает вместе с комнатами. Нужно проверить на настоящей встрече.",
+ links:["SC-030","J8"], doc:"docs/01-product/features/meetings-rooms.md"});
+add({id:"SC-084",g:"stage",st:3,s:"later",t:"«Повод написать» по новостям",
+ what:"Идея: AI находит новости по сферам и подсказывает, кому из контактов их переслать.",
+ left:"Решили 16 ноября: пока не делаем.", links:["SC-032"]});
+
+/* Этап 4 */
+add({id:"SC-040",g:"stage",st:4,s:"check",t:"AI-помощник",
+ what:"Пишешь: «нужен юрист по недвижимости». AI ищет среди твоих контактов и делит ответ на «Напрямую» (знаешь сам) и «Может знать» (кто может свести).",
+ done:["Работает в приложении","AI вызывается только через сервер, ключ в безопасности"], left:"Автоматическая проверка качества ответов не прогонялась.",
+ links:["SC-041","SC-042","SC-017","sys-ai","J9"], doc:"docs/01-product/features/ai-assistant.md"});
+add({id:"SC-041",g:"stage",st:4,s:"doing",t:"Список задач и «Решено»",
+ what:"Все твои запросы к AI хранятся как задачи. Когда вопрос решён, отмечаешь «Решено».",
+ done:["Список задач","Экран задачи","Кнопка «Решено» и архив"], left:"Нет выбора «кто помог». Он нужен, чтобы AI учился, кто реально полезен.",
+ links:["SC-040","J9"]});
+add({id:"SC-042",g:"stage",st:4,s:"todo",t:"Голосовой ввод",
+ what:"Наговорить задачу голосом вместо набора текста.",
+ left:"Сейчас кнопка микрофона только подсказывает воспользоваться диктовкой клавиатуры.", links:["SC-040","J9"]});
+
+/* Этап 5 */
+add({id:"SC-050",g:"stage",st:5,s:"done",t:"Карта в Apple Wallet",
+ what:"Твоя визитка в приложении «Wallet» на iPhone, рядом с банковскими картами. Показываешь её, и человек сканирует QR.",
+ done:["Карта по дизайну","Сертификат Apple действует до декабря 2027","Проверено на iPhone"],
+ links:["SC-051","SC-083","sys-wallet","SC-013","J6"], doc:"docs/01-product/features/wallet-card.md"});
+add({id:"SC-051",g:"stage",st:5,s:"todo",t:"Карта обновляется сама",
+ what:"Поменял телефон в профиле, и карта в Wallet обновилась без переустановки.", left:"Не начато.", links:["SC-050","sys-wallet"]});
+add({id:"SC-083",g:"stage",st:5,s:"todo",t:"Фото на Wallet-карте",
+ what:"Показывать фото профиля на карте.", left:"Сейчас фото на карте нет.", links:["SC-050","SC-082"]});
+add({id:"SC-081",g:"stage",st:5,s:"check",t:"Приглашения друзей",
+ what:"Ссылка или код приглашения, SMS выбранным людям. За 10 приглашённых даётся +1 месяц Pro.",
+ done:["Выпущено в 0.2.0","Страница приглашения на сайте работает"], left:"На сайт нужно добавить публичную ссылку на TestFlight, чтобы приглашённые могли установить приложение.",
+ you:"Создать публичную ссылку TestFlight.", links:["J12","sys-site","TF"], doc:"docs/01-product/features/invites.md"});
+add({id:"SC-060",g:"stage",st:5,s:"todo",t:"Оплата Pro через App Store",
+ what:"Покупка подписки Pro прямо в приложении.", done:["Сейчас Pro бесплатно у всех на 2 месяца"], left:"Не начато. Это главный путь к первым деньгам.",
+ links:["SC-061","sys-pay","J11"], doc:"docs/01-product/features/plans-billing.md"});
+add({id:"SC-061",g:"stage",st:5,s:"todo",t:"Тариф Business для команд",
+ what:"Компания покупает доступ для сотрудников и оплачивает на сайте.", done:["Таблицы для команд в базе есть"], left:"Экранов нет.",
+ links:["SC-060","J11"], doc:"docs/06-business/pricing-and-plans.md"});
+add({id:"SC-052",g:"stage",st:5,s:"done",t:"Обновления без новой сборки",
+ what:"Мелкие исправления прилетают пользователям сами, без новой загрузки в App Store.", done:["Работает с 16 ноября"], links:["TF","sys-app"]});
+add({id:"SC-053",g:"stage",st:5,s:"todo",t:"Спрятать ключи сайта",
+ what:"Два секретных ключа на сайте сейчас видны в панели управления. Их нужно пересохранить как скрытые.", left:"Мелкая, но важная задача по безопасности.", links:["sys-site","SC-050"]});
+add({id:"SC-074",g:"stage",st:5,s:"todo",t:"Лимит AI не обнуляется удалением",
+ what:"Защита от хитрости: удалить аккаунт, создать новый и снова получить бесплатные AI-запросы.", left:"Не начато. Нашли на проверке безопасности.", links:["SC-017","SC-072"]});
+
+/* Этап 6 */
+add({id:"TF",ids:"сборки 0.1.0 и 0.2.0",g:"stage",st:6,s:"done",t:"Сборки в TestFlight",
+ what:"TestFlight это приложение Apple для тестеров. Через него приложение ставят до публикации в App Store.",
+ done:["0.1.0 загружена 16 ноября","0.2.0 загружена ночью 16 ноября"], links:["APPSTORE","sys-store","J2","SC-052"], doc:"docs/04-engineering/release-process.md"});
+add({id:"SC-072",g:"stage",st:6,s:"check",t:"Удаление аккаунта",
+ what:"Обязательное требование Apple: человек может сам удалить аккаунт и все данные из приложения.",
+ done:["Кнопка в профиле","Функция на сервере удаляет всё, включая фото и вход через Apple"], left:"Проверить на iPhone удаление тестового аккаунта.",
+ links:["SC-073","SC-074","SC-011","APPSTORE","J13"], doc:"docs/01-product/features/account-deletion.md"});
+add({id:"SC-073",g:"stage",st:6,s:"todo",t:"Старые QR после удаления",
+ what:"Если человек удалил аккаунт, его имя-ссылку нельзя сразу отдавать другому. Иначе старые QR и Wallet-карты будут вести на чужого человека.",
+ left:"Не начато.", you:"Решить, на какой срок блокировать освободившееся имя.", links:["SC-072","SC-050"]});
+add({id:"SC-070",g:"stage",st:6,s:"todo",t:"Политика конфиденциальности",
+ what:"Юридический текст: какие данные собираем и зачем. Без него Apple не пропустит приложение в App Store.",
+ left:"Не начато. Он же нужен для проверки юристом функции «Вас ищут».", links:["APPSTORE","GROUP-link","SC-071"], doc:"docs/06-business/legal.md"});
+add({id:"SC-071",g:"stage",st:6,s:"todo",t:"Страница в App Store",
+ what:"Название, описание, ключевые слова и скриншоты, которые человек видит в App Store.", left:"Ждёт окончательного названия.",
+ links:["SC-004","APPSTORE","J1"], doc:"docs/05-marketing/aso.md"});
+add({id:"APPSTORE",ids:"финиш",g:"stage",st:6,s:"todo",t:"Публикация в App Store",
+ what:"Финальный шаг: приложение доступно всем в App Store, а не только тестерам.",
+ left:"Перед этим нужны: название, политика конфиденциальности, страница в App Store, проверенное удаление аккаунта.",
+ links:["SC-004","SC-070","SC-071","SC-072","TF","sys-store"]});
+
+/* Этап 7 */
+add({id:"GROUP-design",ids:"SC-096",g:"stage",st:7,s:"todo",t:"Макеты экранов «Вас ищут»",
+ what:"Экраны согласия, список «Вас ищут», предложение помощи, настройки приватности. Несколько вариантов на твой выбор.", links:["GROUP-link","GROUP-match"], doc:"docs/01-product/features/needs-matching.md"});
+add({id:"GROUP-link",ids:"SC-090 · SC-091",g:"stage",st:7,s:"todo",t:"Согласие и связи между людьми",
+ what:"Человек разрешает «видно знакомым знакомых». Приложение понимает, кто с кем знаком: общие номера (взаимно), QR, комнаты.",
+ left:"Сначала юрист проверяет, можно ли сравнивать телефонные книги.", links:["SC-070","GROUP-match","GROUP-safety"], doc:"docs/01-product/features/needs-matching.md"});
+add({id:"GROUP-match",ids:"SC-092 · SC-093",g:"stage",st:7,s:"todo",t:"Подбор «Ищу ↔ Помогу» и лента",
+ what:"AI сводит «Сейчас ищу» одних с «Чем могу помочь» других. На главной появляется лента «Вас ищут» с кнопками «Принять / Нет».",
+ left:"Предложения только для Pro и Business.", links:["SC-082","GROUP-link","sys-ai","J10"], doc:"docs/01-product/features/needs-matching.md"});
+add({id:"GROUP-safety",ids:"SC-094 · SC-095",g:"stage",st:7,s:"todo",t:"Жалобы, блок и уведомления",
+ what:"Пожаловаться, заблокировать, заморозка после 3 жалоб. Push-уведомления о новых предложениях.",
+ left:"Без жалоб и блокировки Apple фичу не пропустит. Push в приложении пока нет вообще.", links:["GROUP-match","sys-push"], doc:"docs/01-product/features/needs-matching.md"});
+
+/* ---------- Путь человека ---------- */
+const LANES = [
+ {t:"Приходит", d:"узнаёт и попадает внутрь", steps:["J1","J2","J3"]},
+ {t:"Настраивается", d:"первые минуты в приложении", steps:["J4","J5"]},
+ {t:"Пользуется", d:"каждый день и на встречах", steps:["J6","J7","J8","J9"]},
+ {t:"Остаётся и растёт", d:"платит, зовёт друзей", steps:["J10","J11","J12","J13"]}
+];
+add({id:"J1",g:"journey",s:"doing",t:"Узнаёт о приложении",
+ what:"Откуда человек слышит о Smart Contacts: от друга по приглашению, с сайта, из рекламы или из App Store.",
+ done:["Приглашения от друзей работают"], left:"Нет листа ожидания на сайте, рекламы и страницы в App Store.", links:["SC-081","SC-002","SC-003","SC-071"]});
+add({id:"J2",g:"journey",s:"doing",t:"Устанавливает",
+ what:"Скачивает приложение на iPhone.", done:["Тестеры ставят через TestFlight"], left:"В App Store приложения ещё нет. Обычный человек скачать его не может.",
+ links:["TF","APPSTORE","SC-070"]});
+add({id:"J3",g:"journey",s:"check",t:"Входит",
+ what:"Создаёт аккаунт одной кнопкой «Продолжить с Apple».", done:["Вход через Apple работает"], left:"Вход по номеру телефона не сделан, решение за тобой.", links:["SC-011"]});
+add({id:"J4",g:"journey",s:"check",t:"Заполняет профиль",
+ what:"Имя, компания, фото, «Сейчас ищу», «Чем могу помочь».", done:["Профиль работает","Фото и «Ищу/Помогу» в 0.2.0, нужно проверить"], links:["SC-012","SC-082"]});
+add({id:"J5",g:"journey",s:"done",t:"Загружает контакты",
+ what:"Даёт доступ к контактам телефона. AI сам раскладывает их по разделам.", done:["Импорт и AI-раскладка работают"], left:"Мелочь: кнопка «Ещё» со всеми разделами.", links:["SC-020","SC-021"]});
+add({id:"J6",g:"journey",s:"done",t:"Делится собой",
+ what:"Показывает QR, отправляет ссылку на профиль или карту из Wallet. Собеседнику приложение не нужно.", done:["QR","Профиль на сайте","Wallet-карта"], links:["SC-014","SC-013","SC-050"]});
+add({id:"J7",g:"journey",s:"check",t:"Открывает «Сегодня»",
+ what:"Каждый день: кому написать, у кого день рождения, новые знакомства.", done:["Выпущено в 0.2.0"], left:"Проверить на iPhone.", links:["SC-080","SC-032"]});
+add({id:"J8",g:"journey",s:"todo",t:"Идёт на встречу",
+ what:"Создаёт комнату на встрече клуба. Потом «Вспомнить всех», кто там был.", left:"Создать комнату пока нельзя. Это следующий большой шаг.", links:["SC-030","SC-031"]});
+add({id:"J9",g:"journey",s:"doing",t:"Просит AI найти человека",
+ what:"«Нужен хороший нотариус» — AI отвечает, кого ты знаешь и кто может свести.", done:["Помощник работает","Список задач и «Решено»"], left:"Нет голосового ввода и выбора «кто помог».", links:["SC-040","SC-041","SC-042"]});
+add({id:"J10",g:"journey",s:"todo",t:"Получает «Вас ищут»",
+ what:"Приложение подсказывает, кому из знакомых знакомых он может помочь, и наоборот.", left:"Будущая функция, описание готово.", links:["GROUP-match","GROUP-link"]});
+add({id:"J11",g:"journey",s:"todo",t:"Платит за Pro",
+ what:"Покупает подписку прямо в приложении.", done:["Сейчас Pro у всех бесплатно на 2 месяца"], left:"Оплата не подключена.", links:["SC-060","SC-061"]});
+add({id:"J12",g:"journey",s:"check",t:"Зовёт друзей",
+ what:"Отправляет приглашения и получает бонусный месяц Pro.", done:["Работает в 0.2.0"], left:"Нужна публичная ссылка TestFlight на сайте.", links:["SC-081"]});
+add({id:"J13",g:"journey",s:"check",t:"Может удалить аккаунт",
+ what:"Удаляет себя и все данные одной кнопкой. Это обязательно для Apple.", done:["Кнопка и серверная функция готовы"], left:"Проверить на iPhone.", links:["SC-072"]});
+
+/* ---------- Как устроено ---------- */
+add({id:"sys-user",g:"system",s:"done",t:"Человек с iPhone",x:30,y:250,
+ what:"Пользователь Smart Contacts. Всё, что он делает, идёт через приложение.", links:["sys-app","J3"]});
+add({id:"sys-guest",g:"system",s:"done",t:"Гость без приложения",x:30,y:460,
+ what:"Человек, которому ты показал QR или прислал ссылку. Приложение ему не нужно: он видит твой профиль на сайте.", links:["sys-site","SC-013"]});
+add({id:"sys-store",g:"system",s:"doing",t:"TestFlight / App Store",sub:"только TestFlight",x:280,y:40,
+ what:"Откуда приложение попадает на iPhone. Сейчас только через TestFlight для тестеров.", done:["TestFlight работает"], left:"Публикации в App Store нет.", links:["TF","APPSTORE","sys-app"]});
+add({id:"sys-app",g:"system",s:"done",t:"Приложение iPhone",sub:"версия 0.2.0",x:280,y:250,
+ what:"То, что человек видит на экране: книжка, профиль, «Сегодня», AI-помощник. Само по себе почти ничего не хранит, всё берёт с сервера.",
+ done:["Работает, обновляется по воздуху"], links:["sys-server","SC-052","SC-016","SC-021"], doc:"apps/mobile"});
+add({id:"sys-pay",g:"system",s:"todo",t:"Оплата Apple",sub:"не подключено",x:540,y:40,
+ what:"Покупка подписки Pro через App Store.", left:"Не подключено.", links:["SC-060","sys-app"]});
+add({id:"sys-server",g:"system",s:"done",t:"Сервер и база",sub:"Supabase",x:540,y:250,
+ what:"Сердце системы. Хранит все данные, проверяет, кто есть кто, и выполняет серверные функции: AI, удаление аккаунта, ежедневные подсказки.",
+ done:["База и защита данных","Серверные функции работают"], links:["SC-010","sys-ai","sys-app","sys-site"], doc:"supabase/"});
+add({id:"sys-ai",g:"system",s:"done",t:"AI Claude",sub:"только через сервер",x:810,y:150,
+ what:"Искусственный интеллект. Раскладывает контакты, отвечает помощнику, подбирает «Стоит написать». Приложение не общается с ним напрямую, только через сервер. Так ключ остаётся в безопасности, и работают лимиты.",
+ done:["Раскладка контактов","AI-помощник","Ежедневные подсказки"], links:["SC-040","SC-020","SC-032","SC-017"]});
+add({id:"sys-push",g:"system",s:"todo",t:"Push-уведомления",sub:"нет",x:810,y:350,
+ what:"Сообщения на экран блокировки: «Вам новое предложение» и подобные.", left:"В приложении пока нет вообще.", links:["GROUP-safety"]});
+add({id:"sys-site",g:"system",s:"done",t:"Сайт",sub:"smart-contacts.vercel.app",x:540,y:460,
+ what:"Публичные страницы: профиль по ссылке и QR, страница приглашения, выдача Wallet-карт. Скоро здесь будет вход гостя в комнату.",
+ done:["Профили","Приглашения","Wallet-карты"], left:"Страница входа гостя в комнату пустая. Спрятать два ключа.", links:["SC-013","SC-081","SC-030","SC-053","sys-wallet"], doc:"apps/web"});
+add({id:"sys-wallet",g:"system",s:"done",t:"Apple Wallet",sub:"карта-визитка",x:810,y:460,
+ what:"Приложение «Wallet» на iPhone. Туда ложится твоя визитка-карта.", done:["Карта выдаётся и работает"], left:"Автообновление и фото на карте.", links:["SC-050","SC-051"]});
+
+const EDGES = [
+ ["sys-user","sys-app","пользуется"],["sys-store","sys-app","устанавливает"],["sys-app","sys-server","данные"],
+ ["sys-server","sys-ai","запросы к AI"],["sys-server","sys-push","",true],["sys-app","sys-pay","",true],
+ ["sys-guest","sys-site","сканирует QR"],["sys-site","sys-server","читает профиль"],["sys-site","sys-wallet","выдаёт карту"]
+];
+
+/* ---------- Ждёт тебя ---------- */
+const TODOS = [
+ {id:"t1",k:"проверить",t:"Проверить версию 0.2.0 в TestFlight",p:"Фото профиля, кнопка Wallet, вкладка «Сегодня», приглашения, AI «Ищу». В «Контактах» один раз нажать «Импортировать ещё», чтобы подтянулись дни рождения.",n:"J7"},
+ {id:"t2",k:"проверить",t:"Проверить удаление тестового аккаунта",p:"Создать тестовый аккаунт в TestFlight и удалить его кнопкой в профиле.",n:"SC-072"},
+ {id:"t3",k:"решить",t:"Выбрать окончательное название",p:"«Smart Contacts» в App Store занято. Без названия не сделать страницу в App Store.",n:"SC-004"},
+ {id:"t4",k:"сделать",t:"Создать ключ Sign in with Apple (.p8)",p:"В кабинете Apple Developer, затем положить в секреты Supabase. Инструкция в чек-листе release-process.md.",n:"SC-011"},
+ {id:"t5",k:"решить",t:"Нужен ли вход по номеру телефона",p:"Каждая SMS с кодом стоит денег. Сейчас есть вход через Apple и по почте.",n:"SC-011"},
+ {id:"t6",k:"решить",t:"Срок блокировки имени удалённого аккаунта",p:"Сколько времени нельзя отдавать освободившееся имя-ссылку другому человеку.",n:"SC-073"},
+ {id:"t7",k:"сделать",t:"Включить защиту от утёкших паролей",p:"Supabase → Authentication → Leaked Password Protection. Последнее замечание проверки безопасности.",n:"SC-010"},
+ {id:"t8",k:"сделать",t:"Сохранить копию папки wallet-secrets",p:"Это секретный ключ Apple для Wallet-карт. Положить в менеджер паролей. В коде его нет и быть не должно.",n:"SC-050"},
+ {id:"t9",k:"сделать",t:"Публичная ссылка TestFlight для приглашений",p:"Когда появится, добавить её на сайт, чтобы приглашённые могли установить приложение.",n:"SC-081"},
+ {id:"t10",k:"решить",t:"Следующий шаг по продукту",p:"Рекомендация: комнаты для встреч и политика конфиденциальности. Это путь к пилоту в клубе и к App Store.",n:"SC-030"}
+];
+
+/* ---------- Что сделали (новое сверху) ---------- */
+const UPDATED = "18 ноября 2026";
+const HISTORY = [
+ {d:"18 ноября 2026", t:"Появилась эта карта", pct:47,
+  items:["Сделали карту проекта, чтобы видеть общую картину без технических деталей","Теперь её обновляют в конце каждой рабочей сессии, а сюда пишется, что сделали"],
+  nodes:[]},
+ {d:"16 ноября 2026", w:"ночь", t:"Версия 0.2.0 ушла тестерам",
+  items:["Починили AI-раскладку контактов по разделам","Профиль стал богаче: фото, «Сейчас ищу», «Чем могу помочь», дни рождения","Новая вкладка «Сегодня» и подсказки «Стоит написать»","Приглашения друзей и страница приглашения на сайте","Описали будущую функцию «Вас ищут»"],
+  nodes:["SC-020","SC-082","SC-080","SC-032","SC-081","GROUP-match"]},
+ {d:"16 ноября 2026", w:"вечер", t:"Вход через Apple проверен на iPhone",
+  items:["«Продолжить с Apple» работает в TestFlight","Обновления по воздуху работают","Телефон в профиле с выбором страны","«Мой профиль» показывает, как тебя видят другие, и шкалу заполненности","Pro бесплатно всем на 2 месяца, лимит AI 10 сообщений в день"],
+  nodes:["SC-011","SC-052","SC-012","SC-017"]},
+ {d:"16 ноября 2026", w:"день", t:"Первая сборка в TestFlight",
+  items:["Кнопка удаления аккаунта (требование Apple)","Кнопка «Продолжить с Apple»","Версия 0.1.0 собрана и загружена в TestFlight"],
+  nodes:["SC-072","SC-011","TF"]},
+ {d:"12 ноября 2026", t:"Порядок, защита и Wallet-карта",
+  items:["Автопроверки каждого изменения и 53 автотеста","Усилили защиту базы: закрыли 63 замечания","Лимиты на AI, чтобы не было больших счетов","Отчёты о сбоях","Карта в Apple Wallet работает на iPhone","QR теперь ведёт на публичный сайт"],
+  nodes:["SC-019","SC-010","SC-017","SC-016","SC-050","SC-014"]}
+];
+
+/* ---------- links: bidirectional ---------- */
+const REL = {};
+for (const id in N){ REL[id] = REL[id] || new Set(); }
+for (const id in N){ for (const l of (N[id].links||[])){ if(!N[l]) continue; REL[id].add(l); REL[l].add(id); } }
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function card(o, extra=""){
+  return `<button class="card s-${o.s}" data-id="${o.id}">${extra}<span class="t">${esc(o.t)}</span><span class="st">${S[o.s].l}</span></button>`;
+}
+
+/* summary */
+(function(){
+  const st = Object.values(N).filter(o=>o.g==="stage");
+  const c = {done:0,check:0,doing:0,todo:0,later:0}; st.forEach(o=>c[o.s]++);
+  const total = st.length - c.later;
+  const pct = Math.round((c.done + c.check*0.8 + c.doing*0.4)/total*100);
+  $("#pct").textContent = pct+"%";
+  $("#bar").innerHTML = ["done","check","doing","todo","later"].map(k=>`<span class="s-${k}" style="width:${c[k]/st.length*100}%;background:var(--c)" title="${S[k].l}: ${c[k]}"></span>`).join("");
+  $("#legend").innerHTML = ["done","check","doing","todo","later"].map(k=>`<span class="s-${k}"><i style="background:var(--c)"></i>${S[k].l}: <b style="color:var(--ink)">${c[k]}</b></span>`).join("");
+})();
+
+/* journey */
+$("#journey").innerHTML = LANES.map((L,li)=>{
+  let n = LANES.slice(0,li).reduce((a,x)=>a+x.steps.length,0);
+  const parts = L.steps.map((id,i)=>(i?`<span class="arrow" aria-hidden="true"><span>→</span></span>`:"")+card(N[id],`<span class="num">шаг ${n+i+1}</span>`));
+  return `<div class="lane"><div class="lane-h"><h2>${L.t}</h2><small>${L.d}</small></div><div class="flow">${parts.join("")}</div></div>`+(li<LANES.length-1?`<div class="lane-link" aria-hidden="true">↓</div>`:"");
+}).join("");
+
+/* stages */
+function ring(p){
+  const r=18, C=2*Math.PI*r;
+  return `<svg class="ring" viewBox="0 0 44 44"><circle cx="22" cy="22" r="${r}" fill="var(--surface)" stroke="var(--surface-2)" stroke-width="5"/><circle cx="22" cy="22" r="${r}" fill="none" stroke="var(--done)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${C*p} ${C}" transform="rotate(-90 22 22)"/><text x="22" y="26" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)" font-family="Onest,system-ui">${Math.round(p*100)}</text></svg>`;
+}
+$("#stages").innerHTML = STAGES.map(G=>{
+  const items = Object.values(N).filter(o=>o.g==="stage"&&o.st===G.n);
+  const act = items.filter(o=>o.s!=="later");
+  const p = act.length ? act.reduce((a,o)=>a+({done:1,check:.8,doing:.4,todo:0}[o.s]),0)/act.length : 0;
+  return `<div class="stage"><div class="stage-h">${ring(p)}<div><h2>${G.n}. ${G.t}</h2><small>${G.d}</small></div></div>
+  <div class="grid">${G.note?`<p class="stage-note">${G.note}</p>`:""}${items.map(o=>card(o)).join("")}</div></div>`;
+}).join("");
+
+/* system */
+(function(){
+  const W=160,H=72, P=id=>N[id];
+  const ctr = o=>({x:o.x+W/2,y:o.y+H/2});
+  function clip(a,b){ // point on rect a's border toward b
+    const c=ctr(a), d=ctr(b), dx=d.x-c.x, dy=d.y-c.y;
+    const s = Math.min(Math.abs((W/2+6)/(dx||1e-9)), Math.abs((H/2+6)/(dy||1e-9)));
+    return {x:c.x+dx*s, y:c.y+dy*s};
+  }
+  let e = EDGES.map(([a,b,l,off])=>{
+    const A=clip(P(a),P(b)), B=clip(P(b),P(a)), mx=(A.x+B.x)/2, my=(A.y+B.y)/2;
+    const lab = l || (off?"ещё нет":"");
+    const w = lab.length*6.4+12;
+    return `<g data-edge="${a} ${b}"><line class="edge${off?" off":""}" x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" marker-end="url(#ah)"/>
+      ${lab?`<rect class="el-bg" x="${mx-w/2}" y="${my-10}" width="${w}" height="18" rx="4"/><text class="el" x="${mx}" y="${my+3}" text-anchor="middle">${lab}</text>`:""}</g>`;
+  }).join("");
+  const nodes = Object.values(N).filter(o=>o.g==="system").map(o=>`<g class="node s-${o.s}" data-id="${o.id}" tabindex="0" role="button" aria-label="${esc(o.t)}">
+    <rect x="${o.x}" y="${o.y}" width="${W}" height="${H}" rx="12"/>
+    <text class="nt" x="${o.x+14}" y="${o.y+30}">${esc(o.t)}</text>
+    <text class="ns" x="${o.x+14}" y="${o.y+52}">${esc(o.sub||S[o.s].l)}</text></g>`).join("");
+  $("#sys").innerHTML = `<svg viewBox="0 0 1000 560" role="img" aria-label="Схема частей продукта">
+    <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
+    ${e}${nodes}</svg>`;
+})();
+
+/* history */
+$("#updated").textContent = UPDATED;
+$("#history").innerHTML = HISTORY.map(h=>`<div class="entry"><div class="when">${esc(h.d.replace(/ 20\d\d$/,""))}${h.w?`<small>${esc(h.w)}</small>`:""}${h.pct!=null?`<small>готово ${h.pct}%</small>`:""}</div>
+  <div><h3>${esc(h.t)}</h3>${list(h.items)}${h.nodes.length?`<div class="chips">${h.nodes.filter(id=>N[id]).map(id=>`<button class="chip s-${N[id].s}" data-open="${id}">${esc(N[id].t)}</button>`).join("")}</div>`:""}</div></div>`).join("");
+
+/* todos */
+let checked = {};
+try{ checked = JSON.parse(localStorage.getItem("sc-map-todos")||"{}"); }catch(_){}
+function renderTodos(){
+  $("#todos").innerHTML = TODOS.map(t=>`<div class="todo${checked[t.id]?" done":""}"><input type="checkbox" id="${t.id}" ${checked[t.id]?"checked":""}>
+    <div><label for="${t.id}">${esc(t.t)}</label><span class="kind">${t.k}</span><p>${esc(t.p)}</p><button class="more" data-open="${t.n}">Связано с: ${esc(N[t.n].t)}</button></div></div>`).join("");
+  $("#youcnt").textContent = TODOS.filter(t=>!checked[t.id]).length;
+}
+renderTodos();
+$("#todos").addEventListener("change",e=>{
+  if(e.target.type!=="checkbox")return; checked[e.target.id]=e.target.checked;
+  try{ localStorage.setItem("sc-map-todos",JSON.stringify(checked)); }catch(_){}
+  renderTodos();
+});
+
+/* views */
+const VIEW_OF = {journey:"journey",stage:"stages",system:"system"};
+let view = "journey", selected = null;
+function show(v){
+  if(!["journey","stages","system","you","history"].includes(v)) v="journey";
+  view=v;
+  document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v));
+  ["journey","stages","system","you","history"].forEach(k=>$("#v-"+k).hidden = k!==v);
+  highlight();
+}
+$("#tabs").addEventListener("click",e=>{const b=e.target.closest(".tab"); if(b){ close(); location.hash=b.dataset.v; }});
+window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
+show(location.hash.slice(1));
+
+function highlight(){
+  const sec = $("#v-"+view);
+  document.querySelectorAll(".sel,.rel").forEach(el=>el.classList.remove("sel","rel"));
+  document.querySelectorAll(".dimmed").forEach(el=>el.classList.remove("dimmed"));
+  if(!selected || !sec) return;
+  const rel = REL[selected];
+  let any=false;
+  sec.querySelectorAll("[data-id]").forEach(el=>{
+    if(el.dataset.id===selected){ el.classList.add("sel"); any=true; }
+    else if(rel.has(el.dataset.id)){ el.classList.add("rel"); any=true; }
+  });
+  if(any) sec.classList.add("dimmed");
+}
+
+function list(a){ return a&&a.length ? `<ul>${a.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>` : ""; }
+const GROUP_NAME = {stage:"Этапы",journey:"Путь человека",system:"Как устроено"};
+function open(id){
+  const o=N[id]; if(!o) return;
+  selected=id;
+  const target = VIEW_OF[o.g];
+  if(view!==target){ history.replaceState(null,"","#"+target); show(target); } else highlight();
+  const rel=[...REL[id]].map(r=>N[r]);
+  const stageName = o.g==="stage" ? `Этап ${o.st}: ${STAGES[o.st].t}` : GROUP_NAME[o.g];
+  const d=$("#drawer");
+  d.innerHTML = `<button class="x" aria-label="Закрыть" id="x">✕</button>
+    <span class="tag s-${o.s}">${S[o.s].l}</span>
+    <h2>${esc(o.t)}</h2>
+    <div class="ids">${esc(stageName)}${o.g==="stage"?" · "+esc(o.ids||o.id):""}</div>
+    <h4>Что это</h4><p>${esc(o.what)}</p>
+    ${o.done&&o.done.length?`<h4>Что уже сделано</h4>${list(o.done)}`:""}
+    ${o.left?`<h4>Что осталось</h4><div class="left-box">${esc(o.left)}</div>`:""}
+    ${o.you?`<div class="you"><b>Нужно от тебя:</b> ${esc(o.you)}</div>`:""}
+    ${rel.length?`<h4>Связано с</h4><div class="chips">${rel.map(r=>`<button class="chip s-${r.s}" data-open="${r.id}">${esc(r.t)}<br><small style="color:var(--muted)">${GROUP_NAME[r.g]}</small></button>`).join("")}</div>`:""}
+    ${o.doc?`<div class="doc">Подробное описание для команды: <code>${esc(o.doc)}</code></div>`:""}`;
+  d.hidden=false; $("#backdrop").hidden=false; d.scrollTop=0;
+  $("#x").focus({preventScroll:true});
+  const el=document.querySelector(`#v-${target} [data-id="${CSS.escape(id)}"]`);
+  if(el && window.innerWidth>820) el.scrollIntoView({block:"nearest",behavior:"smooth"});
+}
+function close(){ selected=null; $("#drawer").hidden=true; $("#backdrop").hidden=true; highlight(); }
+
+document.addEventListener("click",e=>{
+  const op=e.target.closest("[data-open]"); if(op){ open(op.dataset.open); return; }
+  const c=e.target.closest("[data-id]"); if(c && !c.closest("#drawer")){ open(c.dataset.id); return; }
+  if(selected && !e.target.closest("#drawer,.tab,.todo")) close();
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape") close();
+  if((e.key==="Enter"||e.key===" ") && e.target.matches(".node")){ e.preventDefault(); open(e.target.dataset.id); }
+});
+$("#backdrop").addEventListener("click",close);
+</script>
