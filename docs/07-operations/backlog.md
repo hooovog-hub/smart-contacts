@@ -33,7 +33,7 @@
 | SC-053 | Пересохранить WALLET_SIGNER_KEY_B64 и WALLET_LINK_SECRET в Vercel как Secret | 5 | P2 | release-manager | todo | Сейчас тип Config (видно в панели Vercel) |
 | SC-060 | IAP Pro | 5 | P0 | integrations-engineer | todo | |
 | SC-061 | Business: команды, оплата через сайт | 5 | P1 | backend-engineer | todo | Таблицы teams есть, экранов нет |
-| SC-070 | Политика конфиденциальности и условия | 6 | P0 | legal-privacy-advisor | todo | |
+| SC-070 | Политика конфиденциальности и условия | 6 | P0 | legal-privacy-advisor | doing | 2026-11-18: черновики RU/EN, страницы и ссылки в ветке `feat/SC-070-privacy-terms`; публикация после SC-100…105 |
 | SC-071 | Страница App Store | 6 | P0 | aso-seo-specialist | todo | |
 | SC-072 | Удаление аккаунта в приложении (требование Apple) | 6 | P0 | mobile-engineer, backend-engineer | review | 2026-11-16: кнопка в профиле + Edge Function `delete-account` с отзывом токенов Apple (`features/account-deletion.md`). Нужно: задеплоить функцию, ключ Apple .p8 в секреты, проверить на iPhone |
 | SC-073 | Не отдавать handle удалённого аккаунта новому человеку (старые QR и Wallet-карты) | 6 | P1 | backend-engineer | todo | Ревью безопасности 2026-11-16. Срок блокировки — решение основателя |
@@ -51,6 +51,12 @@
 | SC-082 | Профиль на месте: фото, «Сейчас ищу», «Чем могу помочь», Wallet рядом с фото | 2 | P0 | mobile-engineer | review | 0.2.0, `features/profile.md` |
 | SC-083 | Фото профиля на Wallet-карте (нужен PNG-thumbnail) | 5 | P2 | integrations-engineer | todo | Сейчас фото на карте нет |
 | SC-084 | «Повод написать»: новости по сферам → кому переслать | 3 | P2 | product-lead | backlog | Решение 2026-11-16: пока не делаем |
+| SC-100 | Согласие на AI перед первым использованием + выключатель AI | 6 | P0 | mobile-engineer, ai-engineer | todo | Apple 5.1.2(i); политика это обещает |
+| SC-101 | Пожаловаться / заблокировать пользователя | 6 | P0 | mobile-engineer, backend-engineer | todo | Apple 1.2 |
+| SC-102 | Убрать плашку «✓ Профиль проверен» | 6 | P0 | mobile-engineer, web-engineer | todo | Никто не проверяет — вводит в заблуждение |
+| SC-103 | Закрыть массовую выгрузку телефонов из `profiles` | 6 | P0 | backend-engineer | todo | RLS `using (true)` на все колонки; нужен security-review |
+| SC-104 | Удалить контакт / все импортированные в приложении | 6 | P0 | mobile-engineer | todo | Сейчас только письмом |
+| SC-105 | Автоочистка `client_errors` старше 12 месяцев | 6 | P1 | backend-engineer | todo | Обещано в политике |
 
 ## Где мы сейчас
 См. `docs/07-operations/status.md` — сводка и следующие шаги.
