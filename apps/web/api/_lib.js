@@ -42,6 +42,7 @@ h1{font-size:24px;letter-spacing:-.02em;margin:10px 0 2px}.muted{color:var(--mut
 .lock{border:1px dashed #333;border-radius:16px;padding:12px;color:var(--muted);font-size:14px;margin-top:12px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:var(--surface2);border-radius:999px;padding:6px 11px;font-size:13px}
 .code{font:600 28px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.12em;text-align:center;background:var(--surface);border-radius:18px;padding:16px;margin-top:14px}
+.legal{line-height:1.55;color:#D1D1D6}.legal h1{color:var(--ink)}.legal h2{color:var(--ink);font-size:19px;margin:26px 0 8px}.legal h3{color:var(--ink);font-size:16px;margin:18px 0 6px}.legal a{color:#FFB57A}.legal table{width:100%;border-collapse:collapse;font-size:14px;margin:10px 0}.legal th,.legal td{border-bottom:1px solid #2A2A2E;padding:7px 6px;text-align:left;vertical-align:top}.legal code{background:var(--surface2);padding:1px 5px;border-radius:5px}.legal blockquote{border-left:3px solid #3A3A3F;margin:12px 0;padding:4px 12px;color:var(--muted)}.legal-nav{text-align:right;margin-top:8px}.legal-nav a{color:#FFB57A;font-size:14px}
 .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:28px}
 </style></head><body><main>${body}</main></body></html>`;
 }
