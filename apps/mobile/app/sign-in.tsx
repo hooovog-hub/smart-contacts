@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Field, st } from "@/components/ui";
 import { isAppleSignInAvailable, signInWithApple } from "@/lib/appleAuth";
 import { reportError } from "@/lib/errorReport";
+import { openLegal, PRIVACY_URL, TERMS_URL } from "@/lib/legal";
 import { supabase } from "@/lib/supabase";
 import { c } from "@/theme/tokens";
 
@@ -98,6 +99,17 @@ export default function SignIn() {
             <Text style={{ color: c.ink, fontWeight: "600" }}>{mode === "up" ? "Войти" : "Создать"}</Text>
           </Text>
         </Pressable>
+        <Text style={{ color: c.muted, fontSize: 12, textAlign: "center", marginTop: 24, lineHeight: 17 }}>
+          Продолжая, вы принимаете{" "}
+          <Text style={{ color: c.ink }} onPress={() => openLegal(TERMS_URL)} accessibilityRole="link">
+            Условия использования
+          </Text>{" "}
+          и{" "}
+          <Text style={{ color: c.ink }} onPress={() => openLegal(PRIVACY_URL)} accessibilityRole="link">
+            Политику конфиденциальности
+          </Text>
+          . Сервис для лиц от 18 лет.
+        </Text>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

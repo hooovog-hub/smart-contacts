@@ -4,6 +4,14 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/terms",
+      "destination": "/api/legal?doc=terms"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/api/legal?doc=privacy"
+    },
+    {
       "source": "/i/:code",
       "destination": "/api/invite?code=:code"
     },

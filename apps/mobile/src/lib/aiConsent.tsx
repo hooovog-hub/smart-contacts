@@ -2,11 +2,12 @@
 // A row in ai_consents = allowed (migration 0013); the server refuses AI calls without it (guard.ts → consume(),
 // 403 `ai_consent_required`). Before the first AI action the app asks with a sheet; the profile has a switch.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Alert, AppState, Modal, Pressable, Text, View } from "react-native";
+import { Alert, AppState, Linking, Modal, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button } from "@/components/ui";
 import { c } from "@/theme/tokens";
 import { useAuth } from "./auth";
+import { PRIVACY_URL } from "./legal";
 import { supabase } from "./supabase";
 
 type Ctx = {
@@ -190,7 +191,14 @@ function AiConsentSheet({ visible, onAnswer }: { visible: boolean; onAnswer: (al
           модели на этих данных.
         </Text>
         <Text style={{ color: c.muted, fontSize: 13.5, lineHeight: 19 }}>
-          Выключить можно в любой момент: «Профиль» → «AI-помощник».
+          Выключить можно в любой момент: «Профиль» → «AI-помощник».{" "}
+          <Text
+            onPress={() => Linking.openURL(PRIVACY_URL)} // Safari: an in-app sheet cannot open over this modal
+            accessibilityRole="link"
+            style={{ color: c.accentInk, textDecorationLine: "underline" }}
+          >
+            Политика конфиденциальности
+          </Text>
         </Text>
         <Button kind="grad" title="Разрешить" loading={busy} onPress={() => press(true)} style={{ marginTop: 6 }} />
         <Button kind="ghost" title="Не сейчас" disabled={busy} onPress={() => press(false)} />

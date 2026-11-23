@@ -11,6 +11,7 @@ import { useAiConsent } from "@/lib/aiConsent";
 import { useAuth } from "@/lib/auth";
 import { changeAvatar, removeAvatar } from "@/lib/avatar";
 import { completeness } from "@/lib/completeness.logic";
+import { openLegal, PRIVACY_URL, TERMS_URL } from "@/lib/legal";
 import { SITE_URL } from "@/lib/config";
 import { reportError } from "@/lib/errorReport";
 import { supabase } from "@/lib/supabase";
@@ -277,6 +278,14 @@ export default function MyProfile() {
             >
               <Text style={{ color: c.danger, fontSize: 14 }}>{deleting ? "Удаляем…" : "Удалить аккаунт"}</Text>
             </Pressable>
+            <View style={{ flexDirection: "row", justifyContent: "center", gap: 16, marginTop: 8 }}>
+              <Pressable onPress={() => openLegal(PRIVACY_URL)} accessibilityRole="link" hitSlop={8}>
+                <Text style={{ color: c.muted, fontSize: 12.5 }}>Конфиденциальность</Text>
+              </Pressable>
+              <Pressable onPress={() => openLegal(TERMS_URL)} accessibilityRole="link" hitSlop={8}>
+                <Text style={{ color: c.muted, fontSize: 12.5 }}>Условия</Text>
+              </Pressable>
+            </View>
           </>
         )}
       </ScrollView>
