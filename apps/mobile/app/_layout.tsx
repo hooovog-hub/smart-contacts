@@ -34,7 +34,7 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => Pro
 }
 
 function Gate() {
-  const { session, profile, loading } = useAuth();
+  const { session, profile, loading, profileError, reloadProfile } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -49,14 +49,32 @@ function Gate() {
     const top = segments[0] as string | undefined;
     if (top === "i") return router.replace(session ? "/" : "/sign-in"); // invite deep link: code already saved
     if (!session && top !== "sign-in") router.replace("/sign-in");
+    else if (session && !profile && profileError)
+      return; // offline: show retry below, not sign-up
     else if (session && !profile && top !== "onboarding") router.replace("/onboarding");
     else if (session && profile && (top === "sign-in" || top === "onboarding")) router.replace("/");
-  }, [session, profile, loading, segments, router]);
+  }, [session, profile, loading, profileError, segments, router]);
 
   if (loading)
     return (
       <View style={{ flex: 1, backgroundColor: c.bg, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator color={c.ink} />
+      </View>
+    );
+  if (session && !profile && profileError)
+    return (
+      <View style={{ flex: 1, backgroundColor: c.bg, alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <Text style={{ color: c.ink, fontSize: 20, fontWeight: "600", marginBottom: 8 }}>Нет связи</Text>
+        <Text style={{ color: c.muted, textAlign: "center", marginBottom: 24 }}>
+          Не удалось загрузить ваш профиль. Проверьте интернет и попробуйте ещё раз.
+        </Text>
+        <Pressable
+          onPress={reloadProfile}
+          accessibilityRole="button"
+          style={{ backgroundColor: c.ink, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 24 }}
+        >
+          <Text style={{ color: c.bg, fontWeight: "600" }}>Повторить</Text>
+        </Pressable>
       </View>
     );
   return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }} />;
