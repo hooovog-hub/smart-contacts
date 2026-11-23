@@ -1,8 +1,8 @@
-# Smart Contacts Terms of Use
+# BeContact Terms of Use
 
-Version 1.0 · Effective 18 November 2026
+Version 1.0 · Effective 24 November 2026
 
-This is an agreement between you and the operator of the Smart Contacts service. We have tried to keep it short and clear. How we handle data is described separately in the [Privacy Policy](https://smart-contacts.vercel.app/privacy).
+This is an agreement between you and the operator of the BeContact service. We have tried to keep it short and clear. How we handle data is described separately in the [Privacy Policy](https://becontact.app/privacy).
 
 ## Contents
 
@@ -27,7 +27,7 @@ This is an agreement between you and the operator of the Smart Contacts service.
 
 ## 1. What this document is
 
-The Smart Contacts service (the iPhone app and the website smart-contacts.vercel.app) is provided by the individual **Hovhannes Ghazaryan**, Yerevan, Republic of Armenia. Below, "we".
+The BeContact service (the iPhone app and the website becontact.app) is provided by the individual **Hovhannes Ghazaryan**, Yerevan, Republic of Armenia. Below, "we".
 
 By creating an account or using the service you accept these Terms and the Privacy Policy. If you do not agree, do not use the service.
 
@@ -46,7 +46,7 @@ By creating an account or using the service you accept these Terms and the Priva
 
 ## 4. What the service does
 
-Smart Contacts helps you manage business connections:
+BeContact helps you manage business connections:
 
 - a public business-card profile with a link, QR code, vCard and Apple Wallet card;
 - a private contact book: contacts from your phone (with your permission), by QR or added manually, notes and sections;
@@ -57,11 +57,12 @@ Some features (for example meetings and rooms) are still in development and may 
 
 ## 5. Public profile and your content
 
-- **Your profile is public.** Everything you add to your profile, including your phone number, can be seen by anyone on the internet, including without signing in to the app. Details are in section 4 of the Privacy Policy.
+- **Your profile is public.** Everything you add to your profile can be seen by anyone on the internet, including without signing in to the app; your phone number is shown to people who open your profile specifically. Details are in section 4 of the Privacy Policy.
 - You are responsible for the content of your profile: name, photo, description, brands, memberships, awards, links. Add only what you have the right to: for example, do not use other people's logos and do not claim membership of an organisation you do not belong to.
-- The "Verified" mark on a membership is set only by the organisation or the service. The "Profile verified" badge means the profile was created in Smart Contacts, not that we checked your documents or qualifications.
+- The "Verified" mark on a membership is set only by the organisation or the service. We do not check users' documents or qualifications.
 - You keep the rights to your content. You allow us, free of charge, to store, display and transmit your profile as needed to run the service (profile page, vCard, Wallet card, showing it to other users) for as long as the profile exists.
 - We may hide or remove content that breaches these Terms or the law.
+- **Reporting and blocking.** Under someone else's profile there are Report and Block buttons. We review reports within 24 hours and, if there is a breach, remove the content or the offender's account. We do not tolerate objectionable or illegal content or abusive users.
 
 ## 6. Other people's contacts
 
@@ -93,6 +94,7 @@ You may not:
 - post unlawful content: fraud, threats, hate speech, pornography, infringement of trademarks, copyright or privacy;
 - game the bonus system by creating fake accounts to earn invite bonuses;
 - bypass plan limits and restrictions, hack, overload or probe the service for vulnerabilities without our written permission (if you find a vulnerability, please tell us);
+- file knowingly false reports about other users;
 - use the service in breach of the laws of the Republic of Armenia or of the country you are in.
 
 ## 9. Plans, promo and subscription
@@ -126,7 +128,7 @@ You may not:
 
 ## 12. Rights in the service
 
-The app, website, design, name and logo of Smart Contacts belong to us or are used by us lawfully. We grant you a personal, non-exclusive, non-transferable, free (except for paid plans) right to use the app on your Apple devices in accordance with these Terms. You may not copy, modify, decompile or resell the app, unless the law expressly allows it.
+The app, website, design, name and logo of BeContact belong to us or are used by us lawfully. We grant you a personal, non-exclusive, non-transferable, free (except for paid plans) right to use the app on your Apple devices in accordance with these Terms. You may not copy, modify, decompile or resell the app, unless the law expressly allows it.
 
 ## 13. Suspension and deletion of accounts
 
@@ -166,10 +168,10 @@ Send questions and claims about the app to us: Hovhannes Ghazaryan, Yerevan, Arm
 
 ## 17. Changes to these terms
 
-We may update these Terms. The new version is published at [smart-contacts.vercel.app/terms](https://smart-contacts.vercel.app/terms) with a new date. We will announce material changes in the app at least 14 days in advance. If you keep using the service after the changes take effect, you accept them. If you do not agree, you can delete your account.
+We may update these Terms. The new version is published at [becontact.app/terms](https://becontact.app/terms) with a new date. We will announce material changes in the app at least 14 days in advance. If you keep using the service after the changes take effect, you accept them. If you do not agree, you can delete your account.
 
 ## 18. Contact, version and date
 
 Hovhannes Ghazaryan, Yerevan, Republic of Armenia · [hooovo.g@gmail.com](mailto:hooovo.g@gmail.com)
 
-Version 1.0 · Effective date: 18 November 2026
+Version 1.0 · Effective date: 24 November 2026

@@ -1,8 +1,8 @@
-# Smart Contacts Privacy Policy
+# BeContact Privacy Policy
 
-Version 1.0 · Effective 18 November 2026
+Version 1.0 · Effective 24 November 2026
 
-This policy explains in plain words what data the Smart Contacts app (iOS) and the website smart-contacts.vercel.app process, why, who receives it, how long it is kept and how to delete it.
+This policy explains in plain words what data the BeContact app (iOS) and the website becontact.app process, why, who receives it, how long it is kept and how to delete it.
 
 ## Contents
 
@@ -35,10 +35,11 @@ This policy is based on the Law of the Republic of Armenia "On Protection of Per
 
 ## 2. The short version
 
-- **Your profile is public.** Your name, role, photo, phone number, links and other profile fields can be seen by anyone, through a link or QR code, without signing in. Do not add anything to your profile that you are not ready to show everyone.
+- **Your profile is public.** Your name, role, photo, links and other profile fields can be seen by anyone, through a link or QR code, without signing in. Your phone number is shown to people who open your profile specifically; nobody can download all users' numbers at once (section 4). Do not add anything to your profile that you are not ready to show everyone.
 - **Your contact book is private.** Only you see your contacts, notes, sections and AI conversations.
 - **Contacts from your phone are uploaded only with your iOS permission.** We never message or call people in your book and we do not sell this data.
-- **AI runs on Anthropic (Claude).** For AI features we send names, roles, companies, notes and section names. Contacts' phone numbers and emails are never sent to AI. Anthropic does not train its models on this data.
+- **AI runs on Anthropic (Claude), only with your consent.** For AI features we send names, roles, companies, notes and section names. Contacts' phone numbers and emails are never sent to AI. Anthropic does not train its models on this data. You can turn AI off: Profile → AI assistant.
+- **Report and block.** You can report someone's profile or block its owner; we review reports within 24 hours.
 - **No ads, no third-party analytics, no tracking, no selling of data.**
 - **You can delete your account in the app, immediately and completely**: Profile → Delete account.
 
@@ -49,7 +50,9 @@ This policy is based on the Law of the Republic of Armenia "On Protection of Per
 | Account | Email and password (the password is stored only as a hash), or Sign in with Apple: Apple identifier, email (may be a hidden Apple address like ...@privaterelay.appleid.com), name on first sign-in | You and Apple | Only us, for service purposes |
 | Profile | Name, profile address (handle), role, About, city, languages, phone, links (WhatsApp, Telegram, Instagram, LinkedIn, email), photo, brands and companies, organisation memberships, awards, Looking for, How I can help, endorsements, invite code | You | Everyone, see section 4 |
 | Contact book | Contacts from your phone (name, phone number, company and job title, birthday), contacts added by QR or manually, your notes, sections, "met" marks | You | Only you |
-| AI | Your requests to the AI assistant and its answers, tasks, "Worth writing today" suggestions with a ready message, an AI usage counter (which feature and when) | Created as you use the app | Only you |
+| AI | Your AI consent (date), your requests to the AI assistant and its answers, tasks, "Worth writing today" suggestions with a ready message, an AI usage counter (which feature and when) | Created as you use the app | Only you |
+| Reports and blocks | Who reported whom, the reason, date and review status; the people you have blocked | You | Reports: only us; blocks: only you (and us) |
+| Service counters | Whose numbers you opened today (for the daily limit); for vCard downloads from the website, a counter keyed by an encrypted fingerprint of the IP address (the address itself is not stored) | Automatic | Only us |
 | Invites and bonuses | Who signed up with whose code, whether a friend was counted, bonus months received | Created at sign-up with a code | The invitee sees their own record; the inviter sees only counts |
 | Plan | Current plan and promo end date. After subscriptions launch, the subscription status from Apple (without your card details) | Us and Apple | Only us |
 | Crash reports | Error text, technical stack trace, app version, platform, account identifier. Strings that look like phone numbers are masked; contacts' names, phone numbers and notes are never included | The app and our server | Only us |
@@ -62,20 +65,25 @@ The camera and photo library are used only when you tap "Scan QR" or "Profile ph
 
 ## 4. Your public profile
 
-Smart Contacts is a digital business card, so the profile is public by nature:
+BeContact is a digital business card, so the profile is public by nature:
 
-- The page smart-contacts.vercel.app/your-handle opens for **anyone without signing in**, including from a QR code and an Apple Wallet card. Visitors can download your contact (name, role, phone) as a vCard.
-- **The phone number in your profile is public.** WhatsApp and Telegram default to the same number; you can change or hide them.
-- The core profile fields (name, role, city, languages, photo, phone, links, About, How I can help, invite code) are technically available to anyone, even without the link, for example through the service interface.
+- The page becontact.app/your-handle opens for **anyone without signing in**, including from a QR code and an Apple Wallet card. Visitors can download your contact (name, role, phone) as a vCard; one address can get at most 20 vCards with a phone number per hour.
+- **Your phone number** is shown to people who open your profile specifically: on the website in the vCard, and in the app to signed-in users, at most 50 different profiles per user per day. Nobody can get all users' numbers in one request. WhatsApp and Telegram default to the same number; you can change or hide them. If you set a different number for WhatsApp or Telegram, it is stored in your profile links and is available like the other links.
+- The other core profile fields (name, role, city, languages, photo, links, About, How I can help, invite code) are technically available to anyone, even without the link, for example through the service interface.
 - Brands, organisation memberships, awards and Looking for are shown publicly on **Pro profiles**. Right now everyone has Pro for free (a 2-month promo from sign-up), so right now these blocks are public for everyone.
 - If you move to Free, these blocks stop being shown to others but stay in your account.
 - We cannot delete copies other people have made (a saved contact, a screenshot, a Wallet card on someone else's phone).
 
 You decide what to fill in. You can change or delete any field at any time.
 
+**Reporting and blocking.** Under someone else's profile there are Report and Block buttons.
+
+- A report (spam, abuse, fake profile, other) comes to us; we review it within 24 hours and, if the Terms of Use are broken, remove the content or the account. One report per person per profile is accepted. The reported person is not told who reported them.
+- A block works **in the app**: the blocked person no longer sees your profile and phone number, and numbers are not shown in the other direction either. The public page and the vCard work without signing in, so the block does not apply to them. You can unblock in the same place.
+
 ## 5. Contacts from your phone
 
-**How it works.** The app reads contacts only after you allow it in the iOS system dialog. You can give access to selected contacts only (limited access in iOS 18) and withdraw it at any time in iPhone Settings → Smart Contacts → Contacts. We upload contacts that have a name and a phone number: name, first phone number, company and job title, birthday. Emails and postal addresses from your address book are not uploaded.
+**How it works.** The app reads contacts only after you allow it in the iOS system dialog. You can give access to selected contacts only (limited access in iOS 18) and withdraw it at any time in iPhone Settings → BeContact → Contacts. We upload contacts that have a name and a phone number: name, first phone number, company and job title, birthday. Emails and postal addresses from your address book are not uploaded.
 
 **This is other people's data.** When you upload contacts, you give us data about people who did not consent to us directly. Therefore:
 
@@ -91,7 +99,9 @@ You decide what to fill in. You can change or delete any field at any time.
 - For AI features we send part of the contact data to Anthropic (see section 6), without phone numbers and emails.
 - If a person from your book contacts us, we will help them: explain how the service works and, on a justified request, restrict or delete their data.
 
-Changes in your phone's address book are not copied to Smart Contacts automatically, and vice versa: the app never writes to your iPhone contacts.
+**Deleting from your book.** You can delete any contact on its card (Delete contact), and all contacts uploaded from your phone at once: Book → at the bottom, Delete all imported from phone. Contacts added by QR or manually stay. A deleted contact's name may remain in earlier AI assistant answers; that history is deleted with your account or on request by email.
+
+Changes in your phone's address book are not copied to BeContact automatically, and vice versa: the app never writes to your iPhone contacts.
 
 ## 6. AI features
 
@@ -102,10 +112,10 @@ For AI we use the Claude API by **Anthropic PBC** (USA). Requests are sent only 
 | Feature | What the AI receives | What it does not receive |
 |---|---|---|
 | Sorting contacts into sections | Your name, role and brand names; for contacts: names, roles and companies, your notes; section names | Phone numbers, emails, birthdays |
-| AI assistant "who to call" | Your name, the text of your request and recent messages in this task; for each contact: name, role and company, section, your note; for contacts who have a Smart Contacts profile, their public brands, How I can help and Looking for | Phone numbers, emails, birthdays |
+| AI assistant "who to call" | Your name, the text of your request and recent messages in this task; for each contact: name, role and company, section, your note; for contacts who have a BeContact profile, their public brands, How I can help and Looking for | Phone numbers, emails, birthdays |
 | "Worth writing today" | Your name and role; up to 3 contacts a day: name, role, a reason (for example "met 5 days ago", "looking for an accountant" or the first 80 characters of your note) | Phone numbers, emails, birthdays |
 
-**Consent.** Before data is sent to AI for the first time, the app shows what will be sent and where, and asks for your explicit consent. Without consent AI features do not work; the rest of the app does. You can withdraw consent in the app settings or by writing to us.
+**Consent.** Before data is sent to AI for the first time, the app shows a "Turn on the AI assistant?" sheet explaining what will be sent and where, with Allow and Not now buttons. Without consent AI features do not work (our server checks this too); the rest of the app does. You can turn AI off at any time: Profile → AI assistant, or by writing to us.
 
 **What Anthropic does with the data.** According to Anthropic's published rules for the commercial API, Anthropic:
 
@@ -166,7 +176,9 @@ Armenian law allows transfers to other countries with the data subject's consent
 - **Account, profile, contact book, notes, AI conversations, daily suggestions, invites**: while the account exists. Deleted immediately when you delete the account (see section 12).
 - **Crash reports**: as long as needed to fix the error, but no longer than 12 months; deleted together with the account.
 - **Hosting technical logs**: a short period set by the provider (usually up to a few days).
-- **Supabase database backups**: deleted data disappears from them as backups are refreshed, no later than 7 days.
+- **Database backups**: we currently make none (Supabase free plan), so deleted data disappears immediately and cannot be restored. If we start making backups, we will add their retention period here.
+- **Reports**: while the accounts of the reporter and the reported person exist; **blocks**: until you unblock the person or delete your account.
+- **Service counters**: which numbers you opened, 7 days; the vCard download counter keyed by an IP fingerprint, 2 hours.
 - **At Anthropic**: up to 30 days (for exceptions see section 6).
 - **Public page cache**: after you change or delete your profile, the old page may still be shown for up to 6 minutes.
 
@@ -176,14 +188,14 @@ Armenian law allows transfers to other countries with the data subject's consent
 
 What happens immediately:
 
-- your account, profile, brands, memberships, awards, Looking for, endorsements, the whole contact book with notes and sections, meetings, AI tasks and conversations, AI counters, daily suggestions, invites and bonuses are deleted;
+- your account, profile, brands, memberships, awards, Looking for, endorsements, the whole contact book with notes and sections, meetings, AI tasks and conversations, your AI consent, AI counters, daily suggestions, invites and bonuses, your reports and blocks, and reports about you are deleted;
 - all your files (profile photo) are deleted;
 - Sign in with Apple access is revoked;
 - your crash reports are deleted.
 
 Deletion is irreversible; data cannot be restored. Your public page may still open from cache for up to 6 minutes, then shows "Profile not found". If someone else has you in their contact book, their entry about you stays with them, but the link to your profile disappears.
 
-**Without the app:** write to [hooovo.g@gmail.com](mailto:hooovo.g@gmail.com) from the address linked to your account and we will delete it manually. You can also ask us to delete specific data, for example all uploaded contacts or your AI conversations.
+**Without the app:** write to [hooovo.g@gmail.com](mailto:hooovo.g@gmail.com) from the address linked to your account and we will delete it manually. You can also ask us to delete specific data, for example your AI conversations. You can delete contacts yourself in the app (section 5).
 
 ## 13. Your rights
 
@@ -192,7 +204,7 @@ Under the Armenian Law "On Protection of Personal Data" you can:
 - **find out** what data about you we process, why, where it came from and who receives it, and get a copy free of charge (Articles 15 and 20);
 - **correct** incomplete, inaccurate or outdated data; you can edit most data yourself in the app (Article 15, part 2);
 - **ask us to block or destroy** data that is inaccurate, unlawfully obtained or no longer needed (Articles 15 and 21);
-- **withdraw consent** (Article 9, part 3): delete your account, turn off access to contacts, camera and photos in iPhone Settings, turn off AI features. Withdrawal does not make earlier processing unlawful;
+- **withdraw consent** (Article 9, part 3): delete your account, turn off access to contacts, camera and photos in iPhone Settings, turn off AI (Profile → AI assistant). Withdrawal does not make earlier processing unlawful;
 - **complain** about our actions to the authorised body for the protection of personal data of the Republic of Armenia or to a court (Article 17).
 
 How: write to [hooovo.g@gmail.com](mailto:hooovo.g@gmail.com). We may ask you to confirm that the account is yours. We answer access requests within 5 days and correct or delete data within 3 working days (Article 20).
@@ -208,12 +220,13 @@ If you are in someone else's contact book and want your data removed, it is best
 | Photos | Choose a profile photo | Yes |
 | Sign in with Apple | Sign in without a password | Yes, email sign-in is available |
 
-You can change permissions at any time: iPhone Settings → Smart Contacts. Paid features do not depend on whether you grant access to this data.
+You can change permissions at any time: iPhone Settings → BeContact. Paid features do not depend on whether you grant access to this data.
 
 ## 15. Security
 
 - Connections are encrypted (HTTPS/TLS); data is stored at Supabase in encrypted form.
 - Access to every table is restricted by database rules: you see only your own private data.
+- Phone numbers cannot be exported in bulk: they are handed out one profile at a time, with daily limits.
 - Secret keys are kept only on the server. The AI key is not built into the app.
 - Our technical logs do not contain contacts' names, phone numbers or notes.
 - Only the operator has administrative access to the database.
@@ -222,12 +235,12 @@ No protection is absolute. If a data breach happens, we will publish a notice, i
 
 ## 16. Age
 
-Smart Contacts is for people aged **18 and over**. We do not knowingly collect data from children. If you learn that a minor has created an account, write to us and we will delete it.
+BeContact is for people aged **18 and over**. We do not knowingly collect data from children. If you learn that a minor has created an account, write to us and we will delete it.
 
 ## 17. Changes to this policy
 
-If we change this policy, the new version will appear at [smart-contacts.vercel.app/privacy](https://smart-contacts.vercel.app/privacy) with a new date. We will announce material changes (new types of data, new recipients, new purposes) in the app in advance and, where required, ask for your consent again.
+If we change this policy, the new version will appear at [becontact.app/privacy](https://becontact.app/privacy) with a new date. We will announce material changes (new types of data, new recipients, new purposes) in the app in advance and, where required, ask for your consent again.
 
 ## 18. Version and date
 
-Version 1.0 · Effective date: 18 November 2026 · Controller: Hovhannes Ghazaryan, Yerevan, Armenia · [hooovo.g@gmail.com](mailto:hooovo.g@gmail.com)
+Version 1.0 · Effective date: 24 November 2026 · Controller: Hovhannes Ghazaryan, Yerevan, Armenia · [hooovo.g@gmail.com](mailto:hooovo.g@gmail.com)

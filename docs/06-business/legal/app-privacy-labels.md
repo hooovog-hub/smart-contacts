@@ -18,8 +18,8 @@
 | Вопрос Apple | Ответ | Почему |
 |---|---|---|
 | Do you or your third-party partners collect data from this app? | **Yes, we collect data from this app** | Аккаунт, профиль, контакты и AI-данные уходят на наш сервер (Supabase) и в Anthropic |
-| Privacy Policy URL | https://smart-contacts.vercel.app/privacy | Обязательное поле |
-| User Privacy Choices URL (необязательно) | https://smart-contacts.vercel.app/privacy#12-удаление-аккаунта-и-данных | Где описано удаление и отзыв согласия |
+| Privacy Policy URL | https://becontact.app/privacy | Обязательное поле |
+| User Privacy Choices URL (необязательно) | https://becontact.app/privacy#12-удаление-аккаунта-и-данных | Где описано удаление и отзыв согласия |
 | Used for tracking (для каждого типа) | **No** | Нет рекламы, нет сторонней аналитики, нет SDK трекинга, данные не объединяются с чужими данными для рекламы, нет брокеров данных. App Tracking Transparency не нужен |
 
 Цель для всех типов ниже — только **App Functionality**. Не отмечаем Third-Party Advertising, Developer's Advertising or Marketing, Analytics, Other Purposes.
@@ -56,7 +56,7 @@
 
 **User Content → Photos or Videos.** Фото профиля, которое пользователь сам выбрал или снял (Supabase Storage). Кадры камеры при сканировании QR не сохраняются и не отправляются — их не считаем. Связано. App Functionality.
 
-**User Content → Other User Content.** «О себе», роль, город, языки, бренды, членство, награды, «Сейчас ищу», «Чем могу помочь», рекомендации, заметки к контактам, разделы, тексты запросов к AI-помощнику и ответы, подсказки «Стоит написать сегодня». Связано. App Functionality.
+**User Content → Other User Content.** «О себе», роль, город, языки, бренды, членство, награды, «Сейчас ищу», «Чем могу помочь», рекомендации, заметки к контактам, разделы, тексты запросов к AI-помощнику и ответы, подсказки «Стоит написать сегодня», жалобы на профили (причина) и список заблокированных. Связано. App Functionality (жалобы — ещё и модерация, тоже App Functionality).
 
 **Identifiers → User ID.** Идентификатор аккаунта Supabase и идентификатор Apple (sub) при входе через Apple. Связано. App Functionality.
 

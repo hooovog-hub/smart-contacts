@@ -21,6 +21,6 @@ export default function handler(req, res) {
   const body = `
   <div class="legal-nav"><a href="${path}?lang=${other}">${other === "en" ? "English" : "Русский"}</a></div>
   <article class="legal">${entry.html}</article>
-  <div class="foot">Smart Contacts · <a href="/privacy?lang=${lang}" style="color:inherit">${lang === "ru" ? "Конфиденциальность" : "Privacy"}</a> · <a href="/terms?lang=${lang}" style="color:inherit">${lang === "ru" ? "Условия" : "Terms"}</a></div>`;
+  <div class="foot">BeContact · <a href="/privacy?lang=${lang}" style="color:inherit">${lang === "ru" ? "Конфиденциальность" : "Privacy"}</a> · <a href="/terms?lang=${lang}" style="color:inherit">${lang === "ru" ? "Условия" : "Terms"}</a></div>`;
   return html(res, 200, page(entry.title, body));
 }
