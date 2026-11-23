@@ -5,6 +5,7 @@
     "scheme": "smartcontacts",
     "version": "0.2.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#000000",
     "ios": {

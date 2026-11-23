@@ -71,11 +71,11 @@ async function sendPass(req, res) {
       organizationName: "BeContact",
       serialNumber: userId,
       description: `Визитка: ${card.name}`,
-      logoText: "BeContact",
-      // Graphite card from the design: #161618 ground, #F5F5F7 text, #A1A1A6 secondary.
-      backgroundColor: "rgb(22,22,24)",
-      foregroundColor: "rgb(245,245,247)",
-      labelColor: "rgb(161,161,166)",
+      // White card (design 2026-11-24, docs/02-design/wallet-white.svg): #FFFFFF ground, #141416 text,
+      // #6E6E73 labels. The logo image already contains the "becontact" wordmark, so no logoText.
+      backgroundColor: "rgb(255,255,255)",
+      foregroundColor: "rgb(20,20,22)",
+      labelColor: "rgb(110,110,115)",
       sharingProhibited: false,
     },
   );
