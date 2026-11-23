@@ -12,6 +12,7 @@ create table if not exists public.phone_reads (
 create index if not exists phone_reads_profile_idx on public.phone_reads (profile_id);
 -- Nobody reads or writes this table through the API; only profile_phone() does.
 alter table public.phone_reads enable row level security;
+revoke all on public.phone_reads from anon, authenticated;
 
 create or replace function public.profile_phone(p_id uuid)
 returns text
