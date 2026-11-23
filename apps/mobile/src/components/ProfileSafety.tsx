@@ -43,8 +43,9 @@ export function ProfileSafety({
   if (!me || me === profileId) return null;
 
   async function sendReport(reason: Reason) {
-    const { error } = await supabase.from("profile_reports").insert({ reporter_id: me, target_id: profileId, reason });
-    if (error) {
+    const { error } = await supabase.from("profile_reports").insert({ target_id: profileId, reason });
+    // 23505 = already reported this person: nothing new to send, same answer.
+    if (error && error.code !== "23505") {
       reportError(error, { context: { kind: "profile_report" } });
       return Alert.alert("Не получилось отправить", "Проверьте интернет и попробуйте ещё раз.");
     }
@@ -80,7 +81,7 @@ export function ProfileSafety({
   function confirmBlock() {
     Alert.alert(
       `Заблокировать ${name}?`,
-      "Этот человек больше не увидит ваш профиль и номер. Он не узнает о блокировке. Разблокировать можно здесь же.",
+      "В приложении этот человек больше не увидит ваш профиль и номер. Публичная страница по ссылке остаётся открытой. Разблокировать можно здесь же.",
       [
         { text: "Отмена", style: "cancel" },
         { text: "Заблокировать", style: "destructive", onPress: block },
@@ -98,7 +99,7 @@ export function ProfileSafety({
     <View style={{ marginTop: 28, gap: 4, alignItems: "center" }}>
       {blocked ? (
         <Text style={{ color: c.muted, fontSize: 13, textAlign: "center", marginBottom: 4 }}>
-          Вы заблокировали этого человека: он не видит ваш профиль и номер.
+          Вы заблокировали этого человека: в приложении он не видит ваш профиль и номер.
         </Text>
       ) : null}
       <View style={{ flexDirection: "row", gap: 24 }}>

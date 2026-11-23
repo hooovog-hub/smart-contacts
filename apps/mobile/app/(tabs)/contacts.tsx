@@ -88,12 +88,19 @@ export default function ContactsScreen() {
   }
 
   /** SC-104: remove everything imported from the phone book (QR and manual contacts stay). */
-  function confirmDeleteImported() {
-    const n = list.filter((x) => x.source === "phonebook").length;
-    if (!session || busy || !n) return;
+  async function confirmDeleteImported() {
+    if (!session || busy) return;
+    // Count on the server: the screen may not hold every contact (archived ones too).
+    const { count } = await supabase
+      .from("contacts")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_id", session.user.id)
+      .eq("source", "phonebook");
+    const n = count ?? 0;
+    if (!n) return;
     Alert.alert(
       "Удалить импортированные контакты?",
-      `Из книжки исчезнут ${n} контактов, загруженных из телефона, вместе с заметками. Контакты, добавленные по QR и вручную, останутся. В телефоне ничего не удалится. Отменить нельзя.`,
+      `Из книжки исчезнут ${n} контактов, загруженных из телефона, вместе с заметками. Контакты, добавленные по QR и вручную, останутся. В телефоне ничего не удалится. В старых ответах AI-помощника имена могут остаться. Отменить нельзя.`,
       [
         { text: "Отмена", style: "cancel" },
         {

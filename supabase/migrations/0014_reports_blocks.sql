@@ -1,6 +1,7 @@
 -- 0014 (SC-101): «Пожаловаться» and «Заблокировать» on someone else's profile (Apple guideline 1.2).
 -- Reports: write-only for users, read by the team in the Supabase dashboard (answer within 24 hours).
--- Blocks: the blocked person no longer sees the blocker's profile and cannot get their phone.
+-- Blocks: in the app the blocked person no longer sees the blocker's profile and cannot get their phone
+-- (phones are not handed out in either direction across a block).
 
 create table if not exists public.profile_reports (
   id          bigint generated always as identity primary key,
@@ -10,12 +11,16 @@ create table if not exists public.profile_reports (
   details     text check (char_length(details) <= 1000),
   status      text not null default 'new' check (status in ('new', 'reviewed', 'actioned')),
   created_at  timestamptz not null default now(),
-  check (reporter_id <> target_id)
+  check (reporter_id <> target_id),
+  unique (reporter_id, target_id) -- one report per person per profile: no flooding the queue
 );
 create index if not exists profile_reports_target_idx on public.profile_reports (target_id);
 create index if not exists profile_reports_new_idx on public.profile_reports (created_at desc) where status = 'new';
 alter table public.profile_reports enable row level security;
-revoke all on public.profile_reports from anon;
+revoke all on public.profile_reports from anon, authenticated;
+-- Clients send only these columns; reporter_id (auth.uid()), status and created_at come from defaults.
+grant insert (target_id, reason, details) on public.profile_reports to authenticated;
+drop policy if exists "profile_reports insert own" on public.profile_reports;
 create policy "profile_reports insert own" on public.profile_reports for insert to authenticated
   with check ((select auth.uid()) = reporter_id and status = 'new');
 
@@ -29,10 +34,13 @@ create table if not exists public.profile_blocks (
 create index if not exists profile_blocks_blocked_idx on public.profile_blocks (blocked_id);
 alter table public.profile_blocks enable row level security;
 revoke all on public.profile_blocks from anon;
+drop policy if exists "profile_blocks own read" on public.profile_blocks;
 create policy "profile_blocks own read" on public.profile_blocks for select to authenticated
   using ((select auth.uid()) = blocker_id);
+drop policy if exists "profile_blocks own insert" on public.profile_blocks;
 create policy "profile_blocks own insert" on public.profile_blocks for insert to authenticated
   with check ((select auth.uid()) = blocker_id);
+drop policy if exists "profile_blocks own delete" on public.profile_blocks;
 create policy "profile_blocks own delete" on public.profile_blocks for delete to authenticated
   using ((select auth.uid()) = blocker_id);
 
@@ -51,6 +59,9 @@ $$;
 revoke all on function private.blocked_me(uuid) from public;
 grant execute on function private.blocked_me(uuid) to anon, authenticated;
 
+-- Only signed-in app users can be blocked out: the public web page and vCard work without sign-in.
+-- brands / awards / memberships / profile_seeks follow automatically because private.is_paid() (0001)
+-- is SECURITY INVOKER and reads profiles under this policy. Keep it INVOKER, or add blocked_me() there too.
 drop policy if exists "profiles read" on public.profiles;
 create policy "profiles read" on public.profiles for select
   using ((select auth.uid()) is null or not private.blocked_me(id));
