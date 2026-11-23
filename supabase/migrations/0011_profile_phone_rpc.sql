@@ -46,6 +46,35 @@ $$;
 revoke all on function public.profile_phone(uuid) from public, anon;
 grant execute on function public.profile_phone(uuid) to authenticated;
 
+-- Public vCard (web, /<handle>/vcard) gives the phone without sign-in, so it is limited per visitor:
+-- at most 20 downloads per hour from one IP. The web server stores only a hash of the IP.
+create table if not exists public.web_rate_hits (
+  key    text not null check (char_length(key) <= 200),
+  bucket timestamptz not null,
+  hits   integer not null default 0,
+  primary key (key, bucket)
+);
+alter table public.web_rate_hits enable row level security;
+revoke all on public.web_rate_hits from anon, authenticated;
+
+-- true = allowed. Called only by the web server with the secret key (service_role).
+create or replace function public.web_rate_hit(p_key text, p_limit integer)
+returns boolean
+language sql
+security definer
+set search_path = ''
+as $$
+  insert into public.web_rate_hits as w (key, bucket, hits)
+  values (p_key, date_trunc('hour', now()), 1)
+  on conflict (key, bucket) do update set hits = w.hits + 1
+  returning hits <= p_limit;
+$$;
+revoke all on function public.web_rate_hit(text, integer) from public, anon, authenticated;
+grant execute on function public.web_rate_hit(text, integer) to service_role;
+
+select cron.unschedule(jobid) from cron.job where jobname = 'purge-old-web-rate-hits';
+select cron.schedule('purge-old-web-rate-hits', '37 * * * *', $$delete from public.web_rate_hits where bucket < now() - interval '2 hours'$$);
+
 -- Old counters are useless after a day; keep a week for debugging. Runs with the 0010 cron setup.
 select cron.unschedule(jobid) from cron.job where jobname = 'purge-old-phone-reads';
 select cron.schedule('purge-old-phone-reads', '27 3 * * *', $$delete from public.phone_reads where day < current_date - 7$$);
