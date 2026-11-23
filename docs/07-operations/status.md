@@ -6,15 +6,18 @@
 **Последнее обновление:** 2026-11-24 (вечер)
 
 ## Состояние одной строкой
-Продукт — **BeContact**, сайт **https://becontact.app**. **Все 6 доработок перед ревью Apple сделаны и выкачены** (SC-100…105). Следующий шаг — опубликовать политику конфиденциальности и условия на becontact.app (SC-070), затем сборка 0.3.0 и страница App Store.
+Продукт — **BeContact**, сайт **https://becontact.app**. Все 6 доработок перед ревью Apple выкачены, **политика и условия опубликованы** (becontact.app/privacy, /terms), Wallet-карта белая. Дальше — анкета App Privacy (основатель) и сборка 0.3.0.
 
 ## С чего начать в следующий раз
-1. **SC-070 — политика и условия.** Ветка `feat/SC-070-privacy-terms` (старая, от 18.11): перебазировать на `main`, заменить Smart Contacts → BeContact и `smart-contacts.vercel.app` → `becontact.app`, дописать: согласие на AI (окно + выключатель), удаление контактов в приложении, жалобы/блокировки (ответ за 24 ч), лимиты на номера (50 в день в приложении, 20 визиток в час на сайте), резервных копий нет (Supabase Free). Пересобрать `node scripts/build-legal.mjs`, проверить `/privacy` `/terms`, влить. В окне согласия на AI добавить ссылку на политику.
-2. **Анкета App Privacy** в App Store Connect по `docs/06-business/legal/app-privacy-labels.md` (вход основателя).
-3. **Сборка 0.3.0** (новое имя под иконкой, всё сегодняшнее) → TestFlight → страница App Store (SC-071) → отправка на ревью.
+1. **Анкета App Privacy** в App Store Connect (вход основателя) — по `docs/06-business/legal/app-privacy-labels.md`; Privacy Policy URL = https://becontact.app/privacy.
+2. **Сборка 0.3.0**: поднять `version` в `app.json`, `npx eas-cli build --platform ios --profile production --auto-submit` (нужен вход основателя). В ней: имя «BeContact» и новая иконка. По желанию — заставка со знаком.
+3. **Страница App Store (SC-071)**: подзаголовок, описание, ключевые слова, скриншоты, категория (Бизнес / Продуктивность).
 4. **Оплата Pro через IAP (SC-060) — до 4 января 2027.**
+5. Юристу — 20 вопросов из `docs/06-business/legal/README.md` до публичного запуска.
 
 ## Сделано 2026-11-24
+- PR #18: белая Wallet-карта с логотипом BeContact (`docs/02-design/wallet-white.png`), иконка приложения (`apps/mobile/assets/icon.png`, появится в 0.3.0).
+- PR #19: SC-070 — политика и условия опубликованы на becontact.app, ссылки в приложении и в окне согласия на AI (OTA).
 - PR #15: SC-100 (согласие на AI), SC-101 (пожаловаться / заблокировать), SC-104 (удаление контактов). Миграции 0013, 0014 применены; OTA; AI-функции задеплоены (ai-assistant v5, classify-contacts v6, daily-picks v2) — без согласия сервер отвечает 403.
 - PR #16: при запуске без связи — экран «Нет связи — Повторить» вместо регистрации (у основателя открывалась регистрация, когда телефон был без интернета).
 - **Новая ежедневная обязанность основателя:** раз в день проверить жалобы — Supabase → SQL Editor: `select * from profile_reports where status = 'new' order by created_at;` (инструкция в `docs/01-product/features/profile.md`).
