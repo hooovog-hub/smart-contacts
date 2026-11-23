@@ -51,11 +51,11 @@
 | SC-082 | Профиль на месте: фото, «Сейчас ищу», «Чем могу помочь», Wallet рядом с фото | 2 | P0 | mobile-engineer | review | 0.2.0, `features/profile.md` |
 | SC-083 | Фото профиля на Wallet-карте (нужен PNG-thumbnail) | 5 | P2 | integrations-engineer | todo | Сейчас фото на карте нет |
 | SC-084 | «Повод написать»: новости по сферам → кому переслать | 3 | P2 | product-lead | backlog | Решение 2026-11-16: пока не делаем |
-| SC-100 | Согласие на AI перед первым использованием + выключатель AI | 6 | P0 | mobile-engineer, ai-engineer | doing | 2026-11-24: окно согласия, выключатель, проверка на сервере (0013 + guard.ts); не выкачено | Apple 5.1.2(i); политика это обещает |
-| SC-101 | Пожаловаться / заблокировать пользователя | 6 | P0 | mobile-engineer, backend-engineer | doing | 2026-11-24: миграция 0014 + кнопки под чужим профилем; жалобы читает команда в Supabase (24 ч); не выкачено |
+| SC-100 | Согласие на AI перед первым использованием + выключатель AI | 6 | P0 | mobile-engineer, ai-engineer | done | 2026-11-24: выкачено (0013, OTA, ai-assistant v5, classify-contacts v6, daily-picks v2) |
+| SC-101 | Пожаловаться / заблокировать пользователя | 6 | P0 | mobile-engineer, backend-engineer | done | 2026-11-24: выкачено (0014, OTA); жалобы проверять раз в день в Supabase |
 | SC-102 | Убрать плашку «✓ Профиль проверен» | 6 | P0 | mobile-engineer, web-engineer | done | Никто не проверяет — вводит в заблуждение |
 | SC-103 | Закрыть массовую выгрузку телефонов из `profiles` | 6 | P0 | backend-engineer | done | 2026-11-24: 0011+0012 применены; номер — profile_phone() (50 чел./день), vCard 20/час на IP; проверено на iPhone |
-| SC-104 | Удалить контакт / все импортированные в приложении | 6 | P0 | mobile-engineer | doing | 2026-11-24: «Удалить контакт» в карточке, «Удалить все импортированные из телефона» в книжке; не выкачено |
+| SC-104 | Удалить контакт / все импортированные в приложении | 6 | P0 | mobile-engineer | done | 2026-11-24: выкачено (OTA) |
 | SC-105 | Автоочистка `client_errors` старше 12 месяцев | 6 | P1 | backend-engineer | done | 2026-11-24: миграция 0010 применена (pg_cron, 03:17 ежедневно) |
 | SC-106 | Свой номер в WhatsApp/Telegram (режим «другой номер») лежит в публичной `links` | 6 | P1 | backend-engineer | todo | Из security-review SC-103: выгружается одним запросом |
 | SC-107 | `room_members.guest_phone` видят все участники комнаты | 7 | P2 | backend-engineer | todo | Сверить с security-privacy.md |
