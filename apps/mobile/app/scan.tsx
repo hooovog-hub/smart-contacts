@@ -68,7 +68,7 @@ export default function Scan() {
       const notFound = e instanceof Error && e.message === "not_found";
       Alert.alert(
         notFound ? "Профиль не найден" : "Не сохранилось",
-        notFound ? "Этот QR не ведёт на профиль Smart Contacts." : "Проверьте интернет и попробуйте ещё раз.",
+        notFound ? "Этот QR не ведёт на профиль BeContact." : "Проверьте интернет и попробуйте ещё раз.",
         [{ text: "OK", onPress: () => (handled.current = false) }],
       );
     } finally {
@@ -117,7 +117,7 @@ export default function Scan() {
           />
           <View style={{ position: "absolute", bottom: 60, left: 24, right: 24 }}>
             <Text style={{ color: "#fff", textAlign: "center", fontSize: 15 }}>
-              Наведите на QR-визитку Smart Contacts — контакт сохранится в книжку
+              Наведите на QR-визитку BeContact — контакт сохранится в книжку
             </Text>
           </View>
         </View>

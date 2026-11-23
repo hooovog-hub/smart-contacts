@@ -7,7 +7,7 @@
 | SC-001 | Интервью-гайд и список 15 респондентов | 0 | P0 | ux-researcher | todo | В репозитории следов нет — уточнить у основателя |
 | SC-002 | Лендинг с листом ожидания | 0 | P0 | web-engineer | todo | Есть `apps/web/public/index.html`, листа ожидания нет |
 | SC-003 | Тест Meta $50–100 | 0 | P0 | ads-manager | todo | Уточнить у основателя |
-| SC-004 | Варианты названия и проверка доступности | 0 | P1 | brand-designer | todo | Название — открытый вопрос в decisions-log |
+| SC-004 | Варианты названия и проверка доступности | 0 | P1 | brand-designer | done | 2026-11-24: BeContact, логотип в `Identity/` |
 | SC-010 | Миграция 0001 + RLS + seed | 1 | P0 | backend-engineer | done | |
 | SC-011 | Вход (телефон / Apple ID) | 1 | P0 | mobile-engineer | review | 2026-11-16: «Продолжить с Apple» сделан (`features/sign-in.md`). Нужно: включить Apple в Supabase, проверить на iPhone. Вход по телефону не начат — решение основателя (SMS платные) |
 | SC-012 | Экран «Мой профиль» + редактирование | 1 | P0 | mobile-engineer | done | Бренды и членство редактируются |

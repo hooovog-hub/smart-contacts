@@ -39,7 +39,7 @@ export async function applyInvite(profileId: string, code: string | null) {
 export const inviteLink = (code: string) => `${SITE_URL}/i/${code}`;
 
 export function inviteMessage(name: string, code: string) {
-  return `Привет! Я пользуюсь Smart Contacts — умной записной книжкой для бизнеса: AI подсказывает, кто из знакомых поможет. Присоединяйся: ${inviteLink(code)}\n— ${name}`;
+  return `Привет! Я пользуюсь BeContact — умной записной книжкой для бизнеса: AI подсказывает, кто из знакомых поможет. Присоединяйся: ${inviteLink(code)}\n— ${name}`;
 }
 
 export type InviteStats = { joined: number; counted: number; rewards: number };
