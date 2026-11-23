@@ -55,7 +55,7 @@
 | SC-101 | Пожаловаться / заблокировать пользователя | 6 | P0 | mobile-engineer, backend-engineer | todo | Apple 1.2 |
 | SC-102 | Убрать плашку «✓ Профиль проверен» | 6 | P0 | mobile-engineer, web-engineer | done | Никто не проверяет — вводит в заблуждение |
 | SC-103 | Закрыть массовую выгрузку телефонов из `profiles` | 6 | P0 | backend-engineer | done | 2026-11-24: 0011+0012 применены; номер — profile_phone() (50 чел./день), vCard 20/час на IP; проверено на iPhone |
-| SC-104 | Удалить контакт / все импортированные в приложении | 6 | P0 | mobile-engineer | todo | Сейчас только письмом |
+| SC-104 | Удалить контакт / все импортированные в приложении | 6 | P0 | mobile-engineer | doing | 2026-11-24: «Удалить контакт» в карточке, «Удалить все импортированные из телефона» в книжке; не выкачено |
 | SC-105 | Автоочистка `client_errors` старше 12 месяцев | 6 | P1 | backend-engineer | done | 2026-11-24: миграция 0010 применена (pg_cron, 03:17 ежедневно) |
 | SC-106 | Свой номер в WhatsApp/Telegram (режим «другой номер») лежит в публичной `links` | 6 | P1 | backend-engineer | todo | Из security-review SC-103: выгружается одним запросом |
 | SC-107 | `room_members.guest_phone` видят все участники комнаты | 7 | P2 | backend-engineer | todo | Сверить с security-privacy.md |

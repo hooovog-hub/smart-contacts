@@ -86,6 +86,39 @@ export default function ContactsScreen() {
     }
   }
 
+  /** SC-104: remove everything imported from the phone book (QR and manual contacts stay). */
+  function confirmDeleteImported() {
+    const n = list.filter((x) => x.source === "phonebook").length;
+    if (!session || busy || !n) return;
+    Alert.alert(
+      "Удалить импортированные контакты?",
+      `Из книжки исчезнут ${n} контактов, загруженных из телефона, вместе с заметками. Контакты, добавленные по QR и вручную, останутся. В телефоне ничего не удалится. Отменить нельзя.`,
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: "Удалить",
+          style: "destructive",
+          onPress: async () => {
+            setBusy(true);
+            try {
+              const { error } = await supabase
+                .from("contacts")
+                .delete()
+                .eq("owner_id", session.user.id)
+                .eq("source", "phonebook");
+              if (error) throw error;
+              await load();
+            } catch {
+              Alert.alert("Не получилось", "Проверьте интернет и попробуйте ещё раз.");
+            } finally {
+              setBusy(false);
+            }
+          },
+        },
+      ],
+    );
+  }
+
   async function importPhone() {
     if (!session || busy) return;
     setBusy(true);
@@ -377,6 +410,16 @@ export default function ContactsScreen() {
               }
               loading={busy}
             />
+            {list.some((x) => x.source === "phonebook") ? (
+              <Pressable
+                onPress={confirmDeleteImported}
+                disabled={busy}
+                accessibilityRole="button"
+                style={{ alignItems: "center", paddingVertical: 10, marginTop: 8 }}
+              >
+                <Text style={{ color: c.danger, fontSize: 14 }}>Удалить все импортированные из телефона</Text>
+              </Pressable>
+            ) : null}
           </View>
         ) : null}
       </ScrollView>
