@@ -4,6 +4,7 @@ import { Alert, Linking, Pressable, ScrollView, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
 import { Avatar, Button, Chip, Field, Section } from "@/components/ui";
+import { ProfileSafety } from "@/components/ProfileSafety";
 import { ProfileView } from "@/components/ProfileView";
 import { useSections } from "@/lib/sections";
 import { supabase } from "@/lib/supabase";
@@ -158,6 +159,7 @@ export default function ContactScreen() {
         >
           <Text style={{ color: c.danger, fontSize: 14 }}>Удалить контакт</Text>
         </Pressable>
+        {x.linked_profile_id ? <ProfileSafety profileId={x.linked_profile_id} name={x.display_name} /> : null}
       </ScrollView>
     </SafeAreaView>
   );
