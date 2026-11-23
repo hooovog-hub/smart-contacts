@@ -61,7 +61,7 @@
 - [x] «BeContact» вписан и сохранён в App Store Connect (2026-11-24).
 - [x] Домен **becontact.app** куплен (GoDaddy, 2026-11-24) и добавлен в Vercel-проект `smart-contacts` (www → 308 на корень).
 - [x] DNS в GoDaddy настроен (2026-11-24): https://becontact.app открывает сайт, HTTPS работает, www → корень. Старый `smart-contacts.vercel.app` тоже работает — не выключать (старые QR и Wallet-карты).
-- [ ] Перевести ссылки в коде (QR, профили, приглашения, Wallet, политика) и тексты сайта на becontact.app / BeContact.
+- [x] Ссылки и тексты переведены на becontact.app / BeContact (2026-11-24): QR, профили, приглашения, Wallet-карта, сайт. Сканер принимает и старые QR `smart-contacts.vercel.app`. На телефоне — после OTA/сборки, на сайте — после влития PR.
 - [ ] Дизайнеру: белая версия надписи для тёмного фона и знак в один цвет.
 - [ ] Решить: вход по телефону (SMS платные) — нужен ли; срок блокировки handle удалённых аккаунтов (SC-073).
 - [ ] Supabase → Authentication → включить **Leaked Password Protection** (последнее замечание безопасности).
@@ -84,6 +84,6 @@
 - Серверные функции деплоятся через Supabase MCP (`deploy_edge_function`, с файлами `../_shared/*`); CLI Supabase не залогинен.
 
 ## Адреса
-- Публичный сайт / профили: https://smart-contacts.vercel.app (адрес `*-how-iq.vercel.app` закрыт защитой Vercel — не использовать).
+- Публичный сайт / профили: **https://becontact.app** (домен в GoDaddy, DNS → Vercel). Старый https://smart-contacts.vercel.app работает и не выключается — на нём старые QR и Wallet-карты. Адрес `*-how-iq.vercel.app` закрыт защитой Vercel — не использовать.
 - Supabase: проект `nqaooorpdptdsucgmwkg`. Vercel: проект `smart-contacts` (команда HowIQ).
 - Дизайн Wallet-карты: холст «Smart Contacts — Wallet-карта» в claude.ai.

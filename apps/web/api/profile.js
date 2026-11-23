@@ -52,6 +52,6 @@ export default async function handler(req, res) {
   ${orgs.length ? `<div class="sect">Членство в организациях</div>` + orgs.map((o) => `<div class="card org"><div><b>${esc(o.org_name)}</b><span class="muted">${esc(o.status_title || "")}${o.since_year ? " · с " + o.since_year : ""}</span></div>${o.verified ? '<span class="ok">✓ Подтверждено</span>' : ""}</div>`).join("") : ""}
   ${!paid ? `<div class="lock">Бизнесы, бренды и членство показываются в Pro-профиле.</div>` : ""}
   <a class="btn ghost" href="smartcontacts://person/${esc(p.id)}">Открыть в приложении</a>
-  <div class="foot">Smart Contacts · <a href="/" style="color:inherit">Создать свой профиль</a></div>`;
-  return html(res, 200, page(`${p.full_name} — Smart Contacts`, body));
+  <div class="foot">BeContact · <a href="/" style="color:inherit">Создать свой профиль</a></div>`;
+  return html(res, 200, page(`${p.full_name} — BeContact`, body));
 }

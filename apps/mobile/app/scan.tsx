@@ -1,4 +1,4 @@
-// Scan someone's Smart Contacts QR (smart-contacts.vercel.app/<handle>) and save them to the book in one step.
+// Scan someone's BeContact QR (becontact.app/<handle>, old smart-contacts.vercel.app too) and save them to the book in one step.
 // Spec: docs/01-product/features/today.md («Познакомиться»)
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
@@ -8,17 +8,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
-import { SITE_URL } from "@/lib/config";
 import { reportError } from "@/lib/errorReport";
+import { handleFromQr } from "@/lib/qr";
 import { supabase } from "@/lib/supabase";
 import { c } from "@/theme/tokens";
-
-/** Profile handle from a Smart Contacts QR, or null for any other code. */
-export function handleFromQr(data: string): string | null {
-  const host = SITE_URL.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  const m = data.trim().match(new RegExp(`^https?://${host.replace(/\./g, "\\.")}/([a-z0-9_.]{3,30})/?$`, "i"));
-  return m ? m[1].toLowerCase() : null;
-}
 
 export default function Scan() {
   const router = useRouter();
