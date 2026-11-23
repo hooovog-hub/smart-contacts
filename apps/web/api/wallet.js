@@ -67,10 +67,10 @@ async function sendPass(req, res) {
       formatVersion: 1,
       passTypeIdentifier: process.env.WALLET_PASS_TYPE_ID,
       teamIdentifier: process.env.WALLET_TEAM_ID,
-      organizationName: "Smart Contacts",
+      organizationName: "BeContact",
       serialNumber: userId,
       description: `Визитка: ${card.name}`,
-      logoText: "Smart Contacts",
+      logoText: "BeContact",
       // Graphite card from the design: #161618 ground, #F5F5F7 text, #A1A1A6 secondary.
       backgroundColor: "rgb(22,22,24)",
       foregroundColor: "rgb(245,245,247)",

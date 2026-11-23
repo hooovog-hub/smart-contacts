@@ -1,4 +1,4 @@
-// Scan someone's Smart Contacts QR (smart-contacts.vercel.app/<handle>) and save them to the book in one step.
+// Scan someone's BeContact QR (becontact.app/<handle>, old smart-contacts.vercel.app too) and save them to the book in one step.
 // Spec: docs/01-product/features/today.md («Познакомиться»)
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
@@ -8,17 +8,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
-import { SITE_URL } from "@/lib/config";
 import { reportError } from "@/lib/errorReport";
+import { handleFromQr } from "@/lib/qr";
 import { supabase } from "@/lib/supabase";
 import { c } from "@/theme/tokens";
-
-/** Profile handle from a Smart Contacts QR, or null for any other code. */
-export function handleFromQr(data: string): string | null {
-  const host = SITE_URL.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  const m = data.trim().match(new RegExp(`^https?://${host.replace(/\./g, "\\.")}/([a-z0-9_.]{3,30})/?$`, "i"));
-  return m ? m[1].toLowerCase() : null;
-}
 
 export default function Scan() {
   const router = useRouter();
@@ -68,7 +61,7 @@ export default function Scan() {
       const notFound = e instanceof Error && e.message === "not_found";
       Alert.alert(
         notFound ? "Профиль не найден" : "Не сохранилось",
-        notFound ? "Этот QR не ведёт на профиль Smart Contacts." : "Проверьте интернет и попробуйте ещё раз.",
+        notFound ? "Этот QR не ведёт на профиль BeContact." : "Проверьте интернет и попробуйте ещё раз.",
         [{ text: "OK", onPress: () => (handled.current = false) }],
       );
     } finally {
@@ -117,7 +110,7 @@ export default function Scan() {
           />
           <View style={{ position: "absolute", bottom: 60, left: 24, right: 24 }}>
             <Text style={{ color: "#fff", textAlign: "center", fontSize: 15 }}>
-              Наведите на QR-визитку Smart Contacts — контакт сохранится в книжку
+              Наведите на QR-визитку BeContact — контакт сохранится в книжку
             </Text>
           </View>
         </View>

@@ -23,13 +23,13 @@ export default async function handler(req, res) {
     return html(res, 404, page("Не найдено", `<h1>Приглашение не найдено</h1><p class="muted">Проверьте ссылку.</p>`));
   const first = esc(String(p.full_name).split(/\s+/)[0]);
   const body = `
-  <h1 style="margin-top:28px">${first} приглашает вас в Smart Contacts</h1>
+  <h1 style="margin-top:28px">${first} приглашает вас в BeContact</h1>
   <p class="muted">${esc(p.role || "")}</p>
   <p class="bio">Умная записная книжка для бизнеса: AI подсказывает, кто из знакомых поможет с задачей, визитка в Apple Wallet и напоминания, кому стоит написать.</p>
   ${INSTALL_URL ? `<a class="btn save" href="${esc(INSTALL_URL)}">Установить приложение</a>` : `<div class="lock">Приложение сейчас в закрытом тестировании. Попросите ${first} добавить вас — и сохраните код ниже.</div>`}
   <a class="btn ghost" href="smartcontacts://i/${esc(code)}">У меня уже есть приложение</a>
   <div class="sect">Код приглашения — введите его при создании профиля</div>
   <div class="code">${esc(code)}</div>
-  <div class="foot">Smart Contacts</div>`;
-  return html(res, 200, page(`${p.full_name} приглашает вас в Smart Contacts`, body));
+  <div class="foot">BeContact</div>`;
+  return html(res, 200, page(`${p.full_name} приглашает вас в BeContact`, body));
 }

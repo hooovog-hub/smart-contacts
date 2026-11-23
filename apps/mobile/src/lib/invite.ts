@@ -1,5 +1,5 @@
 // Invites (spec: docs/01-product/features/invites.md): 10 friends with a filled profile = +1 month Pro.
-// A link smartcontacts://i/<code> (or https://smart-contacts.vercel.app/i/<code>) stores the code until the
+// A link smartcontacts://i/<code> (or https://becontact.app/i/<code>) stores the code until the
 // new user creates a profile; onboarding then links the invite once (table profile_invites, owner-only).
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SITE_URL } from "./config";
@@ -39,7 +39,7 @@ export async function applyInvite(profileId: string, code: string | null) {
 export const inviteLink = (code: string) => `${SITE_URL}/i/${code}`;
 
 export function inviteMessage(name: string, code: string) {
-  return `Привет! Я пользуюсь Smart Contacts — умной записной книжкой для бизнеса: AI подсказывает, кто из знакомых поможет. Присоединяйся: ${inviteLink(code)}\n— ${name}`;
+  return `Привет! Я пользуюсь BeContact — умной записной книжкой для бизнеса: AI подсказывает, кто из знакомых поможет. Присоединяйся: ${inviteLink(code)}\n— ${name}`;
 }
 
 export type InviteStats = { joined: number; counted: number; rewards: number };
