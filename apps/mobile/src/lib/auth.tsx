@@ -1,5 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { PROFILE_COLUMNS, profilePhone } from "./profileData";
 import { supabase } from "./supabase";
 import type { Profile } from "./types";
 
@@ -16,16 +17,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null);
       return;
     }
-    const { data } = await supabase
-      .from("profiles")
-      .select("*, brands(*), memberships(*)")
-      .eq("id", s.user.id)
-      .maybeSingle();
-    if (data)
-      data.brands = (data.brands ?? []).sort(
-        (a: { position: number }, b: { position: number }) => a.position - b.position,
-      );
-    setProfile((data as Profile) ?? null);
+    const [{ data }, phone] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select(`${PROFILE_COLUMNS}, brands(*), memberships(*)`)
+        .eq("id", s.user.id)
+        .maybeSingle(),
+      profilePhone(s.user.id),
+    ]);
+    if (!data) return setProfile(null);
+    const brands = ((data.brands ?? []) as { position: number }[]).sort((a, b) => a.position - b.position);
+    setProfile({ ...(data as unknown as Profile), brands: brands as Profile["brands"], phone });
   }, []);
 
   useEffect(() => {

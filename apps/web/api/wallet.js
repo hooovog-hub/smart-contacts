@@ -4,13 +4,13 @@
 // GET  /api/wallet?t=<token>                                  → the .pkpass; Safari shows "Add to Apple Wallet".
 // The session token never goes into a URL; the link carries only the user id, expiry and an HMAC.
 import { PKPass } from "passkit-generator";
-import { SUPABASE_URL, SUPABASE_KEY, SITE_URL, rest } from "./_lib.js";
+import { SUPABASE_URL, SUPABASE_KEY, SITE_URL, profilePhone, rest } from "./_lib.js";
 import { canHaveCard, cardContent, missingEnv, signLink, verifyLink } from "./_wallet.js";
 import { PASS_IMAGES_B64 } from "./_pass-images.js";
 
 const b64 = (k) => Buffer.from(process.env[k] ?? "", "base64");
 const baseUrl = (req) => SITE_URL || `https://${req.headers.host}`;
-const PROFILE_COLS = "id,handle,full_name,role,phone,links,plan,brands(name,position)";
+const PROFILE_COLS = "id,handle,full_name,role,links,plan,brands(name,position)";
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
@@ -48,10 +48,11 @@ async function issueLink(req, res) {
 async function sendPass(req, res) {
   const userId = verifyLink(String(req.query.t ?? ""), process.env.WALLET_LINK_SECRET);
   if (!userId) return res.status(410).send("Ссылка устарела. Нажмите «Добавить в Apple Wallet» в приложении ещё раз.");
-  // Profiles are public; brands of paid profiles are public too (RLS), so the publishable key is enough.
+  // Profiles are public (except the phone, read with the secret key); brands of paid profiles are public too.
   const [p] = await rest(`profiles?id=eq.${userId}&select=${PROFILE_COLS}`);
   if (!p || !canHaveCard(p.plan)) return res.status(403).send("Карта в Apple Wallet доступна на тарифе Pro.");
   if (Array.isArray(p.brands)) p.brands.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  p.phone = await profilePhone({ id: userId });
   const card = cardContent(p, baseUrl(req));
 
   const images = Object.fromEntries(Object.entries(PASS_IMAGES_B64).map(([k, v]) => [k, Buffer.from(v, "base64")]));

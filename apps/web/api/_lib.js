@@ -1,7 +1,56 @@
+import { createHmac } from "node:crypto";
+
 // Shared helpers for Vercel Functions. Data is read via Supabase REST with the publishable key (RLS applies).
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 export const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
+
+// Secret (service) key: server-only, used just to read a phone (SC-103: the column is closed for the publishable key).
+const SECRET_KEY = process.env.SUPABASE_SECRET_KEY || "";
+
+/** Phone of exactly one profile ({ id } or { handle }), read on the server. Null when unknown or the key is missing. */
+export async function profilePhone({ id, handle }) {
+  const filter = id ? `id=eq.${encodeURIComponent(id)}` : handle ? `handle=eq.${encodeURIComponent(handle)}` : "";
+  if (!SECRET_KEY || !filter) return null;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?${filter}&select=phone&limit=1`, {
+      headers: { apikey: SECRET_KEY, Accept: "application/json" },
+    });
+    if (!r.ok) return null;
+    const [row] = await r.json();
+    return typeof row?.phone === "string" && row.phone ? row.phone : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Visitor IP as Vercel reports it (x-real-ip / first x-forwarded-for entry), or "". */
+export function clientIp(req) {
+  const h = req.headers || {};
+  return String(h["x-real-ip"] || String(h["x-forwarded-for"] || "").split(",")[0] || "").trim();
+}
+
+/**
+ * Counts one hit of `action` for this visitor and says whether it is within `limit` per hour.
+ * Only a keyed hash of the IP is stored. Returns false when unsure (no key, no IP, error):
+ * callers then leave the phone out instead of handing it out unlimited.
+ */
+export async function withinHourlyLimit(req, action, limit) {
+  const ip = clientIp(req);
+  if (!SECRET_KEY || !ip) return false;
+  const key = `${action}:${createHmac("sha256", SECRET_KEY).update(ip).digest("hex")}`;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/web_rate_hit`, {
+      method: "POST",
+      headers: { apikey: SECRET_KEY, "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ p_key: key, p_limit: limit }),
+    });
+    if (!r.ok) return false;
+    return (await r.json()) === true;
+  } catch {
+    return false;
+  }
+}
 
 export async function rest(path, headers = {}) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {

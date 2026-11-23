@@ -6,7 +6,7 @@
 
 | Таблица | Назначение | Ключевые поля | Кто видит |
 |---|---|---|---|
-| `profiles` | Публичный профиль пользователя (1:1 с auth.users) | handle, full_name, role, bio, city, languages[], phone, links jsonb, plan, avatar_url | Все (публичные поля), редактирует владелец |
+| `profiles` | Публичный профиль пользователя (1:1 с auth.users) | handle, full_name, role, bio, city, languages[], phone, links jsonb, plan, avatar_url | Все (публичные поля), редактирует владелец. **`phone` напрямую не читается** (0012): только `profile_phone(id)` — свой всегда, чужие до 50 человек в день; веб — сервером с секретным ключом, vCard 20/час на IP. Новую колонку добавлять в грант 0012 и в `PROFILE_COLUMNS` (`apps/mobile/src/lib/profileData.ts`) |
 | `brands` | Бренды/компании профиля | profile_id, name, sphere, description, founded_year, team_size, offer, links jsonb, position | Все, если plan ≠ free |
 | `organizations` | Клубы, палаты, ассоциации | name, kind, verified | Все |
 | `memberships` | Членство профиля | profile_id, organization_id, org_name, status_title, since_year, verified | Все, если plan ≠ free |
