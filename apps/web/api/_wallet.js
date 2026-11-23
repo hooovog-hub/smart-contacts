@@ -1,5 +1,5 @@
 // Pure logic for the Apple Wallet card (unit-tested with Vitest). Files starting with "_" are not routes on Vercel.
-// Design: claude.ai canvas "Smart Contacts — Wallet-карта", board "Ближайший вариант для Apple Wallet".
+// Design: docs/02-design/wallet-white.svg (white card, BeContact logo; 2026-11-24).
 import crypto from "node:crypto";
 
 /** A download link lives 5 minutes: the app gets it with the user's session, Safari opens it without one. */
