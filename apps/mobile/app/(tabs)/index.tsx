@@ -58,7 +58,7 @@ async function openMessage(phone: string | null | undefined, text: string) {
 
 export default function Today() {
   const router = useRouter();
-  const { consent, requireAiConsent } = useAiConsent();
+  const { consent, requireAiConsent, consentRevoked } = useAiConsent();
   const [birthdays, setBirthdays] = useState<UpcomingBirthday[]>([]);
   const [picks, setPicks] = useState<Pick[] | null>(null);
   const [recent, setRecent] = useState<Recent[]>([]);
@@ -86,17 +86,21 @@ export default function Today() {
     setBirthdays(upcomingBirthdays((bd as BirthdayContact[]) ?? [], day));
     setRecent((rc as Recent[]) ?? []);
     // SC-100: picks use AI, so only after consent (null = still loading, false = not allowed).
-    if (consent !== true) return setPicks(consent === false ? [] : null);
+    if (consent !== true) {
+      picksDay.current = null; // load again as soon as AI is allowed
+      return setPicks(consent === false ? [] : null);
+    }
     // Daily picks: at most one request per day per app session (the server caches them, AI costs a quota).
     if (picksDay.current === day) return;
     picksDay.current = day;
     const { data, error } = await supabase.functions.invoke<{ picks: Pick[] }>("daily-picks", { body: { day } });
     if (error) {
       const status = (error as { context?: Response }).context?.status;
-      if (status !== 429) reportError(error, { context: { kind: "daily-picks", status } });
+      if (status === 403) consentRevoked();
+      else if (status !== 429) reportError(error, { context: { kind: "daily-picks", status } });
       setPicks([]);
     } else setPicks(data?.picks ?? []);
-  }, [consent]);
+  }, [consent, consentRevoked]);
 
   useFocusEffect(
     useCallback(() => {
@@ -215,6 +219,8 @@ export default function Today() {
           <Pressable
             onPress={() => requireAiConsent()}
             accessibilityRole="button"
+            accessibilityLabel="Включить AI-подсказки"
+            accessibilityHint="Откроет окно согласия на AI"
             style={{ backgroundColor: c.surface, borderRadius: r.card, padding: 14, gap: 6 }}
           >
             <Text style={st.meta}>

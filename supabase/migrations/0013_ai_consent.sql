@@ -8,10 +8,13 @@ create table if not exists public.ai_consents (
 );
 alter table public.ai_consents enable row level security;
 
+drop policy if exists "ai_consents own read" on public.ai_consents;
 create policy "ai_consents own read" on public.ai_consents for select to authenticated
   using ((select auth.uid()) = profile_id);
+drop policy if exists "ai_consents own insert" on public.ai_consents;
 create policy "ai_consents own insert" on public.ai_consents for insert to authenticated
   with check ((select auth.uid()) = profile_id);
+drop policy if exists "ai_consents own delete" on public.ai_consents;
 create policy "ai_consents own delete" on public.ai_consents for delete to authenticated
   using ((select auth.uid()) = profile_id);
 

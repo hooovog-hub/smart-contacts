@@ -247,11 +247,13 @@ export default function MyProfile() {
                 value={!!aiOn}
                 disabled={aiOn === null || aiBusy}
                 accessibilityLabel="AI-помощник"
+                accessibilityHint="Включение откроет окно согласия на AI"
                 onValueChange={async (on) => {
                   setAiBusy(true);
                   const ok = on ? await requireAiConsent() : await setAiConsent(false);
                   setAiBusy(false);
                   if (!on && !ok) Alert.alert("Не получилось", "Проверьте интернет и попробуйте ещё раз.");
+                  // Turning on: the consent sheet itself reports a failed save.
                 }}
               />
             </View>
