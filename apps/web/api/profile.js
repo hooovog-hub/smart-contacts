@@ -42,7 +42,7 @@ export default async function handler(req, res) {
   <div class="top"><div class="band"></div><div class="pin">${avatar}
     <h1>${esc(p.full_name)} ${paid ? '<span class="pill pro">PRO</span>' : ""}</h1>
     <div class="muted">${esc([p.role, ...brands.map((b) => b.name)].filter(Boolean).join(" · "))}</div>
-    <span class="pill">✓ Профиль проверен</span> <span class="muted" style="font-size:13px">${esc(p.city || "")}</span>
+    ${p.city ? `<div class="muted" style="font-size:13px;margin-top:6px">${esc(p.city)}</div>` : ""}
   </div></div>
   <a class="btn save" href="/${esc(handle)}/vcard">Сохранить контакт</a>
   ${paid && p.bio ? `<p class="bio">${esc(p.bio)}</p>` : ""}
