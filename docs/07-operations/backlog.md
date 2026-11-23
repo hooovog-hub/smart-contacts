@@ -33,7 +33,7 @@
 | SC-053 | Пересохранить WALLET_SIGNER_KEY_B64 и WALLET_LINK_SECRET в Vercel как Secret | 5 | P2 | release-manager | todo | Сейчас тип Config (видно в панели Vercel) |
 | SC-060 | IAP Pro | 5 | P0 | integrations-engineer | todo | |
 | SC-061 | Business: команды, оплата через сайт | 5 | P1 | backend-engineer | todo | Таблицы teams есть, экранов нет |
-| SC-070 | Политика конфиденциальности и условия | 6 | P0 | legal-privacy-advisor | doing | 2026-11-24: тексты обновлены под BeContact и SC-100…105, ветка `feat/SC-070-privacy-terms-v2`, ждут просмотра основателем перед публикацией |
+| SC-070 | Политика конфиденциальности и условия | 6 | P0 | legal-privacy-advisor | done | 2026-11-24: опубликовано becontact.app/privacy и /terms (RU/EN), ссылки в приложении (OTA); юрист — до публичного запуска |
 | SC-071 | Страница App Store | 6 | P0 | aso-seo-specialist | todo | |
 | SC-072 | Удаление аккаунта в приложении (требование Apple) | 6 | P0 | mobile-engineer, backend-engineer | review | 2026-11-16: кнопка в профиле + Edge Function `delete-account` с отзывом токенов Apple (`features/account-deletion.md`). Нужно: задеплоить функцию, ключ Apple .p8 в секреты, проверить на iPhone |
 | SC-073 | Не отдавать handle удалённого аккаунта новому человеку (старые QR и Wallet-карты) | 6 | P1 | backend-engineer | todo | Ревью безопасности 2026-11-16. Срок блокировки — решение основателя |
