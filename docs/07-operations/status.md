@@ -60,7 +60,8 @@
 - [x] Название выбрано: **BeContact** (2026-11-24).
 - [x] «BeContact» вписан и сохранён в App Store Connect (2026-11-24).
 - [x] Домен **becontact.app** куплен (GoDaddy, 2026-11-24) и добавлен в Vercel-проект `smart-contacts` (www → 308 на корень).
-- [ ] GoDaddy → DNS: `A @ 216.198.79.1`, `A @ 64.29.17.1` (удалить старые A `3.33.130.190`, `15.197.148.33`), `CNAME www → a0a8c61aa67281b4.vercel-dns-017.com`. Потом — перевести ссылки в коде на becontact.app; `smart-contacts.vercel.app` не выключать (на нём старые QR и Wallet-карты).
+- [x] DNS в GoDaddy настроен (2026-11-24): https://becontact.app открывает сайт, HTTPS работает, www → корень. Старый `smart-contacts.vercel.app` тоже работает — не выключать (старые QR и Wallet-карты).
+- [ ] Перевести ссылки в коде (QR, профили, приглашения, Wallet, политика) и тексты сайта на becontact.app / BeContact.
 - [ ] Дизайнеру: белая версия надписи для тёмного фона и знак в один цвет.
 - [ ] Решить: вход по телефону (SMS платные) — нужен ли; срок блокировки handle удалённых аккаунтов (SC-073).
 - [ ] Supabase → Authentication → включить **Leaked Password Protection** (последнее замечание безопасности).
