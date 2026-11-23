@@ -59,7 +59,8 @@
 - [ ] Сборка есть — можно создать ключ **Sign in with Apple** (.p8) → секреты Supabase (в чек-листе `release-process.md`).
 - [x] Название выбрано: **BeContact** (2026-11-24).
 - [x] «BeContact» вписан и сохранён в App Store Connect (2026-11-24).
-- [ ] Решить про домен: becontact.app / becontact.am (свободны на 2026-11-24).
+- [x] Домен **becontact.app** куплен (GoDaddy, 2026-11-24) и добавлен в Vercel-проект `smart-contacts` (www → 308 на корень).
+- [ ] GoDaddy → DNS: `A @ 216.198.79.1`, `A @ 64.29.17.1` (удалить старые A `3.33.130.190`, `15.197.148.33`), `CNAME www → a0a8c61aa67281b4.vercel-dns-017.com`. Потом — перевести ссылки в коде на becontact.app; `smart-contacts.vercel.app` не выключать (на нём старые QR и Wallet-карты).
 - [ ] Дизайнеру: белая версия надписи для тёмного фона и знак в один цвет.
 - [ ] Решить: вход по телефону (SMS платные) — нужен ли; срок блокировки handle удалённых аккаунтов (SC-073).
 - [ ] Supabase → Authentication → включить **Leaked Password Protection** (последнее замечание безопасности).
