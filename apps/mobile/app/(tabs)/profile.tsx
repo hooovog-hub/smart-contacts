@@ -1,12 +1,13 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import { Alert, Linking, Platform, Pressable, ScrollView, Share, Text, View } from "react-native";
+import { Alert, Linking, Platform, Pressable, ScrollView, Share, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon, type IconName } from "@/components/Icon";
 import { ProfileSheet, type SheetTarget } from "@/components/ProfileSheets";
 import { type FullProfile, ProfileView } from "@/components/ProfileView";
 import { Button, Section } from "@/components/ui";
 import { deleteAccount } from "@/lib/account";
+import { useAiConsent } from "@/lib/aiConsent";
 import { useAuth } from "@/lib/auth";
 import { changeAvatar, removeAvatar } from "@/lib/avatar";
 import { completeness } from "@/lib/completeness.logic";
@@ -29,6 +30,8 @@ export default function MyProfile() {
   const [full, setFull] = useState<FullProfile | null>(null);
   const [inWallet, setInWallet] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
+  const { consent: aiOn, setAiConsent, requireAiConsent } = useAiConsent();
+  const [aiBusy, setAiBusy] = useState(false);
 
   const refresh = useCallback(() => {
     reloadProfile();
@@ -224,6 +227,36 @@ export default function MyProfile() {
         />
         {preview ? null : (
           <>
+            <Section>AI-помощник</Section>
+            <View
+              style={{
+                backgroundColor: c.surface,
+                borderRadius: 18,
+                padding: 14,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+              }}
+            >
+              <Text style={{ color: c.muted, fontSize: 13.5, lineHeight: 19, flex: 1 }}>
+                {aiOn
+                  ? "Включён. AI видит имена, должности, компании и заметки контактов. Телефоны и email не отправляются."
+                  : "Выключен. Подсказки «Стоит написать», раскладка по разделам и помощник не работают."}
+              </Text>
+              <Switch
+                value={!!aiOn}
+                disabled={aiOn === null || aiBusy}
+                accessibilityLabel="AI-помощник"
+                accessibilityHint="Включение откроет окно согласия на AI"
+                onValueChange={async (on) => {
+                  setAiBusy(true);
+                  const ok = on ? await requireAiConsent() : await setAiConsent(false);
+                  setAiBusy(false);
+                  if (!on && !ok) Alert.alert("Не получилось", "Проверьте интернет и попробуйте ещё раз.");
+                  // Turning on: the consent sheet itself reports a failed save.
+                }}
+              />
+            </View>
             <Section>Ссылка на профиль</Section>
             <Pressable onPress={() => Linking.openURL(url)}>
               <Text style={{ color: c.accentInk }}>{url.replace("https://", "")}</Text>

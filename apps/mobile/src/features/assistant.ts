@@ -32,6 +32,7 @@ export async function askAssistant(message: string, taskId?: string) {
       const body = (await res.json().catch(() => null)) as { message?: string } | null;
       throw new AiLimitError(body?.message ?? "Лимит AI исчерпан. Попробуйте позже.");
     }
+    if (res?.status === 403) throw error; // no AI consent (SC-100): not a bug, callers ask again
     reportError(error, { context: { fn: "ai-assistant", status: res?.status } });
     throw error;
   }

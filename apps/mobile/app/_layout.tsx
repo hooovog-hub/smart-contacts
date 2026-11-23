@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import * as Linking from "expo-linking";
 import { useEffect } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { AiConsentProvider } from "@/lib/aiConsent";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { installGlobalErrorHandler, reportError } from "@/lib/errorReport";
 import { rememberInvite } from "@/lib/invite";
@@ -64,8 +65,10 @@ function Gate() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <StatusBar style="light" />
-      <Gate />
+      <AiConsentProvider>
+        <StatusBar style="light" />
+        <Gate />
+      </AiConsentProvider>
     </AuthProvider>
   );
 }

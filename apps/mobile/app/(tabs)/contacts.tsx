@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
 import { Avatar, Button, Chip, Section, Title, st } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
+import { isConsentRequired, useAiConsent } from "@/lib/aiConsent";
 import { TEMP_RE, aiSort, orderedSections, useSections } from "@/lib/sections";
 import { supabase } from "@/lib/supabase";
 import type { Contact } from "@/lib/types";
@@ -24,6 +25,7 @@ type PhoneContact = Awaited<ReturnType<typeof Contacts.getContactsAsync>>["data"
 export default function ContactsScreen() {
   const router = useRouter();
   const { session } = useAuth();
+  const { requireAiConsent, consentRevoked } = useAiConsent();
   const [list, setList] = useState<Contact[]>([]);
   const [mode, setMode] = useState<"sec" | "az">("sec");
   const [cat, setCat] = useState<string | null>(null);
@@ -57,6 +59,8 @@ export default function ContactsScreen() {
   /** Claude sorts the given contacts into sections (and may create personal groups). */
   async function runAiSort(ids: string[]) {
     if (!ids.length) return;
+    // SC-100: no AI without consent. Imported contacts then simply stay in «Без раздела».
+    if (!(await requireAiConsent())) return;
     setProgress("AI изучает вашу книжку…");
     const res = await aiSort(ids, (done, total) => setProgress(`AI раскладывает… ${done} из ${total}`));
     await reloadSections();
@@ -75,11 +79,52 @@ export default function ContactsScreen() {
     try {
       await runAiSort(ids);
     } catch (e) {
-      Alert.alert("Ошибка AI", e instanceof Error ? e.message : String(e));
+      if (isConsentRequired(e)) consentRevoked();
+      else Alert.alert("Ошибка AI", e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
       setProgress("");
     }
+  }
+
+  /** SC-104: remove everything imported from the phone book (QR and manual contacts stay). */
+  async function confirmDeleteImported() {
+    if (!session || busy) return;
+    // Count on the server: the screen may not hold every contact (archived ones too).
+    const { count } = await supabase
+      .from("contacts")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_id", session.user.id)
+      .eq("source", "phonebook");
+    const n = count ?? 0;
+    if (!n) return;
+    Alert.alert(
+      "Удалить импортированные контакты?",
+      `Из книжки исчезнут ${n} контактов, загруженных из телефона, вместе с заметками. Контакты, добавленные по QR и вручную, останутся. В телефоне ничего не удалится. В старых ответах AI-помощника имена могут остаться. Отменить нельзя.`,
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: "Удалить",
+          style: "destructive",
+          onPress: async () => {
+            setBusy(true);
+            try {
+              const { error } = await supabase
+                .from("contacts")
+                .delete()
+                .eq("owner_id", session.user.id)
+                .eq("source", "phonebook");
+              if (error) throw error;
+              await load();
+            } catch {
+              Alert.alert("Не получилось", "Проверьте интернет и попробуйте ещё раз.");
+            } finally {
+              setBusy(false);
+            }
+          },
+        },
+      ],
+    );
   }
 
   async function importPhone() {
@@ -373,6 +418,16 @@ export default function ContactsScreen() {
               }
               loading={busy}
             />
+            {list.some((x) => x.source === "phonebook") ? (
+              <Pressable
+                onPress={confirmDeleteImported}
+                disabled={busy}
+                accessibilityRole="button"
+                style={{ alignItems: "center", paddingVertical: 10, marginTop: 8 }}
+              >
+                <Text style={{ color: c.danger, fontSize: 14 }}>Удалить все импортированные из телефона</Text>
+              </Pressable>
+            ) : null}
           </View>
         ) : null}
       </ScrollView>

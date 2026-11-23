@@ -8,6 +8,7 @@ import { ActivityIndicator, Alert, Linking, Platform, Pressable, ScrollView, Tex
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
 import { Avatar, Section, st } from "@/components/ui";
+import { useAiConsent } from "@/lib/aiConsent";
 import { reportError } from "@/lib/errorReport";
 import { supabase } from "@/lib/supabase";
 import {
@@ -57,6 +58,7 @@ async function openMessage(phone: string | null | undefined, text: string) {
 
 export default function Today() {
   const router = useRouter();
+  const { consent, requireAiConsent, consentRevoked } = useAiConsent();
   const [birthdays, setBirthdays] = useState<UpcomingBirthday[]>([]);
   const [picks, setPicks] = useState<Pick[] | null>(null);
   const [recent, setRecent] = useState<Recent[]>([]);
@@ -83,16 +85,22 @@ export default function Today() {
     ]);
     setBirthdays(upcomingBirthdays((bd as BirthdayContact[]) ?? [], day));
     setRecent((rc as Recent[]) ?? []);
+    // SC-100: picks use AI, so only after consent (null = still loading, false = not allowed).
+    if (consent !== true) {
+      picksDay.current = null; // load again as soon as AI is allowed
+      return setPicks(consent === false ? [] : null);
+    }
     // Daily picks: at most one request per day per app session (the server caches them, AI costs a quota).
     if (picksDay.current === day) return;
     picksDay.current = day;
     const { data, error } = await supabase.functions.invoke<{ picks: Pick[] }>("daily-picks", { body: { day } });
     if (error) {
       const status = (error as { context?: Response }).context?.status;
-      if (status !== 429) reportError(error, { context: { kind: "daily-picks", status } });
+      if (status === 403) consentRevoked();
+      else if (status !== 429) reportError(error, { context: { kind: "daily-picks", status } });
       setPicks([]);
     } else setPicks(data?.picks ?? []);
-  }, []);
+  }, [consent, consentRevoked]);
 
   useFocusEffect(
     useCallback(() => {
@@ -207,7 +215,21 @@ export default function Today() {
         <Section right={picks?.length ? <Text style={st.meta}>{picks.length}</Text> : null}>
           ✉️ Стоит написать сегодня
         </Section>
-        {picks === null ? (
+        {consent === false ? (
+          <Pressable
+            onPress={() => requireAiConsent()}
+            accessibilityRole="button"
+            accessibilityLabel="Включить AI-подсказки"
+            accessibilityHint="Откроет окно согласия на AI"
+            style={{ backgroundColor: c.surface, borderRadius: r.card, padding: 14, gap: 6 }}
+          >
+            <Text style={st.meta}>
+              AI каждый день подберёт 3 человека, которым стоит написать, и подготовит текст. Для этого нужно ваше
+              согласие.
+            </Text>
+            <Text style={{ color: c.accentInk, fontSize: 15, fontWeight: "600" }}>Включить AI-подсказки</Text>
+          </Pressable>
+        ) : picks === null ? (
           <ActivityIndicator color={c.muted} style={{ marginVertical: 16 }} />
         ) : picks.length ? (
           <View style={{ backgroundColor: c.surface, borderRadius: r.card, overflow: "hidden" }}>

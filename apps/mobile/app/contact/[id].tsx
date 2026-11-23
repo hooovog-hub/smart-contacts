@@ -1,9 +1,10 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Linking, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
 import { Avatar, Button, Chip, Field, Section } from "@/components/ui";
+import { ProfileSafety } from "@/components/ProfileSafety";
 import { ProfileView } from "@/components/ProfileView";
 import { useSections } from "@/lib/sections";
 import { supabase } from "@/lib/supabase";
@@ -44,6 +45,25 @@ export default function ContactScreen() {
   async function setCat(k: string) {
     setX({ ...x!, category_key: k });
     await supabase.from("contacts").update({ category_key: k, category_locked: true }).eq("id", x!.id);
+  }
+  // SC-104: the contact disappears from the book together with the note and AI picks (FK cascade).
+  function confirmDelete() {
+    Alert.alert(
+      "Удалить контакт?",
+      `${x!.display_name} исчезнет из вашей книжки вместе с заметкой. В телефоне контакт останется, в старых ответах AI-помощника имя может остаться. Отменить нельзя.`,
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: "Удалить",
+          style: "destructive",
+          onPress: async () => {
+            const { error } = await supabase.from("contacts").delete().eq("id", x!.id);
+            if (error) Alert.alert("Не получилось", "Проверьте интернет и попробуйте ещё раз.");
+            else router.back();
+          },
+        },
+      ],
+    );
   }
   async function saveNote() {
     await supabase
@@ -132,6 +152,14 @@ export default function ContactScreen() {
           placeholder="Где познакомились, о чём говорили…"
         />
         <Button kind="ghost" small title={saved ? "Сохранено ✓" : "Сохранить заметку"} onPress={saveNote} />
+        <Pressable
+          onPress={confirmDelete}
+          accessibilityRole="button"
+          style={{ marginTop: 28, alignItems: "center", paddingVertical: 8 }}
+        >
+          <Text style={{ color: c.danger, fontSize: 14 }}>Удалить контакт</Text>
+        </Pressable>
+        {x.linked_profile_id ? <ProfileSafety profileId={x.linked_profile_id} name={x.display_name} /> : null}
       </ScrollView>
     </SafeAreaView>
   );

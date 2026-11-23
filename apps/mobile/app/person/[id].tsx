@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Linking, Pressable, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
+import { ProfileSafety } from "@/components/ProfileSafety";
 import { ProfileView, useProfile } from "@/components/ProfileView";
 import { Button } from "@/components/ui";
 import { c } from "@/theme/tokens";
@@ -37,6 +38,7 @@ export default function PersonScreen() {
             style={{ marginTop: 18 }}
           />
         ) : null}
+        {id && p ? <ProfileSafety profileId={id} name={p.full_name} onBlocked={() => router.back()} /> : null}
       </ScrollView>
     </SafeAreaView>
   );
