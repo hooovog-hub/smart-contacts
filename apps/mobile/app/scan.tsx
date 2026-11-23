@@ -9,6 +9,7 @@ import { Icon } from "@/components/Icon";
 import { Button } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
 import { reportError } from "@/lib/errorReport";
+import { profilePhone } from "@/lib/profileData";
 import { handleFromQr } from "@/lib/qr";
 import { supabase } from "@/lib/supabase";
 import { c } from "@/theme/tokens";
@@ -29,7 +30,7 @@ export default function Scan() {
     try {
       const { data: p } = await supabase
         .from("profiles")
-        .select("id, full_name, role, phone")
+        .select("id, full_name, role")
         .eq("handle", handle)
         .maybeSingle();
       if (!p) throw new Error("not_found");
@@ -44,12 +45,13 @@ export default function Scan() {
         .eq("archived", false)
         .limit(1);
       if (!existing?.length) {
+        const phone = await profilePhone(p.id);
         const { error: insErr } = await supabase.from("contacts").insert({
           owner_id: session.user.id,
           linked_profile_id: p.id,
           display_name: p.full_name,
           role: p.role,
-          phone: p.phone,
+          phone,
           source: "qr",
           met_at: new Date().toISOString(),
         });

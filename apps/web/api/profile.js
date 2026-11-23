@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   let p;
   try {
     const rows = await rest(
-      `profiles?handle=eq.${encodeURIComponent(handle)}&select=id,full_name,role,bio,city,languages,plan,avatar_url,phone,links,helps,brands(name,sphere,description,links,position),memberships(org_name,status_title,since_year,verified),profile_seeks(text,resolved_at)`,
+      `profiles?handle=eq.${encodeURIComponent(handle)}&select=id,full_name,role,bio,city,languages,plan,avatar_url,links,helps,brands(name,sphere,description,links,position),memberships(org_name,status_title,since_year,verified),profile_seeks(text,resolved_at)`,
     );
     p = rows[0];
   } catch {

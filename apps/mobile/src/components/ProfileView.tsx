@@ -7,6 +7,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import { Linking, Pressable, Text, View } from "react-native";
 import { Avatar, Pill, Section, st } from "@/components/ui";
 import { messenger } from "@/lib/completeness.logic";
+import { PROFILE_COLUMNS, profilePhone } from "@/lib/profileData";
 import { supabase } from "@/lib/supabase";
 import type { Brand, Membership, Profile } from "@/lib/types";
 import { c, r } from "@/theme/tokens";
@@ -49,18 +50,20 @@ export function useProfile(id?: string | null, version = 0) {
   useEffect(() => {
     if (!id) return;
     let alive = true; // ignore a slower, older response arriving after a newer one
-    supabase
-      .from("profiles")
-      .select("*, brands(*), memberships(*), awards(*), profile_seeks(id, text, resolved_at)")
-      .eq("id", id)
-      .single()
-      .then(({ data }) => {
-        if (!data || !alive) return;
-        const d = data as FullProfile;
-        d.brands = [...(d.brands ?? [])].sort((a, b) => a.position - b.position);
-        d.profile_seeks = (d.profile_seeks ?? []).filter((s) => !s.resolved_at);
-        setP(d);
-      });
+    Promise.all([
+      supabase
+        .from("profiles")
+        .select(`${PROFILE_COLUMNS}, brands(*), memberships(*), awards(*), profile_seeks(id, text, resolved_at)`)
+        .eq("id", id)
+        .single(),
+      profilePhone(id),
+    ]).then(([{ data }, phone]) => {
+      if (!data || !alive) return;
+      const d = { ...(data as unknown as FullProfile), phone };
+      d.brands = [...(d.brands ?? [])].sort((a, b) => a.position - b.position);
+      d.profile_seeks = (d.profile_seeks ?? []).filter((s) => !s.resolved_at);
+      setP(d);
+    });
     return () => {
       alive = false;
     };

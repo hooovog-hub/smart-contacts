@@ -3,6 +3,25 @@ export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.
 export const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
 
+// Secret (service) key: server-only, used just to read a phone (SC-103: the column is closed for the publishable key).
+const SECRET_KEY = process.env.SUPABASE_SECRET_KEY || "";
+
+/** Phone of exactly one profile ({ id } or { handle }), read on the server. Null when unknown or the key is missing. */
+export async function profilePhone({ id, handle }) {
+  const filter = id ? `id=eq.${encodeURIComponent(id)}` : handle ? `handle=eq.${encodeURIComponent(handle)}` : "";
+  if (!SECRET_KEY || !filter) return null;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?${filter}&select=phone&limit=1`, {
+      headers: { apikey: SECRET_KEY, Accept: "application/json" },
+    });
+    if (!r.ok) return null;
+    const [row] = await r.json();
+    return typeof row?.phone === "string" && row.phone ? row.phone : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function rest(path, headers = {}) {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     headers: { apikey: SUPABASE_KEY, Accept: "application/json", ...headers },
