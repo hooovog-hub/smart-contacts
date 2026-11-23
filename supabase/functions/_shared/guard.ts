@@ -8,10 +8,23 @@ const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE
 });
 
 /**
- * Record one AI use if limits allow it. Returns a ready 429/503 Response when blocked, or null when allowed.
+ * Record one AI use if the user consented to AI (403 otherwise) and limits allow it.
+ * Returns a ready 403/429/503 Response when blocked, or null when allowed.
  * Fails closed: if the limit check itself fails, the AI is not called (protects the Claude bill).
  */
 export async function consume(userId: string, fn: AiFn, plan: string | null | undefined): Promise<Response | null> {
+  // SC-100: no data goes to the AI provider without the user's consent (table ai_consents, migration 0013).
+  const { data: consent, error: consentErr } = await admin
+    .from("ai_consents")
+    .select("profile_id")
+    .eq("profile_id", userId)
+    .maybeSingle();
+  if (consentErr) {
+    await reportError(`consent:${fn}`, consentErr, userId);
+    return Response.json({ error: "limits_unavailable" }, { status: 503 });
+  }
+  if (!consent) return Response.json({ error: "ai_consent_required" }, { status: 403 });
+
   const l = limitsFor(fn, plan);
   const { data, error } = await admin.rpc("ai_consume", {
     p_user: userId,

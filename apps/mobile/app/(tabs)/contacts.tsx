@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Icon } from "@/components/Icon";
 import { Avatar, Button, Chip, Section, Title, st } from "@/components/ui";
 import { useAuth } from "@/lib/auth";
+import { useAiConsent } from "@/lib/aiConsent";
 import { TEMP_RE, aiSort, orderedSections, useSections } from "@/lib/sections";
 import { supabase } from "@/lib/supabase";
 import type { Contact } from "@/lib/types";
@@ -24,6 +25,7 @@ type PhoneContact = Awaited<ReturnType<typeof Contacts.getContactsAsync>>["data"
 export default function ContactsScreen() {
   const router = useRouter();
   const { session } = useAuth();
+  const { requireAiConsent } = useAiConsent();
   const [list, setList] = useState<Contact[]>([]);
   const [mode, setMode] = useState<"sec" | "az">("sec");
   const [cat, setCat] = useState<string | null>(null);
@@ -57,6 +59,8 @@ export default function ContactsScreen() {
   /** Claude sorts the given contacts into sections (and may create personal groups). */
   async function runAiSort(ids: string[]) {
     if (!ids.length) return;
+    // SC-100: no AI without consent. Imported contacts then simply stay in «Без раздела».
+    if (!(await requireAiConsent())) return;
     setProgress("AI изучает вашу книжку…");
     const res = await aiSort(ids, (done, total) => setProgress(`AI раскладывает… ${done} из ${total}`));
     await reloadSections();

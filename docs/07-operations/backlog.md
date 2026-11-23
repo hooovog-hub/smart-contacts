@@ -51,7 +51,7 @@
 | SC-082 | Профиль на месте: фото, «Сейчас ищу», «Чем могу помочь», Wallet рядом с фото | 2 | P0 | mobile-engineer | review | 0.2.0, `features/profile.md` |
 | SC-083 | Фото профиля на Wallet-карте (нужен PNG-thumbnail) | 5 | P2 | integrations-engineer | todo | Сейчас фото на карте нет |
 | SC-084 | «Повод написать»: новости по сферам → кому переслать | 3 | P2 | product-lead | backlog | Решение 2026-11-16: пока не делаем |
-| SC-100 | Согласие на AI перед первым использованием + выключатель AI | 6 | P0 | mobile-engineer, ai-engineer | todo | Apple 5.1.2(i); политика это обещает |
+| SC-100 | Согласие на AI перед первым использованием + выключатель AI | 6 | P0 | mobile-engineer, ai-engineer | doing | 2026-11-24: окно согласия, выключатель, проверка на сервере (0013 + guard.ts); не выкачено | Apple 5.1.2(i); политика это обещает |
 | SC-101 | Пожаловаться / заблокировать пользователя | 6 | P0 | mobile-engineer, backend-engineer | todo | Apple 1.2 |
 | SC-102 | Убрать плашку «✓ Профиль проверен» | 6 | P0 | mobile-engineer, web-engineer | done | Никто не проверяет — вводит в заблуждение |
 | SC-103 | Закрыть массовую выгрузку телефонов из `profiles` | 6 | P0 | backend-engineer | done | 2026-11-24: 0011+0012 применены; номер — profile_phone() (50 чел./день), vCard 20/час на IP; проверено на iPhone |

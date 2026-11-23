@@ -7,6 +7,7 @@ import { Dock } from "@/components/Dock";
 import { Icon } from "@/components/Icon";
 import { Avatar, Button, Pill, st } from "@/components/ui";
 import { addSeekFromAi, AiLimitError, askAssistant, catName } from "@/features/assistant";
+import { useAiConsent } from "@/lib/aiConsent";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import type { AiMessage, AiTask, Contact } from "@/lib/types";
@@ -14,6 +15,7 @@ import { c, r } from "@/theme/tokens";
 
 export default function TaskScreen() {
   const { id, seek: seekParam } = useLocalSearchParams<{ id: string; seek?: string }>();
+  const { requireAiConsent } = useAiConsent();
   const router = useRouter();
   const { profile } = useAuth();
   // "Сейчас ищу" offer from the AI (spec: docs/01-product/features/ai-assistant.md). Nothing is saved without "Добавить".
@@ -41,6 +43,7 @@ export default function TaskScreen() {
   }, [load]);
 
   async function send(t: string) {
+    if (!(await requireAiConsent())) return;
     setBusy(true);
     try {
       const res = await askAssistant(t, id);

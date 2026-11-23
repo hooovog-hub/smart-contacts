@@ -5,12 +5,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Dock } from "@/components/Dock";
 import { Avatar, Chip, Pill, Section, Title, st } from "@/components/ui";
 import { AiLimitError, askAssistant, catName, TASK_CATS } from "@/features/assistant";
+import { useAiConsent } from "@/lib/aiConsent";
 import { supabase } from "@/lib/supabase";
 import type { AiTask } from "@/lib/types";
 import { c, r } from "@/theme/tokens";
 
 export default function Assistant() {
   const router = useRouter();
+  const { requireAiConsent } = useAiConsent();
   const [tasks, setTasks] = useState<AiTask[]>([]);
   const [f, setF] = useState("all");
   const [arch, setArch] = useState(false);
@@ -32,6 +34,7 @@ export default function Assistant() {
   );
 
   async function send(t: string) {
+    if (!(await requireAiConsent())) return;
     setBusy(true);
     try {
       const res = await askAssistant(t);
